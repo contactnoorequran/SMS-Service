@@ -1,0 +1,8 @@
+{
+  "name": "Remix SMS Management Platform",
+  "description": "Production-grade multi-provider SMS management platform built with Node.js, TypeScript, PostgreSQL, and React.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

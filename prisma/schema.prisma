@@ -1,0 +1,652 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==============================================================================
+// 1. IDENTITY & ACCESS CONTROL (RBAC)
+// ==============================================================================
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  firstName    String?
+  lastName     String?
+  status       String    @default("ACTIVE") // ACTIVE, SUSPENDED, PENDING
+  roleId       String
+  role         Role      @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Profiles
+  managerProfile ManagerProfile?
+  agentProfile   AgentProfile?
+  clientProfile  ClientProfile?
+
+  // Financial & Operational relations
+  wallets                Wallet[]
+  creditNotes            CreditNote[]     @relation("UserCreditNotes")
+  issuedCreditNotes      CreditNote[]     @relation("IssuedCreditNotes")
+  paymentRequests        PaymentRequest[] @relation("UserPaymentRequests")
+  reviewedPaymentRequests PaymentRequest[] @relation("ReviewedPaymentRequests")
+  numberAssignments      NumberAssignment[] @relation("AssignedBy")
+
+  // System
+  auditLogs      AuditLog[]
+  notifications  Notification[]
+  apiCredentials ApiCredential[]
+
+  @@index([email])
+  @@index([status])
+  @@index([roleId])
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique // SUPER_ADMIN, MANAGER, AGENT, CLIENT
+  displayName String
+  description String?
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users           User[]
+  rolePermissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  code        String   @unique // e.g. "providers:manage", "numbers:assign", "cdr:view"
+  module      String   // IDENTITY, PROVIDERS, NUMBERS, MESSAGING, BILLING, SYSTEM
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rolePermissions RolePermission[]
+
+  @@index([module])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// ==============================================================================
+// 2. ORGANIZATION & RELATIONSHIP PROFILES
+// ==============================================================================
+
+model ManagerProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department  String?
+  maxAgents   Int      @default(50)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agents  AgentProfile[]
+  clients ClientProfile[]
+
+  @@map("manager_profiles")
+}
+
+model AgentProfile {
+  id             String          @id @default(uuid())
+  userId         String          @unique
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  managerId      String?
+  manager        ManagerProfile? @relation(fields: [managerId], references: [id], onDelete: SetNull)
+  commissionRate Decimal         @default(0.0000) @db.Decimal(5, 4) // e.g. 0.0500 for 5%
+  status         String          @default("ACTIVE") // ACTIVE, INACTIVE
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  clients ClientProfile[]
+  cdrs    CDR[]
+
+  @@index([managerId])
+  @@index([status])
+  @@map("agent_profiles")
+}
+
+model ClientProfile {
+  id          String          @id @default(uuid())
+  userId      String          @unique
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  managerId   String?
+  manager     ManagerProfile? @relation(fields: [managerId], references: [id], onDelete: SetNull)
+  agentId     String?
+  agent       AgentProfile?   @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  companyName String?
+  billingType String          @default("PREPAID") // PREPAID, POSTPAID
+  status      String          @default("ACTIVE") // ACTIVE, SUSPENDED, PENDING
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  assignedNumbers   Number[]
+  numberAssignments NumberAssignment[]
+  incomingMessages  IncomingMessage[]
+  cdrs              CDR[]
+  payoutRates       ClientPayout[]
+
+  @@index([managerId])
+  @@index([agentId])
+  @@index([status])
+  @@map("client_profiles")
+}
+
+// ==============================================================================
+// 3. PROVIDER & CONNECTION LAYER
+// ==============================================================================
+
+model Provider {
+  id            String   @id @default(uuid())
+  name          String
+  slug          String   @unique
+  status        String   @default("ACTIVE") // ACTIVE, INACTIVE, MAINTENANCE
+  protocol      String   @default("HTTP_REST") // HTTP_REST, SMPP
+  description   String?
+  webhookSecret String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  connections      ProviderConnection[]
+  credentials      ProviderCredential[]
+  ranges           Range[]
+  numbers          Number[]
+  rates            Rate[]
+  incomingMessages IncomingMessage[]
+  cdrs             CDR[]
+
+  @@index([status])
+  @@map("providers")
+}
+
+model ProviderConnection {
+  id              String   @id @default(uuid())
+  providerId      String
+  provider        Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  name            String
+  protocol        String   // HTTP, SMPP
+  host            String
+  port            Int
+  systemId        String?  // SMPP system_id or API Client ID
+  bindType        String   @default("TRANSCEIVER") // TRANSMITTER, RECEIVER, TRANSCEIVER
+  throughputLimit Int      @default(30) // messages per second
+  isActive        Boolean  @default(true)
+  isConnected     Boolean  @default(false)
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([providerId])
+  @@index([isActive])
+  @@map("provider_connections")
+}
+
+model ProviderCredential {
+  id              String   @id @default(uuid())
+  providerId      String
+  provider        Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  name            String
+  credentialType  String   // API_KEY, BASIC_AUTH, BEARER_TOKEN, SMPP_CREDENTIALS, OAUTH2
+  keyReference    String?  // Reference key for vault/KMS
+  encryptedSecret String?  // AES-256-GCM ciphertext (never plaintext)
+  iv              String?  // Initialization vector
+  maskedKey       String?  // e.g. "sk_live_...4f89" for UI display
+  isEncrypted     Boolean  @default(true)
+  status          String   @default("ACTIVE") // ACTIVE, REVOKED, EXPIRED
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([providerId])
+  @@index([status])
+  @@map("provider_credentials")
+}
+
+// ==============================================================================
+// 4. INVENTORY: COUNTRIES, OPERATORS, RANGES, NUMBERS
+// ==============================================================================
+
+model Country {
+  id        String   @id @default(uuid())
+  name      String
+  iso2      String   @unique // e.g. "US", "GB", "DE"
+  iso3      String   // e.g. "USA", "GBR", "DEU"
+  dialCode  String   // e.g. "+1", "+44", "+49"
+  currency  String   @default("USD")
+  status    String   @default("ACTIVE") // ACTIVE, INACTIVE
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  operators    Operator[]
+  ranges       Range[]
+  numbers      Number[]
+  rates        Rate[]
+  clientPayouts ClientPayout[]
+
+  @@index([iso2])
+  @@index([status])
+  @@map("countries")
+}
+
+model Operator {
+  id        String   @id @default(uuid())
+  countryId String
+  country   Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  name      String
+  mcc       String   // Mobile Country Code (3 digits)
+  mnc       String   // Mobile Network Code (2-3 digits)
+  brandName String?
+  status    String   @default("ACTIVE") // ACTIVE, INACTIVE
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ranges       Range[]
+  numbers      Number[]
+  rates        Rate[]
+  clientPayouts ClientPayout[]
+
+  @@unique([countryId, mcc, mnc])
+  @@index([countryId])
+  @@index([status])
+  @@map("operators")
+}
+
+model Range {
+  id          String    @id @default(uuid())
+  providerId  String
+  provider    Provider  @relation(fields: [providerId], references: [id], onDelete: Restrict)
+  countryId   String
+  country     Country   @relation(fields: [countryId], references: [id], onDelete: Restrict)
+  operatorId  String?
+  operator    Operator? @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+  name        String
+  prefix      String    // e.g. "+1202"
+  startRange  String?   // e.g. "+12025550100"
+  endRange    String?   // e.g. "+12025550199"
+  rangeType   String    @default("LONGCODE") // LONGCODE, SHORTCODE, TOLL_FREE
+  status      String    @default("ACTIVE") // ACTIVE, EXHAUSTED, SUSPENDED
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  numbers      Number[]
+  rates        Rate[]
+  clientPayouts ClientPayout[]
+
+  @@index([providerId])
+  @@index([countryId])
+  @@index([operatorId])
+  @@index([prefix])
+  @@index([status])
+  @@map("ranges")
+}
+
+model Number {
+  id              String         @id @default(uuid())
+  rangeId         String
+  range           Range          @relation(fields: [rangeId], references: [id], onDelete: Restrict)
+  providerId      String
+  provider        Provider       @relation(fields: [providerId], references: [id], onDelete: Restrict)
+  countryId       String
+  country         Country        @relation(fields: [countryId], references: [id], onDelete: Restrict)
+  operatorId      String?
+  operator        Operator?      @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+  currentClientId String?
+  currentClient   ClientProfile? @relation(fields: [currentClientId], references: [id], onDelete: SetNull)
+  e164Number      String         @unique // Global standard +E.164, e.g. "+12025550123"
+  nationalNumber  String?
+  numberType      String         @default("LONGCODE") // LONGCODE, SHORTCODE, VIRTUAL
+  capabilities    String         @default("SMS") // SMS, VOICE, BOTH
+  status          String         @default("AVAILABLE") // AVAILABLE, ASSIGNED, RESERVED, QUARANTINED, INACTIVE
+  assignedAt      DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  assignments      NumberAssignment[]
+  incomingMessages IncomingMessage[]
+  cdrs             CDR[]
+
+  @@index([e164Number])
+  @@index([status])
+  @@index([providerId])
+  @@index([countryId])
+  @@index([rangeId])
+  @@index([currentClientId])
+  @@map("numbers")
+}
+
+// ==============================================================================
+// 5. ASSIGNMENT LIFECYCLE (Temporal History)
+// ==============================================================================
+
+model NumberAssignment {
+  id               String        @id @default(uuid())
+  numberId         String
+  number           Number        @relation(fields: [numberId], references: [id], onDelete: Cascade)
+  clientId         String
+  client           ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  assignedByUserId String?
+  assignedByUser   User?         @relation("AssignedBy", fields: [assignedByUserId], references: [id], onDelete: SetNull)
+  status           String        @default("ACTIVE") // ACTIVE, RELEASED, EXPIRED, TERMINATED
+  assignedAt       DateTime      @default(now())
+  releasedAt       DateTime?
+  expiresAt        DateTime?
+  notes            String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([numberId, status])
+  @@index([clientId, status])
+  @@index([assignedAt])
+  @@map("number_assignments")
+}
+
+// ==============================================================================
+// 6. MESSAGING & CDR RECORDS (Auditable Billing Event)
+// ==============================================================================
+
+model IncomingMessage {
+  id                 String         @id @default(uuid())
+  messageRef         String?        // Provider transmission unique ID
+  numberId           String
+  number             Number         @relation(fields: [numberId], references: [id], onDelete: Restrict)
+  providerId         String
+  provider           Provider       @relation(fields: [providerId], references: [id], onDelete: Restrict)
+  clientId           String?
+  client             ClientProfile? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  senderAddress      String         // Sender phone / alphanumeric header
+  destinationAddress String         // Destination phone number
+  messageBody        String
+  encoding           String         @default("UTF-8")
+  segmentCount       Int            @default(1)
+  rawPayload         Json?          // Complete provider webhook payload
+  status             String         @default("RECEIVED") // RECEIVED, PROCESSED, FAILED, ROUTED
+  receivedAt         DateTime       @default(now())
+  createdAt          DateTime       @default(now())
+
+  cdr CDR?
+
+  @@index([numberId])
+  @@index([providerId])
+  @@index([clientId])
+  @@index([receivedAt])
+  @@index([senderAddress])
+  @@index([status])
+  @@map("incoming_messages")
+}
+
+model CDR {
+  id                String          @id @default(uuid())
+  incomingMessageId String          @unique
+  incomingMessage   IncomingMessage @relation(fields: [incomingMessageId], references: [id], onDelete: Cascade)
+  numberId          String
+  number            Number          @relation(fields: [numberId], references: [id], onDelete: Restrict)
+  providerId        String
+  provider          Provider        @relation(fields: [providerId], references: [id], onDelete: Restrict)
+  clientId          String?
+  client            ClientProfile?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  agentId           String?
+  agent             AgentProfile?   @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  providerCost      Decimal         @db.Decimal(18, 6)
+  clientPayout      Decimal         @db.Decimal(18, 6)
+  agentCommission   Decimal         @default(0) @db.Decimal(18, 6)
+  netProfit         Decimal         @db.Decimal(18, 6)
+  currency          String          @default("USD")
+  status            String          @default("SETTLED") // SETTLED, PENDING, DISPUTED
+  billedAt          DateTime        @default(now())
+  createdAt         DateTime        @default(now())
+
+  @@index([clientId, billedAt])
+  @@index([providerId, billedAt])
+  @@index([agentId])
+  @@index([status])
+  @@map("cdrs")
+}
+
+// ==============================================================================
+// 7. RATES & FINANCIAL LEDGER
+// ==============================================================================
+
+model Rate {
+  id            String    @id @default(uuid())
+  providerId    String
+  provider      Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  countryId     String
+  country       Country   @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  operatorId    String?
+  operator      Operator? @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+  rangeId       String?
+  range         Range?    @relation(fields: [rangeId], references: [id], onDelete: SetNull)
+  costPerSms    Decimal   @db.Decimal(18, 6)
+  currency      String    @default("USD")
+  effectiveFrom DateTime  @default(now())
+  effectiveTo   DateTime?
+  status        String    @default("ACTIVE") // ACTIVE, EXPIRED, DRAFT
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([providerId, countryId, status])
+  @@map("rates")
+}
+
+model ClientPayout {
+  id            String        @id @default(uuid())
+  clientId      String
+  client        ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  countryId     String
+  country       Country       @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  operatorId    String?
+  operator      Operator?     @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+  rangeId       String?
+  range         Range?        @relation(fields: [rangeId], references: [id], onDelete: SetNull)
+  payoutPerSms  Decimal       @db.Decimal(18, 6)
+  currency      String        @default("USD")
+  effectiveFrom DateTime      @default(now())
+  effectiveTo   DateTime?
+  status        String        @default("ACTIVE") // ACTIVE, EXPIRED, DRAFT
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([clientId, countryId, status])
+  @@map("client_payouts")
+}
+
+model Wallet {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currency        String   @default("USD")
+  balance         Decimal  @default(0) @db.Decimal(18, 4)
+  pendingBalance  Decimal  @default(0) @db.Decimal(18, 4)
+  reservedBalance Decimal  @default(0) @db.Decimal(18, 4)
+  status          String   @default("ACTIVE") // ACTIVE, FROZEN, SUSPENDED
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  transactions    Transaction[]
+  paymentRequests PaymentRequest[]
+
+  @@unique([userId, currency])
+  @@index([userId])
+  @@map("wallets")
+}
+
+model Transaction {
+  id            String   @id @default(uuid())
+  walletId      String
+  wallet        Wallet   @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  type          String   // CREDIT, DEBIT
+  category      String   // SMS_PAYOUT, RECHARGE, WITHDRAWAL, AGENT_COMMISSION, ADJUSTMENT
+  amount        Decimal  @db.Decimal(18, 4)
+  balanceBefore Decimal  @db.Decimal(18, 4)
+  balanceAfter  Decimal  @db.Decimal(18, 4)
+  currency      String   @default("USD")
+  referenceType String   // CDR, PAYMENT_REQUEST, CREDIT_NOTE, MANUAL
+  referenceId   String?
+  description   String?
+  createdAt     DateTime @default(now()) // Immutable ledger timestamp
+
+  paymentRequests PaymentRequest[]
+
+  @@index([walletId, createdAt])
+  @@index([referenceType, referenceId])
+  @@map("transactions")
+}
+
+model CreditNote {
+  id             String    @id @default(uuid())
+  userId         String
+  user           User      @relation("UserCreditNotes", fields: [userId], references: [id], onDelete: Restrict)
+  issuedByUserId String
+  issuedByUser   User      @relation("IssuedCreditNotes", fields: [issuedByUserId], references: [id], onDelete: Restrict)
+  amount         Decimal   @db.Decimal(18, 4)
+  currency       String    @default("USD")
+  reason         String
+  status         String    @default("PENDING") // PENDING, APPROVED, REJECTED, APPLIED
+  appliedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("credit_notes")
+}
+
+model PaymentRequest {
+  id               String       @id @default(uuid())
+  userId           String
+  user             User         @relation("UserPaymentRequests", fields: [userId], references: [id], onDelete: Restrict)
+  walletId         String
+  wallet           Wallet       @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  reviewedByUserId String?
+  reviewedByUser   User?        @relation("ReviewedPaymentRequests", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  transactionId    String?
+  transaction      Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  amount           Decimal      @db.Decimal(18, 4)
+  currency         String       @default("USD")
+  paymentMethod    String       // BANK_TRANSFER, USDT_TRC20, PAYPAL
+  paymentDetails   Json
+  status           String       @default("REQUESTED") // REQUESTED, UNDER_REVIEW, APPROVED, REJECTED, COMPLETED
+  notes            String?
+  requestedAt      DateTime     @default(now())
+  processedAt      DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([userId, status])
+  @@index([walletId])
+  @@map("payment_requests")
+}
+
+// ==============================================================================
+// 8. SYSTEM, AUDITING & API CREDENTIALS
+// ==============================================================================
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  type      String    @default("INFO") // INFO, WARNING, ALERT, SUCCESS
+  isRead    Boolean   @default(false)
+  readAt    DateTime?
+  metadata  Json?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String   // e.g., "AUTH_LOGIN", "NUMBER_ASSIGNED", "PROVIDER_CREATED"
+  entityType String   // USER, PROVIDER, NUMBER, TRANSACTION
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model ApiCredential {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  keyPrefix   String    // e.g. "sms_live_a1b2"
+  keyHash     String    @unique // SHA-256 hash of API secret key
+  status      String    @default("ACTIVE") // ACTIVE, REVOKED
+  allowedIps  Json?     // Array of CIDR / IP strings
+  permissions Json?     // Scoped permission codes
+  expiresAt   DateTime?
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  requestLogs ApiRequestLog[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("api_credentials")
+}
+
+model ApiRequestLog {
+  id              String         @id @default(uuid())
+  apiCredentialId String?
+  apiCredential   ApiCredential? @relation(fields: [apiCredentialId], references: [id], onDelete: SetNull)
+  endpoint        String
+  method          String
+  statusCode      Int
+  responseTimeMs  Int
+  ipAddress       String?
+  userAgent       String?
+  requestPayload  Json?
+  responseSnippet String?
+  createdAt       DateTime       @default(now())
+
+  @@index([apiCredentialId, createdAt])
+  @@index([endpoint])
+  @@index([statusCode])
+  @@map("api_request_logs")
+}
+
+model SystemConfig {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  @@map("system_configs")
+}

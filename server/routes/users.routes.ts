@@ -8,5 +8,7 @@ usersRouter.use(authenticate);
 
 // Protected user management routes
 usersRouter.get('/', requirePermission('users.view'), UsersController.list);
+usersRouter.get('/:id', requirePermission('users.view'), UsersController.getById);
 usersRouter.post('/', requirePermission('users.create'), UsersController.create);
+usersRouter.put('/:id', requirePermission('users.update'), UsersController.update);
 usersRouter.patch('/:id/status', requirePermission('users.disable'), UsersController.updateStatus);

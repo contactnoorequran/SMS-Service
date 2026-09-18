@@ -1,275 +1,330 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import React, { useState, useEffect } from 'react';
-import { ClientDetail, UpdateClientDTO } from '../../../types/client';
-import { AgentListItem } from '../../../types/agent';
-import { apiClient } from '../../../services/api';
-import { X, Building2, User, Phone, DollarSign, Globe, AlertCircle } from 'lucide-react';
+import { Modal } from '../../ui/Modal';
+import { Button } from '../../ui/Button';
+import {
+  ClientItem,
+  ClientDetail,
+  UpdateClientPayload,
+  ClientStatus,
+  BillingType,
+  AgentSummary,
+} from '../../../types/clients';
+import {
+  Building2,
+  Mail,
+  User,
+  Phone,
+  DollarSign,
+  Briefcase,
+  Lock,
+  AlertCircle,
+} from 'lucide-react';
 
 interface EditClientModalProps {
   isOpen: boolean;
   onClose: () => void;
-  client: ClientDetail | null;
-  onClientUpdated: () => void;
-  canReassignAgent?: boolean;
+  client: ClientItem | ClientDetail | null;
+  onSubmit: (id: string, payload: UpdateClientPayload) => Promise<void>;
+  agents: AgentSummary[];
 }
 
 export const EditClientModal: React.FC<EditClientModalProps> = ({
   isOpen,
   onClose,
   client,
-  onClientUpdated,
-  canReassignAgent = true,
+  onSubmit,
+  agents,
 }) => {
-  const [companyName, setCompanyName] = useState('');
-  const [contactName, setContactName] = useState('');
-  const [contact, setContact] = useState('');
-  const [billingType, setBillingType] = useState<'PREPAID' | 'POSTPAID'>('PREPAID');
-  const [creditLimit, setCreditLimit] = useState<number>(0);
-  const [webhookUrl, setWebhookUrl] = useState('');
-  const [agentId, setAgentId] = useState<string>('');
+  const [formData, setFormData] = useState<{
+    name: string;
+    companyName: string;
+    contactPhone: string;
+    billingType: BillingType;
+    creditLimit: string;
+    agentId: string;
+    status: ClientStatus;
+  }>({
+    name: '',
+    companyName: '',
+    contactPhone: '',
+    billingType: 'PREPAID',
+    creditLimit: '0',
+    agentId: '',
+    status: 'ACTIVE',
+  });
 
-  const [availableAgents, setAvailableAgents] = useState<AgentListItem[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (client) {
-      setCompanyName(client.companyName || '');
-      setContactName(client.name || '');
-      setContact(client.contact || '');
-      setBillingType(client.billingType || 'PREPAID');
-      setCreditLimit(client.creditLimit || 0);
-      setWebhookUrl(client.webhookUrl || '');
-      setAgentId(client.agentId || '');
+      const creditLimitVal = (client as ClientDetail).financials?.creditLimit ?? 0;
+      setFormData({
+        name: client.name || '',
+        companyName: client.companyName || '',
+        contactPhone: client.contactPhone || '',
+        billingType: client.billingType || 'PREPAID',
+        creditLimit: String(creditLimitVal),
+        agentId: client.agentId || '',
+        status: client.status || 'ACTIVE',
+      });
+      setErrors({});
     }
   }, [client]);
 
-  useEffect(() => {
-    if (isOpen && canReassignAgent) {
-      apiClient.getAgents({ limit: 100, status: 'ACTIVE' })
-        .then((res) => {
-          setAvailableAgents(res.items || []);
-        })
-        .catch(() => {
-          setAvailableAgents([]);
-        });
-    }
-  }, [isOpen, canReassignAgent]);
+  const validate = (): boolean => {
+    const errs: Record<string, string> = {};
 
-  if (!isOpen || !client) return null;
+    if (!formData.name.trim()) {
+      errs.name = 'Contact representative name is required.';
+    }
+
+    if (!formData.companyName.trim()) {
+      errs.companyName = 'Company name is required.';
+    }
+
+    if (!formData.contactPhone.trim()) {
+      errs.contactPhone = 'Contact phone number is required.';
+    }
+
+    if (formData.billingType === 'POSTPAID') {
+      const credLim = parseFloat(formData.creditLimit);
+      if (isNaN(credLim) || credLim < 0) {
+        errs.creditLimit = 'Credit limit must be a valid non-negative number.';
+      }
+    }
+
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    if (!client) return;
+    if (!validate()) return;
+
     setIsSubmitting(true);
-
     try {
-      const parts = contactName.trim().split(' ');
-      const firstName = parts[0] || 'Client';
-      const lastName = parts.slice(1).join(' ') || 'User';
-
-      const payload: UpdateClientDTO = {
-        companyName: companyName.trim(),
-        firstName,
-        lastName,
-        contact: contact.trim(),
-        billingType,
-        agentId: canReassignAgent ? (agentId || undefined) : undefined,
-      };
-
-      await apiClient.updateClient(client.id, payload);
-      onClientUpdated();
+      await onSubmit(client.id, {
+        name: formData.name.trim(),
+        companyName: formData.companyName.trim(),
+        contactPhone: formData.contactPhone.trim(),
+        billingType: formData.billingType,
+        creditLimit: formData.billingType === 'POSTPAID' ? parseFloat(formData.creditLimit) || 0 : 0,
+        agentId: formData.agentId ? formData.agentId : null,
+        status: formData.status,
+      });
       onClose();
-    } catch (err: any) {
-      setError(err?.message || 'Failed to update client profile.');
+    } catch {
+      // Error handled by caller
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (!client) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden my-8">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-xl">
-              <Building2 className="w-5 h-5" />
-            </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Edit Client Profile: ${client.companyName}`}
+      size="lg"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+        {/* Read-Only Identity Callout */}
+        <div className="p-3 bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
+            <Lock className="w-4 h-4 text-[var(--text-muted)] shrink-0" />
             <div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Edit Client Details</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Updating profile for {client.companyName} ({client.email})
-              </p>
+              <span className="text-[var(--text-secondary)]">Client Email (Immutable): </span>
+              <span className="font-mono text-[var(--text-primary)] font-semibold">{client.email}</span>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <span className="text-[10px] font-mono text-[var(--text-muted)] bg-[var(--bg-card)] px-2 py-0.5 rounded border border-[var(--border-subtle)]">
+            ID: {client.id}
+          </span>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {error && (
-            <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{error}</span>
+        {/* Company and Contact Person Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+              Company Name <span className="text-[var(--accent-rose)]">*</span>
+            </label>
+            <div className="relative">
+              <Building2 className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
+              <input
+                type="text"
+                value={formData.companyName}
+                onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                className={`w-full pl-9 pr-3 py-2 text-xs bg-[var(--bg-glass-card)] border rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)] transition-all ${
+                  errors.companyName ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
+                }`}
+              />
             </div>
-          )}
-
-          <div className="space-y-4">
-            {/* Company Name */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Company / Organization Name <span className="text-rose-500">*</span>
-              </label>
-              <div className="relative">
-                <Building2 className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-                <input
-                  type="text"
-                  required
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-            </div>
-
-            {/* Contact Person */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Primary Contact Person <span className="text-rose-500">*</span>
-              </label>
-              <div className="relative">
-                <User className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-                <input
-                  type="text"
-                  required
-                  value={contactName}
-                  onChange={(e) => setContactName(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-            </div>
-
-            {/* Phone Contact */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Phone Contact
-              </label>
-              <div className="relative">
-                <Phone className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-                <input
-                  type="text"
-                  value={contact}
-                  onChange={(e) => setContact(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-            </div>
-
-            {/* Billing Type & Credit Limit */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Billing Model
-                </label>
-                <select
-                  value={billingType}
-                  onChange={(e) => setBillingType(e.target.value as 'PREPAID' | 'POSTPAID')}
-                  className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="PREPAID">PREPAID</option>
-                  <option value="POSTPAID">POSTPAID</option>
-                </select>
-              </div>
-
-              {billingType === 'POSTPAID' && (
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Credit Limit ($)
-                  </label>
-                  <div className="relative">
-                    <DollarSign className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-                    <input
-                      type="number"
-                      min="0"
-                      step="100"
-                      value={creditLimit}
-                      onChange={(e) => setCreditLimit(parseFloat(e.target.value) || 0)}
-                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Webhook URL */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Inbound SMS Webhook Callback URL
-              </label>
-              <div className="relative">
-                <Globe className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-                <input
-                  type="url"
-                  placeholder="https://api.acme.com/webhooks/sms-inbound"
-                  value={webhookUrl}
-                  onChange={(e) => setWebhookUrl(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-            </div>
-
-            {/* Reassign Agent if permitted */}
-            {canReassignAgent && (
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Assigned Agent Hierarchy
-                </label>
-                <select
-                  value={agentId}
-                  onChange={(e) => setAgentId(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="">Unassigned (Direct Platform Client)</option>
-                  {availableAgents.map((ag) => (
-                    <option key={ag.id} value={ag.id}>
-                      {ag.name} ({ag.companyName || ag.email})
-                    </option>
-                  ))}
-                </select>
-              </div>
+            {errors.companyName && (
+              <p className="text-[11px] text-[var(--accent-rose)] mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {errors.companyName}
+              </p>
             )}
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-5 py-2.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-xs transition-colors flex items-center gap-2 disabled:opacity-50"
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <span>Save Changes</span>
-              )}
-            </button>
+          <div>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+              Primary Contact Person <span className="text-[var(--accent-rose)]">*</span>
+            </label>
+            <div className="relative">
+              <User className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className={`w-full pl-9 pr-3 py-2 text-xs bg-[var(--bg-glass-card)] border rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)] transition-all ${
+                  errors.name ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
+                }`}
+              />
+            </div>
+            {errors.name && (
+              <p className="text-[11px] text-[var(--accent-rose)] mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {errors.name}
+              </p>
+            )}
           </div>
-        </form>
-      </div>
-    </div>
+        </div>
+
+        {/* Contact Phone & Status Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+              Contact Phone <span className="text-[var(--accent-rose)]">*</span>
+            </label>
+            <div className="relative">
+              <Phone className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
+              <input
+                type="text"
+                value={formData.contactPhone}
+                onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
+                className={`w-full pl-9 pr-3 py-2 text-xs bg-[var(--bg-glass-card)] border rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)] transition-all ${
+                  errors.contactPhone ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
+                }`}
+              />
+            </div>
+            {errors.contactPhone && (
+              <p className="text-[11px] text-[var(--accent-rose)] mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {errors.contactPhone}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+              Account Status
+            </label>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value as ClientStatus })}
+              className="w-full px-3 py-2 text-xs bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)]"
+            >
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="SUSPENDED">SUSPENDED</option>
+              <option value="PENDING">PENDING</option>
+              <option value="DISABLED">DISABLED</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Commercial & Billing Parameters */}
+        <div className="p-3.5 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl space-y-3">
+          <label className="block text-xs font-semibold text-[var(--text-primary)] flex items-center gap-2">
+            <DollarSign className="w-4 h-4 text-[var(--accent-emerald)]" />
+            Billing & Credit Line
+          </label>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-[var(--text-secondary)] mb-1 font-medium">
+                Billing Model
+              </label>
+              <select
+                value={formData.billingType}
+                onChange={(e) => setFormData({ ...formData, billingType: e.target.value as BillingType })}
+                className="w-full px-3 py-2 text-xs bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)]"
+              >
+                <option value="PREPAID">PREPAID (Wallet top-up)</option>
+                <option value="POSTPAID">POSTPAID (Credit line / invoice)</option>
+              </select>
+            </div>
+
+            {formData.billingType === 'POSTPAID' && (
+              <div>
+                <label className="block text-xs text-[var(--text-secondary)] mb-1 font-medium">
+                  Credit Limit ($ USD)
+                </label>
+                <input
+                  type="number"
+                  step="100"
+                  min="0"
+                  value={formData.creditLimit}
+                  onChange={(e) => setFormData({ ...formData, creditLimit: e.target.value })}
+                  className={`w-full px-3 py-2 text-xs bg-[var(--bg-glass-card)] border rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)] ${
+                    errors.creditLimit ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
+                  }`}
+                />
+                {errors.creditLimit && (
+                  <p className="text-[10px] text-[var(--accent-rose)] mt-1">{errors.creditLimit}</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Supervising Agent Selection */}
+        <div className="p-3.5 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl space-y-3">
+          <label className="block text-xs font-semibold text-[var(--text-primary)] flex items-center gap-2">
+            <Briefcase className="w-4 h-4 text-[var(--accent-purple)]" />
+            Supervising Commercial Agent
+          </label>
+          <select
+            value={formData.agentId}
+            onChange={(e) => setFormData({ ...formData, agentId: e.target.value })}
+            className="w-full px-3 py-2 text-xs bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)]"
+          >
+            <option value="">Unassigned (Direct Platform Operations)</option>
+            {agents.map((agent) => (
+              <option key={agent.id} value={agent.id}>
+                {agent.name} — {agent.department || 'Operations'} ({agent.clientsCount} clients)
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-2 pt-3 border-t border-[var(--border-subtle)]">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={onClose}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            size="sm"
+            isLoading={isSubmitting}
+          >
+            Save Changes
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 };

@@ -1,652 +1,837 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-generator client {
-  provider = "prisma-client-js"
-}
+// Prisma schema - approved final architecture (corrected pass 2)
+// ONE datasource, ONE generator, ONE definition per model/enum
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// ==============================================================================
-// 1. IDENTITY & ACCESS CONTROL (RBAC)
-// ==============================================================================
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum ProviderConnectionType {
+  HTTP
+  SMPP
+  OTHER
+}
+
+enum ProviderStatus {
+  ACTIVE
+  SUSPENDED
+  DISABLED
+}
+
+enum InboundStatus {
+  RECEIVED
+  PROCESSING
+  ROUTED
+  UNROUTED
+  FAILED
+}
+
+enum BillingStatus {
+  PENDING
+  BILLED
+  ERROR
+}
+
+enum RateType {
+  INBOUND
+  OUTBOUND
+  DELIVERY_REPORT
+}
+
+enum LedgerEntryType {
+  CREDIT
+  DEBIT
+  REFUND
+  ADJUSTMENT
+  FEE
+}
+
+enum LedgerSourceType {
+  RATE
+  BILLING_EVENT
+  CREDIT_NOTE
+  PAYMENT_REQUEST
+  OTHER
+}
+
+enum NotificationType {
+  INFO
+  WARNING
+  ALERT
+}
+
+// ============================================================
+// ORGANIZATION
+// ============================================================
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users               User[]
+  managerProfiles     ManagerProfile[]
+  agents              Agent[]
+  clients             Client[]
+  providers           Provider[]
+  ranges              Range[]
+  numbers             Number[]
+  activeAssignments   ActiveAssignment[]
+  assignmentHistories AssignmentHistory[]
+  inboundMessages     InboundMessage[]
+  cdrs                Cdr[]
+  billingEvents       BillingEvent[]
+  rates               Rate[]
+  wallets             Wallet[]
+  ledgerEntries       LedgerEntry[]
+  billingTransactions BillingTransaction[]
+  creditNotes         CreditNote[]
+  paymentRequests     PaymentRequest[]
+  notifications       Notification[]
+  apiCredentials      ApiCredential[]
+  apiRequestLogs      ApiRequestLog[]
+  auditLogs           AuditLog[]
+}
+
+// ============================================================
+// RBAC
+// ============================================================
 
 model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  passwordHash String
-  firstName    String?
-  lastName     String?
-  status       String    @default("ACTIVE") // ACTIVE, SUSPENDED, PENDING
-  roleId       String
-  role         Role      @relation(fields: [roleId], references: [id], onDelete: Restrict)
-  lastLoginAt  DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id             String   @id @default(uuid())
+  email          String   @unique
+  passwordHash   String
+  name           String?
+  status         String   @default("ACTIVE")
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  // Profiles
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  // RBAC
+  userRoles UserRole[]
+
+  // One-to-one profiles (FK lives on the profile side)
   managerProfile ManagerProfile?
-  agentProfile   AgentProfile?
-  clientProfile  ClientProfile?
+  agent          Agent?
 
-  // Financial & Operational relations
-  wallets                Wallet[]
-  creditNotes            CreditNote[]     @relation("UserCreditNotes")
-  issuedCreditNotes      CreditNote[]     @relation("IssuedCreditNotes")
-  paymentRequests        PaymentRequest[] @relation("UserPaymentRequests")
-  reviewedPaymentRequests PaymentRequest[] @relation("ReviewedPaymentRequests")
-  numberAssignments      NumberAssignment[] @relation("AssignedBy")
+  // ClientUser membership (one user can belong to multiple clients)
+  clientMemberships ClientUser[]
 
-  // System
-  auditLogs      AuditLog[]
+  // Financial authorisation
+  creditNotesRequested    CreditNote[]     @relation("CreditNoteRequester")
+  creditNotesApproved     CreditNote[]     @relation("CreditNoteApprover")
+  paymentRequestsMade     PaymentRequest[] @relation("PaymentRequestRequester")
+  paymentRequestsApproved PaymentRequest[] @relation("PaymentRequestApprover")
+
+  // Supporting
   notifications  Notification[]
   apiCredentials ApiCredential[]
+  auditLogs      AuditLog[]      @relation("AuditLogPerformedBy")
 
-  @@index([email])
-  @@index([status])
-  @@index([roleId])
-  @@map("users")
+  @@index([organizationId])
+}
+
+model UserRole {
+  id     String @id @default(uuid())
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, roleId])
 }
 
 model Role {
-  id          String   @id @default(uuid())
-  name        String   @unique // SUPER_ADMIN, MANAGER, AGENT, CLIENT
-  displayName String
-  description String?
-  isSystem    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id   String @id @default(uuid())
+  name String @unique
 
-  users           User[]
+  userRoles       UserRole[]
   rolePermissions RolePermission[]
-
-  @@map("roles")
 }
 
 model Permission {
-  id          String   @id @default(uuid())
-  code        String   @unique // e.g. "providers:manage", "numbers:assign", "cdr:view"
-  module      String   // IDENTITY, PROVIDERS, NUMBERS, MESSAGING, BILLING, SYSTEM
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id   String @id @default(uuid())
+  name String @unique
 
   rolePermissions RolePermission[]
-
-  @@index([module])
-  @@map("permissions")
 }
 
 model RolePermission {
-  id           String     @id @default(uuid())
+  id           String @id @default(uuid())
   roleId       String
-  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
   permissionId String
-  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-  createdAt    DateTime   @default(now())
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
 
   @@unique([roleId, permissionId])
-  @@map("role_permissions")
 }
 
-// ==============================================================================
-// 2. ORGANIZATION & RELATIONSHIP PROFILES
-// ==============================================================================
+// ============================================================
+// BUSINESS PROFILES
+// ============================================================
 
 model ManagerProfile {
-  id          String   @id @default(uuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  department  String?
-  maxAgents   Int      @default(50)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  agents  AgentProfile[]
-  clients ClientProfile[]
+  user         User         @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
 
-  @@map("manager_profiles")
+  agents Agent[]
+
+  @@index([organizationId])
 }
 
-model AgentProfile {
-  id             String          @id @default(uuid())
-  userId         String          @unique
-  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  managerId      String?
-  manager        ManagerProfile? @relation(fields: [managerId], references: [id], onDelete: SetNull)
-  commissionRate Decimal         @default(0.0000) @db.Decimal(5, 4) // e.g. 0.0500 for 5%
-  status         String          @default("ACTIVE") // ACTIVE, INACTIVE
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+model Agent {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  managerProfileId String?
+  organizationId   String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  clients ClientProfile[]
-  cdrs    CDR[]
+  user           User            @relation(fields: [userId], references: [id])
+  managerProfile ManagerProfile? @relation(fields: [managerProfileId], references: [id])
+  organization   Organization    @relation(fields: [organizationId], references: [id])
 
-  @@index([managerId])
-  @@index([status])
-  @@map("agent_profiles")
+  // Downstream
+  clients             Client[]
+  activeAssignments   ActiveAssignment[]
+  assignmentHistories AssignmentHistory[]
+  inboundMessages     InboundMessage[]    @relation("AgentInboundMessages")
+  cdrs                Cdr[]               @relation("AgentCdrs")
+  billingEvents       BillingEvent[]      @relation("AgentBillingEvents")
+  wallet              Wallet?             @relation("AgentWallet")
+
+  @@index([managerProfileId])
+  @@index([organizationId])
 }
 
-model ClientProfile {
-  id          String          @id @default(uuid())
-  userId      String          @unique
-  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  managerId   String?
-  manager     ManagerProfile? @relation(fields: [managerId], references: [id], onDelete: SetNull)
-  agentId     String?
-  agent       AgentProfile?   @relation(fields: [agentId], references: [id], onDelete: SetNull)
-  companyName String?
-  billingType String          @default("PREPAID") // PREPAID, POSTPAID
-  status      String          @default("ACTIVE") // ACTIVE, SUSPENDED, PENDING
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+model Client {
+  id             String   @id @default(uuid())
+  name           String
+  agentId        String?
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  assignedNumbers   Number[]
-  numberAssignments NumberAssignment[]
-  incomingMessages  IncomingMessage[]
-  cdrs              CDR[]
-  payoutRates       ClientPayout[]
+  agent        Agent?       @relation(fields: [agentId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
 
-  @@index([managerId])
+  clientUsers         ClientUser[]
+  activeAssignments   ActiveAssignment[]
+  assignmentHistories AssignmentHistory[]
+  inboundMessages     InboundMessage[]    @relation("ClientInboundMessages")
+  cdrs                Cdr[]               @relation("ClientCdrs")
+  billingEvents       BillingEvent[]      @relation("ClientBillingEvents")
+  rates               Rate[]
+  wallet              Wallet?             @relation("ClientWallet")
+
   @@index([agentId])
-  @@index([status])
-  @@map("client_profiles")
+  @@index([organizationId])
 }
 
-// ==============================================================================
-// 3. PROVIDER & CONNECTION LAYER
-// ==============================================================================
+// A user may be a member of multiple clients; @@unique prevents duplicate membership rows.
+// NOTE: userId is NOT globally @unique here — that would restrict a user to one client.
+model ClientUser {
+  id       String @id @default(uuid())
+  clientId String
+  userId   String
+
+  client Client @relation(fields: [clientId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([clientId, userId])
+  @@index([clientId])
+  @@index([userId])
+}
+
+// ============================================================
+// PROVIDER LAYER
+// ============================================================
 
 model Provider {
-  id            String   @id @default(uuid())
-  name          String
-  slug          String   @unique
-  status        String   @default("ACTIVE") // ACTIVE, INACTIVE, MAINTENANCE
-  protocol      String   @default("HTTP_REST") // HTTP_REST, SMPP
-  description   String?
-  webhookSecret String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String         @id @default(uuid())
+  name           String
+  status         ProviderStatus @default(ACTIVE)
+  organizationId String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
-  connections      ProviderConnection[]
-  credentials      ProviderCredential[]
-  ranges           Range[]
-  numbers          Number[]
-  rates            Rate[]
-  incomingMessages IncomingMessage[]
-  cdrs             CDR[]
+  organization Organization @relation(fields: [organizationId], references: [id])
 
+  connections     ProviderConnection[]
+  ranges          Range[]
+  numbers         Number[]
+  rates           Rate[]
+  inboundMessages InboundMessage[]     @relation("ProviderInboundMessages")
+  cdrs            Cdr[]                @relation("ProviderCdrs")
+  billingEvents   BillingEvent[]       @relation("ProviderBillingEvents")
+  wallet          Wallet?              @relation("ProviderWallet")
+
+  @@index([organizationId])
   @@index([status])
-  @@map("providers")
 }
 
 model ProviderConnection {
+  id              String                 @id @default(uuid())
+  providerId      String
+  connectionType  ProviderConnectionType
+  environment     String
+  status          String
+  priority        Int
+  // Structured config (HTTP headers, SMPP params, etc.) — never plaintext secrets
+  protocolConfig  Json?
+  credentialRefId String?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  provider            Provider             @relation(fields: [providerId], references: [id])
+  credentialReference CredentialReference? @relation("CredentialRefConnections", fields: [credentialRefId], references: [id])
+
+  @@index([providerId])
+  @@index([status])
+}
+
+// Secure encrypted credential record — no plaintext secrets stored.
+model CredentialReference {
+  id         String    @id @default(uuid())
+  label      String?
+  // Encrypted payload (e.g., envelope-encrypted by KMS)
+  ciphertext String?
+  keyVersion String?
+  rotatedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  connections ProviderConnection[] @relation("CredentialRefConnections")
+}
+
+// ============================================================
+// GEO / INVENTORY
+// ============================================================
+
+// Country is a global lookup — no organizationId
+model Country {
+  id      String @id @default(uuid())
+  isoCode String @unique
+  name    String
+
+  operators Operator[]
+  ranges    Range[]
+  numbers   Number[]
+  rates     Rate[]
+}
+
+model Operator {
+  id        String @id @default(uuid())
+  name      String
+  countryId String
+
+  country Country @relation(fields: [countryId], references: [id])
+
+  ranges  Range[]
+  numbers Number[]
+  rates   Rate[]
+
+  @@index([countryId])
+}
+
+model Range {
   id              String   @id @default(uuid())
   providerId      String
-  provider        Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  name            String
-  protocol        String   // HTTP, SMPP
-  host            String
-  port            Int
-  systemId        String?  // SMPP system_id or API Client ID
-  bindType        String   @default("TRANSCEIVER") // TRANSMITTER, RECEIVER, TRANSCEIVER
-  throughputLimit Int      @default(30) // messages per second
-  isActive        Boolean  @default(true)
-  isConnected     Boolean  @default(false)
+  providerRangeId String?
+  countryId       String
+  operatorId      String?
+  organizationId  String
+  startE164       String
+  endE164         String
+  startNum        BigInt
+  endNum          BigInt
+  status          String
   metadata        Json?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  @@index([providerId])
-  @@index([isActive])
-  @@map("provider_connections")
-}
+  provider     Provider     @relation(fields: [providerId], references: [id])
+  country      Country      @relation(fields: [countryId], references: [id])
+  operator     Operator?    @relation(fields: [operatorId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
 
-model ProviderCredential {
-  id              String   @id @default(uuid())
-  providerId      String
-  provider        Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  name            String
-  credentialType  String   // API_KEY, BASIC_AUTH, BEARER_TOKEN, SMPP_CREDENTIALS, OAUTH2
-  keyReference    String?  // Reference key for vault/KMS
-  encryptedSecret String?  // AES-256-GCM ciphertext (never plaintext)
-  iv              String?  // Initialization vector
-  maskedKey       String?  // e.g. "sk_live_...4f89" for UI display
-  isEncrypted     Boolean  @default(true)
-  status          String   @default("ACTIVE") // ACTIVE, REVOKED, EXPIRED
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  numbers Number[]
+  rates   Rate[]
 
-  @@index([providerId])
-  @@index([status])
-  @@map("provider_credentials")
-}
-
-// ==============================================================================
-// 4. INVENTORY: COUNTRIES, OPERATORS, RANGES, NUMBERS
-// ==============================================================================
-
-model Country {
-  id        String   @id @default(uuid())
-  name      String
-  iso2      String   @unique // e.g. "US", "GB", "DE"
-  iso3      String   // e.g. "USA", "GBR", "DEU"
-  dialCode  String   // e.g. "+1", "+44", "+49"
-  currency  String   @default("USD")
-  status    String   @default("ACTIVE") // ACTIVE, INACTIVE
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  operators    Operator[]
-  ranges       Range[]
-  numbers      Number[]
-  rates        Rate[]
-  clientPayouts ClientPayout[]
-
-  @@index([iso2])
-  @@index([status])
-  @@map("countries")
-}
-
-model Operator {
-  id        String   @id @default(uuid())
-  countryId String
-  country   Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
-  name      String
-  mcc       String   // Mobile Country Code (3 digits)
-  mnc       String   // Mobile Network Code (2-3 digits)
-  brandName String?
-  status    String   @default("ACTIVE") // ACTIVE, INACTIVE
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  ranges       Range[]
-  numbers      Number[]
-  rates        Rate[]
-  clientPayouts ClientPayout[]
-
-  @@unique([countryId, mcc, mnc])
-  @@index([countryId])
-  @@index([status])
-  @@map("operators")
-}
-
-model Range {
-  id          String    @id @default(uuid())
-  providerId  String
-  provider    Provider  @relation(fields: [providerId], references: [id], onDelete: Restrict)
-  countryId   String
-  country     Country   @relation(fields: [countryId], references: [id], onDelete: Restrict)
-  operatorId  String?
-  operator    Operator? @relation(fields: [operatorId], references: [id], onDelete: SetNull)
-  name        String
-  prefix      String    // e.g. "+1202"
-  startRange  String?   // e.g. "+12025550100"
-  endRange    String?   // e.g. "+12025550199"
-  rangeType   String    @default("LONGCODE") // LONGCODE, SHORTCODE, TOLL_FREE
-  status      String    @default("ACTIVE") // ACTIVE, EXHAUSTED, SUSPENDED
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  numbers      Number[]
-  rates        Rate[]
-  clientPayouts ClientPayout[]
-
-  @@index([providerId])
   @@index([countryId])
   @@index([operatorId])
-  @@index([prefix])
   @@index([status])
-  @@map("ranges")
+  @@index([organizationId])
 }
 
 model Number {
-  id              String         @id @default(uuid())
-  rangeId         String
-  range           Range          @relation(fields: [rangeId], references: [id], onDelete: Restrict)
-  providerId      String
-  provider        Provider       @relation(fields: [providerId], references: [id], onDelete: Restrict)
-  countryId       String
-  country         Country        @relation(fields: [countryId], references: [id], onDelete: Restrict)
-  operatorId      String?
-  operator        Operator?      @relation(fields: [operatorId], references: [id], onDelete: SetNull)
-  currentClientId String?
-  currentClient   ClientProfile? @relation(fields: [currentClientId], references: [id], onDelete: SetNull)
-  e164Number      String         @unique // Global standard +E.164, e.g. "+12025550123"
-  nationalNumber  String?
-  numberType      String         @default("LONGCODE") // LONGCODE, SHORTCODE, VIRTUAL
-  capabilities    String         @default("SMS") // SMS, VOICE, BOTH
-  status          String         @default("AVAILABLE") // AVAILABLE, ASSIGNED, RESERVED, QUARANTINED, INACTIVE
-  assignedAt      DateTime?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  id               String   @id @default(uuid())
+  e164             String   @unique
+  providerId       String
+  countryId        String
+  operatorId       String?
+  rangeId          String?
+  providerNumberId String?
+  organizationId   String
+  status           String
+  metadata         Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  assignments      NumberAssignment[]
-  incomingMessages IncomingMessage[]
-  cdrs             CDR[]
+  provider     Provider     @relation(fields: [providerId], references: [id])
+  country      Country      @relation(fields: [countryId], references: [id])
+  operator     Operator?    @relation(fields: [operatorId], references: [id])
+  range        Range?       @relation(fields: [rangeId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
 
-  @@index([e164Number])
-  @@index([status])
-  @@index([providerId])
+  activeAssignment    ActiveAssignment?
+  assignmentHistories AssignmentHistory[]
+  inboundMessages     InboundMessage[]
+  cdrs                Cdr[]               @relation("NumberCdrs")
+  billingEvents       BillingEvent[]      @relation("NumberBillingEvents")
+
   @@index([countryId])
+  @@index([operatorId])
   @@index([rangeId])
-  @@index([currentClientId])
-  @@map("numbers")
+  @@index([status])
+  @@index([organizationId])
 }
 
-// ==============================================================================
-// 5. ASSIGNMENT LIFECYCLE (Temporal History)
-// ==============================================================================
+// ============================================================
+// ASSIGNMENT
+// ============================================================
 
-model NumberAssignment {
-  id               String        @id @default(uuid())
-  numberId         String
-  number           Number        @relation(fields: [numberId], references: [id], onDelete: Cascade)
-  clientId         String
-  client           ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  assignedByUserId String?
-  assignedByUser   User?         @relation("AssignedBy", fields: [assignedByUserId], references: [id], onDelete: SetNull)
-  status           String        @default("ACTIVE") // ACTIVE, RELEASED, EXPIRED, TERMINATED
-  assignedAt       DateTime      @default(now())
-  releasedAt       DateTime?
-  expiresAt        DateTime?
-  notes            String?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+model ActiveAssignment {
+  id             String   @id @default(uuid())
+  numberId       String   @unique
+  clientId       String
+  agentId        String?
+  organizationId String
+  assignedAt     DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  @@index([numberId, status])
-  @@index([clientId, status])
-  @@index([assignedAt])
-  @@map("number_assignments")
+  number       Number       @relation(fields: [numberId], references: [id])
+  client       Client       @relation(fields: [clientId], references: [id])
+  agent        Agent?       @relation(fields: [agentId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  inboundMessages InboundMessage[] @relation("AssignmentInboundMessages")
+
+  @@index([clientId])
+  @@index([agentId])
+  @@index([organizationId])
 }
 
-// ==============================================================================
-// 6. MESSAGING & CDR RECORDS (Auditable Billing Event)
-// ==============================================================================
+model AssignmentHistory {
+  id             String    @id @default(uuid())
+  numberId       String
+  clientId       String
+  agentId        String?
+  organizationId String
+  assignedAt     DateTime
+  endedAt        DateTime?
+  createdAt      DateTime  @default(now())
 
-model IncomingMessage {
-  id                 String         @id @default(uuid())
-  messageRef         String?        // Provider transmission unique ID
-  numberId           String
-  number             Number         @relation(fields: [numberId], references: [id], onDelete: Restrict)
-  providerId         String
-  provider           Provider       @relation(fields: [providerId], references: [id], onDelete: Restrict)
-  clientId           String?
-  client             ClientProfile? @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  senderAddress      String         // Sender phone / alphanumeric header
-  destinationAddress String         // Destination phone number
-  messageBody        String
-  encoding           String         @default("UTF-8")
-  segmentCount       Int            @default(1)
-  rawPayload         Json?          // Complete provider webhook payload
-  status             String         @default("RECEIVED") // RECEIVED, PROCESSED, FAILED, ROUTED
-  receivedAt         DateTime       @default(now())
-  createdAt          DateTime       @default(now())
-
-  cdr CDR?
+  number       Number       @relation(fields: [numberId], references: [id])
+  client       Client       @relation(fields: [clientId], references: [id])
+  agent        Agent?       @relation(fields: [agentId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
 
   @@index([numberId])
-  @@index([providerId])
   @@index([clientId])
-  @@index([receivedAt])
-  @@index([senderAddress])
-  @@index([status])
-  @@map("incoming_messages")
-}
-
-model CDR {
-  id                String          @id @default(uuid())
-  incomingMessageId String          @unique
-  incomingMessage   IncomingMessage @relation(fields: [incomingMessageId], references: [id], onDelete: Cascade)
-  numberId          String
-  number            Number          @relation(fields: [numberId], references: [id], onDelete: Restrict)
-  providerId        String
-  provider          Provider        @relation(fields: [providerId], references: [id], onDelete: Restrict)
-  clientId          String?
-  client            ClientProfile?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  agentId           String?
-  agent             AgentProfile?   @relation(fields: [agentId], references: [id], onDelete: SetNull)
-  providerCost      Decimal         @db.Decimal(18, 6)
-  clientPayout      Decimal         @db.Decimal(18, 6)
-  agentCommission   Decimal         @default(0) @db.Decimal(18, 6)
-  netProfit         Decimal         @db.Decimal(18, 6)
-  currency          String          @default("USD")
-  status            String          @default("SETTLED") // SETTLED, PENDING, DISPUTED
-  billedAt          DateTime        @default(now())
-  createdAt         DateTime        @default(now())
-
-  @@index([clientId, billedAt])
-  @@index([providerId, billedAt])
   @@index([agentId])
-  @@index([status])
-  @@map("cdrs")
+  @@index([organizationId])
+  @@index([assignedAt])
 }
 
-// ==============================================================================
-// 7. RATES & FINANCIAL LEDGER
-// ==============================================================================
+// ============================================================
+// MESSAGING
+// ============================================================
+
+model InboundMessage {
+  id                 String        @id @default(uuid())
+  organizationId     String
+  providerId         String
+  providerMessageId  String?
+  numberId           String
+  assignmentId       String?
+  clientId           String?
+  agentId            String?
+  fromNumber         String
+  toNumber           String
+  body               String?
+  receivedAt         DateTime
+  providerReceivedAt DateTime?
+  processedAt        DateTime?
+  failedAt           DateTime?
+  failureReason      String?
+  status             InboundStatus @default(RECEIVED)
+  billingStatus      BillingStatus @default(PENDING)
+  metadata           Json?
+  createdAt          DateTime      @default(now())
+
+  organization Organization      @relation(fields: [organizationId], references: [id])
+  provider     Provider          @relation("ProviderInboundMessages", fields: [providerId], references: [id])
+  number       Number            @relation(fields: [numberId], references: [id])
+  assignment   ActiveAssignment? @relation("AssignmentInboundMessages", fields: [assignmentId], references: [id])
+  client       Client?           @relation("ClientInboundMessages", fields: [clientId], references: [id])
+  agent        Agent?            @relation("AgentInboundMessages", fields: [agentId], references: [id])
+
+  billingEvents BillingEvent[]
+  cdrs          Cdr[]
+
+  // Provider-scoped uniqueness — nullable providerMessageId handled at DB level for partial index
+  @@unique([providerId, providerMessageId])
+  @@index([organizationId])
+  @@index([providerId])
+  @@index([numberId])
+  @@index([clientId])
+  @@index([status])
+  @@index([billingStatus])
+  @@index([receivedAt])
+}
+
+// CDR: immutable historical/financial snapshot.
+// billingEventId @unique enforces at-most-one CDR per BillingEvent.
+model Cdr {
+  id                        String   @id @default(uuid())
+  organizationId            String
+  inboundMessageId          String?
+  providerId                String
+  numberId                  String
+  clientId                  String?
+  agentId                   String?
+  billingEventId            String?  @unique
+  providerCostMicrounits    BigInt
+  clientChargeMicrounits    BigInt
+  agentCommissionMicrounits BigInt?
+  platformProfitMicrounits  BigInt?
+  currency                  String
+  createdAt                 DateTime @default(now())
+
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+  inboundMessage InboundMessage? @relation(fields: [inboundMessageId], references: [id])
+  provider       Provider        @relation("ProviderCdrs", fields: [providerId], references: [id])
+  number         Number          @relation("NumberCdrs", fields: [numberId], references: [id])
+  client         Client?         @relation("ClientCdrs", fields: [clientId], references: [id])
+  agent          Agent?          @relation("AgentCdrs", fields: [agentId], references: [id])
+  billingEvent   BillingEvent?   @relation("CdrBillingEvent", fields: [billingEventId], references: [id])
+
+  @@index([organizationId])
+  @@index([providerId])
+  @@index([numberId])
+  @@index([clientId])
+  @@index([createdAt])
+}
+
+// ============================================================
+// BILLING EVENT
+// ============================================================
+
+// One InboundMessage may produce multiple BillingEvents (no @unique on inboundMessageId).
+// One BillingEvent has at most one CDR (enforced by Cdr.billingEventId @unique).
+model BillingEvent {
+  id                        String        @id @default(uuid())
+  organizationId            String
+  inboundMessageId          String
+  providerId                String
+  numberId                  String
+  clientId                  String?
+  agentId                   String?
+  rateId                    String?
+  providerCostMicrounits    BigInt
+  clientChargeMicrounits    BigInt
+  agentCommissionMicrounits BigInt?
+  platformMarginMicrounits  BigInt?
+  currency                  String
+  status                    BillingStatus @default(PENDING)
+  createdAt                 DateTime      @default(now())
+
+  organization   Organization   @relation(fields: [organizationId], references: [id])
+  inboundMessage InboundMessage @relation(fields: [inboundMessageId], references: [id])
+  provider       Provider       @relation("ProviderBillingEvents", fields: [providerId], references: [id])
+  number         Number         @relation("NumberBillingEvents", fields: [numberId], references: [id])
+  client         Client?        @relation("ClientBillingEvents", fields: [clientId], references: [id])
+  agent          Agent?         @relation("AgentBillingEvents", fields: [agentId], references: [id])
+  rate           Rate?          @relation(fields: [rateId], references: [id])
+
+  ledgerEntries LedgerEntry[]
+  cdr           Cdr?          @relation("CdrBillingEvent")
+
+  @@index([organizationId])
+  @@index([inboundMessageId])
+  @@index([providerId])
+  @@index([numberId])
+  @@index([clientId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ============================================================
+// RATE
+// ============================================================
 
 model Rate {
-  id            String    @id @default(uuid())
-  providerId    String
-  provider      Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  countryId     String
-  country       Country   @relation(fields: [countryId], references: [id], onDelete: Cascade)
-  operatorId    String?
-  operator      Operator? @relation(fields: [operatorId], references: [id], onDelete: SetNull)
-  rangeId       String?
-  range         Range?    @relation(fields: [rangeId], references: [id], onDelete: SetNull)
-  costPerSms    Decimal   @db.Decimal(18, 6)
-  currency      String    @default("USD")
-  effectiveFrom DateTime  @default(now())
-  effectiveTo   DateTime?
-  status        String    @default("ACTIVE") // ACTIVE, EXPIRED, DRAFT
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id               String    @id @default(uuid())
+  organizationId   String
+  providerId       String?
+  countryId        String?
+  operatorId       String?
+  rangeId          String?
+  clientId         String?
+  type             RateType
+  amountMicrounits BigInt
+  currency         String
+  effectiveFrom    DateTime
+  effectiveTo      DateTime?
+  priority         Int       @default(0)
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
-  @@index([providerId, countryId, status])
-  @@map("rates")
+  organization Organization @relation(fields: [organizationId], references: [id])
+  provider     Provider?    @relation(fields: [providerId], references: [id])
+  country      Country?     @relation(fields: [countryId], references: [id])
+  operator     Operator?    @relation(fields: [operatorId], references: [id])
+  range        Range?       @relation(fields: [rangeId], references: [id])
+  client       Client?      @relation(fields: [clientId], references: [id])
+
+  billingEvents BillingEvent[]
+
+  @@index([organizationId])
+  @@index([providerId])
+  @@index([countryId])
+  @@index([operatorId])
+  @@index([isActive])
+  @@index([effectiveFrom])
 }
 
-model ClientPayout {
-  id            String        @id @default(uuid())
-  clientId      String
-  client        ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  countryId     String
-  country       Country       @relation(fields: [countryId], references: [id], onDelete: Cascade)
-  operatorId    String?
-  operator      Operator?     @relation(fields: [operatorId], references: [id], onDelete: SetNull)
-  rangeId       String?
-  range         Range?        @relation(fields: [rangeId], references: [id], onDelete: SetNull)
-  payoutPerSms  Decimal       @db.Decimal(18, 6)
-  currency      String        @default("USD")
-  effectiveFrom DateTime      @default(now())
-  effectiveTo   DateTime?
-  status        String        @default("ACTIVE") // ACTIVE, EXPIRED, DRAFT
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-
-  @@index([clientId, countryId, status])
-  @@map("client_payouts")
-}
+// ============================================================
+// FINANCIAL — WALLET
+// NOTE: Exactly-one-owner rule is enforced via a PostgreSQL CHECK constraint
+//       added during migration — not expressible in Prisma schema alone.
+//       Approved owners: Client, Agent, Provider, or Platform (isPlatform=true).
+// ============================================================
 
 model Wallet {
-  id              String   @id @default(uuid())
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  currency        String   @default("USD")
-  balance         Decimal  @default(0) @db.Decimal(18, 4)
-  pendingBalance  Decimal  @default(0) @db.Decimal(18, 4)
-  reservedBalance Decimal  @default(0) @db.Decimal(18, 4)
-  status          String   @default("ACTIVE") // ACTIVE, FROZEN, SUSPENDED
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                String   @id @default(uuid())
+  organizationId    String
+  clientId          String?  @unique
+  agentId           String?  @unique
+  providerId        String?  @unique
+  isPlatform        Boolean  @default(false)
+  balanceMicrounits BigInt   @default(0)
+  currency          String   @default("USD")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  transactions    Transaction[]
-  paymentRequests PaymentRequest[]
+  organization Organization @relation(fields: [organizationId], references: [id])
+  client       Client?      @relation("ClientWallet", fields: [clientId], references: [id])
+  agent        Agent?       @relation("AgentWallet", fields: [agentId], references: [id])
+  provider     Provider?    @relation("ProviderWallet", fields: [providerId], references: [id])
 
-  @@unique([userId, currency])
-  @@index([userId])
-  @@map("wallets")
+  ledgerEntries       LedgerEntry[]
+  billingTransactions BillingTransaction[]
+  creditNotes         CreditNote[]
+  paymentRequests     PaymentRequest[]
+
+  @@index([organizationId])
 }
 
-model Transaction {
-  id            String   @id @default(uuid())
-  walletId      String
-  wallet        Wallet   @relation(fields: [walletId], references: [id], onDelete: Restrict)
-  type          String   // CREDIT, DEBIT
-  category      String   // SMS_PAYOUT, RECHARGE, WITHDRAWAL, AGENT_COMMISSION, ADJUSTMENT
-  amount        Decimal  @db.Decimal(18, 4)
-  balanceBefore Decimal  @db.Decimal(18, 4)
-  balanceAfter  Decimal  @db.Decimal(18, 4)
-  currency      String   @default("USD")
-  referenceType String   // CDR, PAYMENT_REQUEST, CREDIT_NOTE, MANUAL
-  referenceId   String?
-  description   String?
-  createdAt     DateTime @default(now()) // Immutable ledger timestamp
+model LedgerEntry {
+  id                   String           @id @default(uuid())
+  organizationId       String
+  walletId             String
+  amountMicrounits     BigInt
+  currency             String
+  type                 LedgerEntryType
+  sourceType           LedgerSourceType
+  sourceId             String?
+  billingTransactionId String?
+  billingEventId       String?
+  metadata             Json?
+  createdAt            DateTime         @default(now())
 
-  paymentRequests PaymentRequest[]
+  organization       Organization        @relation(fields: [organizationId], references: [id])
+  wallet             Wallet              @relation(fields: [walletId], references: [id])
+  billingTransaction BillingTransaction? @relation(fields: [billingTransactionId], references: [id])
+  billingEvent       BillingEvent?       @relation(fields: [billingEventId], references: [id])
 
-  @@index([walletId, createdAt])
-  @@index([referenceType, referenceId])
-  @@map("transactions")
+  @@index([walletId])
+  @@index([billingEventId])
+  @@index([createdAt])
+  @@index([organizationId])
+}
+
+model BillingTransaction {
+  id               String   @id @default(uuid())
+  organizationId   String
+  walletId         String
+  amountMicrounits BigInt
+  currency         String
+  status           String
+  description      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  organization  Organization  @relation(fields: [organizationId], references: [id])
+  wallet        Wallet        @relation(fields: [walletId], references: [id])
+  ledgerEntries LedgerEntry[]
+
+  @@index([organizationId])
+  @@index([walletId])
+  @@index([status])
 }
 
 model CreditNote {
-  id             String    @id @default(uuid())
-  userId         String
-  user           User      @relation("UserCreditNotes", fields: [userId], references: [id], onDelete: Restrict)
-  issuedByUserId String
-  issuedByUser   User      @relation("IssuedCreditNotes", fields: [issuedByUserId], references: [id], onDelete: Restrict)
-  amount         Decimal   @db.Decimal(18, 4)
-  currency       String    @default("USD")
-  reason         String
-  status         String    @default("PENDING") // PENDING, APPROVED, REJECTED, APPLIED
-  appliedAt      DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id               String   @id @default(uuid())
+  organizationId   String
+  walletId         String
+  requesterId      String
+  approverId       String?
+  amountMicrounits BigInt
+  currency         String
+  status           String
+  reason           String?
+  reference        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  @@index([userId])
-  @@index([status])
-  @@map("credit_notes")
+  organization Organization @relation(fields: [organizationId], references: [id])
+  wallet       Wallet       @relation(fields: [walletId], references: [id])
+  requester    User         @relation("CreditNoteRequester", fields: [requesterId], references: [id])
+  approver     User?        @relation("CreditNoteApprover", fields: [approverId], references: [id])
+
+  @@index([organizationId])
+  @@index([walletId])
+  @@index([requesterId])
 }
 
 model PaymentRequest {
-  id               String       @id @default(uuid())
-  userId           String
-  user             User         @relation("UserPaymentRequests", fields: [userId], references: [id], onDelete: Restrict)
+  id               String   @id @default(uuid())
+  organizationId   String
   walletId         String
-  wallet           Wallet       @relation(fields: [walletId], references: [id], onDelete: Restrict)
-  reviewedByUserId String?
-  reviewedByUser   User?        @relation("ReviewedPaymentRequests", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
-  transactionId    String?
-  transaction      Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
-  amount           Decimal      @db.Decimal(18, 4)
-  currency         String       @default("USD")
-  paymentMethod    String       // BANK_TRANSFER, USDT_TRC20, PAYPAL
-  paymentDetails   Json
-  status           String       @default("REQUESTED") // REQUESTED, UNDER_REVIEW, APPROVED, REJECTED, COMPLETED
-  notes            String?
-  requestedAt      DateTime     @default(now())
-  processedAt      DateTime?
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  requesterId      String
+  approverId       String?
+  amountMicrounits BigInt
+  currency         String
+  status           String
+  reason           String?
+  reference        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  @@index([userId, status])
+  organization Organization @relation(fields: [organizationId], references: [id])
+  wallet       Wallet       @relation(fields: [walletId], references: [id])
+  requester    User         @relation("PaymentRequestRequester", fields: [requesterId], references: [id])
+  approver     User?        @relation("PaymentRequestApprover", fields: [approverId], references: [id])
+
+  @@index([organizationId])
   @@index([walletId])
-  @@map("payment_requests")
+  @@index([requesterId])
 }
 
-// ==============================================================================
-// 8. SYSTEM, AUDITING & API CREDENTIALS
-// ==============================================================================
+// ============================================================
+// SUPPORTING
+// ============================================================
 
 model Notification {
-  id        String    @id @default(uuid())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title     String
-  body      String
-  type      String    @default("INFO") // INFO, WARNING, ALERT, SUCCESS
-  isRead    Boolean   @default(false)
-  readAt    DateTime?
-  metadata  Json?
-  createdAt DateTime  @default(now())
+  id             String           @id @default(uuid())
+  organizationId String
+  userId         String?
+  type           NotificationType @default(INFO)
+  title          String
+  body           String
+  metadata       Json?
+  readAt         DateTime?
+  createdAt      DateTime         @default(now())
 
-  @@index([userId, isRead])
-  @@map("notifications")
-}
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User?        @relation(fields: [userId], references: [id])
 
-model AuditLog {
-  id         String   @id @default(uuid())
-  userId     String?
-  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  action     String   // e.g., "AUTH_LOGIN", "NUMBER_ASSIGNED", "PROVIDER_CREATED"
-  entityType String   // USER, PROVIDER, NUMBER, TRANSACTION
-  entityId   String?
-  metadata   Json?
-  ipAddress  String?
-  userAgent  String?
-  createdAt  DateTime @default(now())
-
+  @@index([organizationId])
   @@index([userId])
-  @@index([action])
-  @@index([createdAt])
-  @@map("audit_logs")
 }
 
 model ApiCredential {
-  id          String    @id @default(uuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name        String
-  keyPrefix   String    // e.g. "sms_live_a1b2"
-  keyHash     String    @unique // SHA-256 hash of API secret key
-  status      String    @default("ACTIVE") // ACTIVE, REVOKED
-  allowedIps  Json?     // Array of CIDR / IP strings
-  permissions Json?     // Scoped permission codes
-  expiresAt   DateTime?
-  lastUsedAt  DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id             String    @id @default(uuid())
+  organizationId String
+  ownerUserId    String?
+  hashedToken    String
+  scopes         String[]
+  expiresAt      DateTime?
+  revokedAt      DateTime?
+  lastUsedAt     DateTime?
+  createdAt      DateTime  @default(now())
 
-  requestLogs ApiRequestLog[]
+  organization Organization @relation(fields: [organizationId], references: [id])
+  ownerUser    User?        @relation(fields: [ownerUserId], references: [id])
 
-  @@index([userId])
-  @@index([status])
-  @@map("api_credentials")
+  apiRequestLogs ApiRequestLog[]
+
+  @@index([organizationId])
+  @@index([ownerUserId])
 }
 
 model ApiRequestLog {
-  id              String         @id @default(uuid())
+  id              String   @id @default(uuid())
+  organizationId  String
   apiCredentialId String?
-  apiCredential   ApiCredential? @relation(fields: [apiCredentialId], references: [id], onDelete: SetNull)
-  endpoint        String
+  requestId       String?
   method          String
+  endpoint        String
   statusCode      Int
-  responseTimeMs  Int
   ipAddress       String?
   userAgent       String?
-  requestPayload  Json?
-  responseSnippet String?
-  createdAt       DateTime       @default(now())
+  metadata        Json?
+  createdAt       DateTime @default(now())
 
-  @@index([apiCredentialId, createdAt])
-  @@index([endpoint])
-  @@index([statusCode])
-  @@map("api_request_logs")
+  organization  Organization   @relation(fields: [organizationId], references: [id])
+  apiCredential ApiCredential? @relation(fields: [apiCredentialId], references: [id])
+
+  @@index([organizationId])
+  @@index([apiCredentialId])
+  @@index([createdAt])
 }
 
-model SystemConfig {
-  id          String   @id @default(uuid())
-  key         String   @unique
-  value       String
-  description String?
-  updatedAt   DateTime @updatedAt
-  createdAt   DateTime @default(now())
+model AuditLog {
+  id             String   @id @default(uuid())
+  organizationId String
+  performedById  String?
+  entityName     String
+  entityId       String
+  action         String
+  result         String
+  ipAddress      String?
+  userAgent      String?
+  changes        Json?
+  createdAt      DateTime @default(now())
 
-  @@map("system_configs")
+  organization Organization @relation(fields: [organizationId], references: [id])
+  performedBy  User?        @relation("AuditLogPerformedBy", fields: [performedById], references: [id])
+
+  @@index([organizationId])
+  @@index([performedById])
+  @@index([entityName, entityId])
+  @@index([createdAt])
 }

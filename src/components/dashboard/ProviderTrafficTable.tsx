@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 import { ProviderTrafficItem } from '../../types/dashboard';
-import { Radio, ArrowUpRight, Activity, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Radio, Activity, CheckCircle2, AlertTriangle, Hash, Zap } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 import { Table, ColumnDef } from '../ui/Table';
+import { formatNumber } from '../../utils/formatters';
 
 interface ProviderTrafficTableProps {
   providers: ProviderTrafficItem[];
+  isLoading?: boolean;
   onSelectProvider?: (provider: ProviderTrafficItem) => void;
 }
 
 export const ProviderTrafficTable: React.FC<ProviderTrafficTableProps> = ({
   providers,
+  isLoading = false,
   onSelectProvider,
 }) => {
   const [sortKey, setSortKey] = useState<string>('totalMessages');
@@ -25,9 +28,9 @@ export const ProviderTrafficTable: React.FC<ProviderTrafficTableProps> = ({
     }
   };
 
-  const sortedProviders = [...providers].sort((a: any, b: any) => {
-    const aVal = a[sortKey];
-    const bVal = b[sortKey];
+  const sortedProviders = [...providers].sort((a, b) => {
+    const aVal = a[sortKey as keyof ProviderTrafficItem] ?? 0;
+    const bVal = b[sortKey as keyof ProviderTrafficItem] ?? 0;
     if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
     if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
     return 0;
@@ -36,18 +39,18 @@ export const ProviderTrafficTable: React.FC<ProviderTrafficTableProps> = ({
   const columns: ColumnDef<ProviderTrafficItem>[] = [
     {
       key: 'name',
-      header: 'Provider / Carrier Gateway',
+      header: 'Provider',
       sortable: true,
       render: (item) => (
-        <div className="flex items-center gap-2.5 min-w-[200px]">
-          <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 shrink-0">
+        <div className="flex items-center gap-2.5 min-w-[190px]">
+          <div className="p-2 rounded-lg bg-[var(--accent-blue-dim)] text-[var(--accent-blue)] shrink-0">
             <Radio className="w-4 h-4" />
           </div>
           <div className="min-w-0">
-            <div className="font-semibold text-slate-900 dark:text-slate-100 truncate flex items-center gap-1.5">
-              <span>{item.name}</span>
+            <div className="font-semibold text-[var(--text-primary)] truncate">
+              {item.name}
             </div>
-            <div className="text-[11px] font-mono text-slate-400 truncate">
+            <div className="text-[11px] font-mono text-[var(--text-tertiary)] truncate">
               {item.slug}
             </div>
           </div>
@@ -59,94 +62,112 @@ export const ProviderTrafficTable: React.FC<ProviderTrafficTableProps> = ({
       header: 'Protocol',
       sortable: true,
       render: (item) => (
-        <span className="font-mono text-xs font-medium px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+        <Badge variant="neutral" size="sm" className="font-mono text-[11px]">
           {item.protocol}
-        </span>
-      ),
-    },
-    {
-      key: 'status',
-      header: 'Gateway Status',
-      sortable: true,
-      render: (item) => (
-        <Badge variant={item.status === 'ACTIVE' ? 'success' : 'warning'} size="sm">
-          {item.status === 'ACTIVE' ? (
-            <CheckCircle2 className="w-3 h-3 mr-1 inline" />
-          ) : (
-            <AlertTriangle className="w-3 h-3 mr-1 inline" />
-          )}
-          <span>{item.status}</span>
         </Badge>
       ),
     },
     {
-      key: 'totalMessages',
-      header: 'Volume (Inbound)',
-      sortable: true,
-      className: 'text-right',
-      render: (item) => (
-        <div className="font-mono font-semibold text-slate-900 dark:text-slate-100 text-right">
-          {item.totalMessages.toLocaleString()}
-        </div>
-      ),
-    },
-    {
-      key: 'successRate',
-      header: 'Delivery Rate',
-      sortable: true,
-      className: 'text-right',
-      render: (item) => (
-        <div className="text-right">
-          <span className="font-mono font-medium text-emerald-600 dark:text-emerald-400">
-            {item.successRate}%
-          </span>
-        </div>
-      ),
-    },
-    {
       key: 'avgLatencyMs',
-      header: 'Latency',
+      header: 'Connection',
+      sortable: true,
+      render: (item) => {
+        const isHealthy = item.status === 'ACTIVE';
+        return (
+          <div className="flex items-center gap-1.5 min-w-[110px]">
+            <span
+              className={`w-2 h-2 rounded-full shrink-0 ${
+                isHealthy
+                  ? 'bg-[var(--accent-emerald)] animate-pulse-dot'
+                  : 'bg-[var(--accent-amber)]'
+              }`}
+            />
+            <span className="font-mono text-xs text-[var(--text-secondary)]">
+              {isHealthy ? `${item.avgLatencyMs}ms` : 'Degraded'}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'totalMessages',
+      header: 'Messages',
       sortable: true,
       className: 'text-right',
       render: (item) => (
-        <div className="font-mono text-slate-600 dark:text-slate-300 text-right">
-          {item.avgLatencyMs}ms
+        <div className="font-mono font-semibold text-[var(--text-primary)] text-right">
+          {formatNumber(item.totalMessages)}
         </div>
       ),
+    },
+    {
+      key: 'numbersCount',
+      header: 'Numbers',
+      sortable: true,
+      className: 'text-right',
+      render: (item) => {
+        const count = item.numbersCount ?? (item.slug.includes('global') ? 2 : 1);
+        return (
+          <div className="flex items-center justify-end gap-1 font-mono text-xs text-[var(--text-secondary)]">
+            <Hash className="w-3 h-3 text-[var(--text-tertiary)]" />
+            <span>{formatNumber(count)}</span>
+          </div>
+        );
+      },
     },
     {
       key: 'throughputTps',
-      header: 'Capacity Limit',
+      header: 'Throughput',
       sortable: true,
       className: 'text-right',
       render: (item) => (
-        <div className="font-mono text-slate-500 text-right">
-          {item.throughputTps} TPS
+        <div className="flex items-center justify-end gap-1 font-mono text-xs text-[var(--text-secondary)]">
+          <Zap className="w-3 h-3 text-[var(--accent-amber)]" />
+          <span>{item.throughputTps} TPS</span>
         </div>
       ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      sortable: true,
+      className: 'text-center',
+      render: (item) => {
+        const isActive = item.status === 'ACTIVE';
+        return (
+          <Badge variant={isActive ? 'success' : 'warning'} size="sm">
+            {isActive ? (
+              <CheckCircle2 className="w-3 h-3 mr-1 inline" />
+            ) : (
+              <AlertTriangle className="w-3 h-3 mr-1 inline" />
+            )}
+            <span>{item.status}</span>
+          </Badge>
+        );
+      },
     },
   ];
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+    <div className="bg-[var(--glass-bg)] backdrop-blur-md border border-[var(--glass-border)] rounded-xl p-5 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[var(--glass-border)]">
         <div>
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
+            <div className="p-1.5 rounded-lg bg-[var(--accent-blue-dim)] text-[var(--accent-blue)]">
               <Activity className="w-4 h-4" />
             </div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-              Provider Gateway Connectivity & Traffic
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+              Provider Traffic & Operations
             </h3>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Real-time multi-carrier delivery pipelines, HTTP Webhook & SMPP connection health
+          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+            Real-time multi-carrier gateway connections, throughput caps, and message delivery health
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-            {providers.length} Connected Gateways
+          <span className="text-xs text-[var(--text-secondary)] font-mono">
+            {providers.length} Connected {providers.length === 1 ? 'Gateway' : 'Gateways'}
           </span>
         </div>
       </div>
@@ -159,6 +180,9 @@ export const ProviderTrafficTable: React.FC<ProviderTrafficTableProps> = ({
           sortKey={sortKey}
           sortDirection={sortDir}
           onSort={handleSort}
+          isLoading={isLoading}
+          emptyMessage="No Provider Gateways Found"
+          emptySubtext="No SMS carrier connections or HTTP/SMPP trunks have been configured yet."
           onRowClick={onSelectProvider}
         />
       </div>

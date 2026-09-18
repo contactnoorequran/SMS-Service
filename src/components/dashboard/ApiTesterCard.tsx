@@ -48,7 +48,7 @@ export const ApiTesterCard: React.FC = () => {
       <CardHeader
         title="Interactive REST API Gateway Tester"
         subtitle="Test foundational HTTP endpoints, error wrappers, and response formats"
-        icon={<Terminal className="w-4 h-4 text-emerald-500" />}
+        icon={<Terminal className="w-4 h-4 text-[var(--accent-emerald)]" />}
         action={
           status !== null ? (
             <Badge variant={status >= 200 && status < 300 ? 'success' : status === 404 ? 'warning' : 'error'}>
@@ -61,7 +61,7 @@ export const ApiTesterCard: React.FC = () => {
         <div className="space-y-4">
           {/* Endpoint selector pills */}
           <div>
-            <label className="text-xs font-medium text-slate-700 dark:text-slate-300 block mb-2">
+            <label className="text-xs font-medium text-[var(--text-secondary)] block mb-2">
               Select Endpoint to Test:
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -74,15 +74,15 @@ export const ApiTesterCard: React.FC = () => {
                   }}
                   className={`p-2.5 rounded-lg border text-left text-xs font-mono transition-all ${
                     selectedEndpoint === ep.path
-                      ? 'bg-blue-50/80 border-blue-300 text-blue-800 dark:bg-blue-950/40 dark:border-blue-700 dark:text-blue-300 ring-1 ring-blue-400'
-                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                      ? 'bg-[var(--accent-blue-dim)] border-[rgba(59,130,246,0.3)] text-[var(--accent-blue)] ring-1 ring-[var(--accent-blue)]'
+                      : 'bg-[var(--glass-bg)] backdrop-blur-md border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-bg-hover)]/50'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-semibold">{ep.path}</span>
-                    <span className="text-[10px] text-slate-400 font-sans">{ep.method}</span>
+                    <span className="text-[10px] text-[var(--text-tertiary)] font-sans">{ep.method}</span>
                   </div>
-                  <div className="text-[11px] text-slate-500 font-sans mt-0.5 truncate">
+                  <div className="text-[11px] text-[var(--text-secondary)] font-sans mt-0.5 truncate">
                     {ep.description}
                   </div>
                 </button>
@@ -107,17 +107,17 @@ export const ApiTesterCard: React.FC = () => {
               variant="outline"
               size="sm"
               onClick={handleCopy}
-              leftIcon={copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+              leftIcon={copied ? <Check className="w-3.5 h-3.5 text-[var(--accent-emerald)]" /> : <Copy className="w-3.5 h-3.5" />}
             >
               {copied ? 'Copied to Clipboard' : 'Copy JSON'}
             </Button>
-            <span className="text-xs text-slate-500 font-mono">
+            <span className="text-xs text-[var(--text-secondary)] font-mono">
               Target: {selectedEndpoint}
             </span>
           </div>
 
           {/* JSON Response console */}
-          <div className="rounded-lg bg-slate-950 text-slate-100 p-4 font-mono text-xs overflow-x-auto border border-slate-800 max-h-72">
+          <div className="rounded-lg bg-[rgba(0,0,0,0.4)] text-[var(--text-primary)] p-4 font-mono text-xs overflow-x-auto border border-[var(--glass-border)] max-h-72">
             <pre className="whitespace-pre">{responseJson}</pre>
           </div>
         </div>

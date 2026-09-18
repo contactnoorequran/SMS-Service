@@ -60,6 +60,7 @@ interface StoredClientRecord {
 
 const clientRegistry: Map<string, StoredClientRecord> = new Map();
 let isInitialized = false;
+let initPromise: Promise<void> | null = null;
 
 export class ClientService {
   /**
@@ -67,11 +68,13 @@ export class ClientService {
    */
   static async initializeSeedClients(): Promise<void> {
     if (isInitialized) return;
+    if (initPromise) return initPromise;
 
-    // Ensure users and agents are ready
-    await UserRepository.initializeSeedUsers();
-    await AgentService.initializeSeedAgents();
-    await ManagerService.initializeSeedManagers();
+    initPromise = (async () => {
+      // Ensure users and agents are ready
+      await UserRepository.initializeSeedUsers();
+      await AgentService.initializeSeedAgents();
+      await ManagerService.initializeSeedManagers();
 
     const now = Date.now();
     const seedClients: StoredClientRecord[] = [
@@ -646,8 +649,11 @@ export class ClientService {
       }
     }
 
-    isInitialized = true;
-    logger.info(`Client repository initialized with ${clientRegistry.size} client profiles.`);
+      isInitialized = true;
+      logger.info(`Client repository initialized with ${clientRegistry.size} client profiles.`);
+    })();
+
+    return initPromise;
   }
 
   /**
@@ -671,22 +677,25 @@ export class ClientService {
    */
   private static async getAgentInfo(agentId: string | null) {
     if (!agentId) return null;
-    const all = await AgentService.listAgents({ limit: 100 }, {
-      userId: 'system',
-      email: 'system@smshub.local',
-      role: 'SUPER_ADMIN',
-      status: 'ACTIVE',
-      tokenId: 'sys',
-    });
-    const agent = all.items.find((a) => a.id === agentId);
-    if (!agent) return null;
-    return {
-      id: agent.id,
-      userId: agent.userId,
-      name: agent.name,
-      email: agent.email,
-      commissionRate: agent.commissionRate,
-    };
+    try {
+      const agent = await AgentService.getAgentById(agentId, {
+        userId: 'system',
+        email: 'system@smshub.local',
+        role: 'SUPER_ADMIN',
+        status: 'ACTIVE',
+        tokenId: 'sys',
+      });
+      if (!agent) return null;
+      return {
+        id: agent.id,
+        userId: agent.userId,
+        name: agent.name,
+        email: agent.email,
+        commissionRate: agent.commissionRate,
+      };
+    } catch {
+      return null;
+    }
   }
 
   /**

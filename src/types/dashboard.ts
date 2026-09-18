@@ -1,3 +1,5 @@
+export type DashboardTimeRange = '24h' | '7d' | '30d' | 'all';
+
 export interface MetricCardData {
   totalProviders: number;
   activeProviders: number;
@@ -49,6 +51,8 @@ export interface ProviderTrafficItem {
   successRate: number;
   avgLatencyMs: number;
   throughputTps: number;
+  numbersCount?: number;
+  connectionStatus?: string;
 }
 
 export interface ActivityFeedItem {

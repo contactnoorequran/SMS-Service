@@ -1,912 +1,704 @@
-import React, { useState, useEffect, useCallback } from 'react';
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState } from 'react';
+import { useClients } from '../../hooks/useClients';
 import {
-  ClientListItem,
+  ClientItem,
   ClientDetail,
-  ClientDashboardData,
-} from '../../types/client';
-import { AgentListItem } from '../../types/agent';
-import { apiClient } from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
+  ClientStatus,
+  BillingType,
+  ClientsSortField,
+  CreateClientPayload,
+  UpdateClientPayload,
+} from '../../types/clients';
+import { StatCard } from '../ui/Card';
 import { Badge } from '../ui/Badge';
+import { Button } from '../ui/Button';
+import { FilterBar } from '../ui/FilterBar';
+import { Table, ColumnDef } from '../ui/Table';
+import { Pagination } from '../ui/Pagination';
+import { StatCardSkeleton } from '../ui/Skeleton';
+import { EmptyState } from '../ui/EmptyState';
+import { ErrorState } from '../ui/ErrorState';
+import { Breadcrumbs } from '../ui/Breadcrumbs';
+import { NotFoundState } from '../system/NotFoundState';
+import { PageHeader } from '../ui/PageHeader';
+import { MoreActionsMenu } from '../ui/MoreActionsMenu';
+
 import { CreateClientModal } from './clients/CreateClientModal';
 import { EditClientModal } from './clients/EditClientModal';
 import { ClientStatusModal } from './clients/ClientStatusModal';
-import { ClientResetPasswordModal } from './clients/ClientResetPasswordModal';
-import { ClientPermissionsModal } from './clients/ClientPermissionsModal';
-import { ClientApiAccessModal } from './clients/ClientApiAccessModal';
-import { ClientDetailsModal } from './clients/ClientDetailsModal';
+import { AssignAgentModal } from './clients/AssignAgentModal';
+import { ClientTransactionsModal } from './clients/ClientTransactionsModal';
+import { ClientDetailsView } from './clients/ClientDetailsView';
+
+import {
+  formatDate,
+  formatNumber,
+  formatCurrency,
+  formatRelativeTime,
+} from '../../utils/formatters';
 import {
   Building2,
-  Search,
+  Users,
+  ShieldAlert,
+  Hash,
+  DollarSign,
   Plus,
   RefreshCw,
-  Filter,
   Eye,
   Edit2,
   Power,
-  KeyRound,
-  ShieldCheck,
-  Key,
-  Phone,
-  DollarSign,
-  ChevronLeft,
-  ChevronRight,
-  Sparkles,
-  BarChart3,
-  ShieldAlert,
-  Clock,
-  ArrowUpRight,
-  TrendingUp,
-  Inbox,
-  Send,
-  Sliders,
+  UserCheck,
   CheckCircle2,
+  AlertCircle,
+  Phone,
+  FileText,
 } from 'lucide-react';
 
 export const ClientManagementView: React.FC = () => {
-  const { user, role, hasPermission } = useAuth();
-
-  // If the logged in user is a CLIENT, we render their dedicated Client Dashboard
-  const isClientRole = role === 'CLIENT';
-
-  // Client Dashboard state (for CLIENT role)
-  const [clientDashboard, setClientDashboard] = useState<ClientDashboardData | null>(null);
-  const [isClientDashLoading, setIsClientDashLoading] = useState(false);
-
-  // Administrative / Agent listing state
-  const [clients, setClients] = useState<ClientListItem[]>([]);
-  const [stats, setStats] = useState<{
-    total: number;
-    active: number;
-    suspended: number;
-    inactive: number;
-    totalBalance: number;
-    totalSmsCount: number;
-    totalNumbers: number;
-  }>({
-    total: 0,
-    active: 0,
-    suspended: 0,
-    inactive: 0,
-    totalBalance: 0,
-    totalSmsCount: 0,
-    totalNumbers: 0,
-  });
-
-  const [scopeInfo, setScopeInfo] = useState<{
-    actorRole: string;
-    isScoped: boolean;
-    scopeName?: string;
-  }>({
-    actorRole: role,
-    isScoped: role !== 'SUPER_ADMIN',
-  });
-
-  // Query / Filters
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [billingFilter, setBillingFilter] = useState('ALL');
-  const [page, setPage] = useState(1);
-  const [limit] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    clients,
+    totalCount,
+    kpis,
+    agents,
+    managers,
+    filterState,
+    totalPages,
+    isLoading,
+    isRefreshing,
+    error,
+    selectedClientId,
+    selectedClientDetail,
+    isLoadingDetail,
+    updateFilter,
+    resetFilters,
+    selectClient,
+    clearSelectedClient,
+    createClient,
+    updateClient,
+    updateClientStatus,
+    assignAgent,
+    refresh,
+  } = useClients();
 
   // Modals state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isStatusOpen, setIsStatusOpen] = useState(false);
-  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
-  const [isPermissionsOpen, setIsPermissionsOpen] = useState(false);
-  const [isApiAccessOpen, setIsApiAccessOpen] = useState(false);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState<ClientItem | ClientDetail | null>(null);
+  const [assigningAgentTarget, setAssigningAgentTarget] = useState<ClientItem | ClientDetail | null>(null);
+  const [viewingTransactionsTarget, setViewingTransactionsTarget] = useState<ClientDetail | null>(null);
+  const [statusTarget, setStatusTarget] = useState<{
+    client: ClientItem | ClientDetail | null;
+    nextStatus: ClientStatus | null;
+  }>({
+    client: null,
+    nextStatus: null,
+  });
 
-  const [selectedClient, setSelectedClient] = useState<ClientDetail | null>(null);
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
-  // Permission guards
-  const canCreate = role === 'SUPER_ADMIN' || role === 'MANAGER' || role === 'AGENT';
-  const canEdit = role === 'SUPER_ADMIN' || role === 'MANAGER' || role === 'AGENT';
-  const canModifyStatus = role === 'SUPER_ADMIN' || role === 'MANAGER';
-  const canResetPassword = role === 'SUPER_ADMIN' || role === 'MANAGER';
-  const canConfigurePermissions = role === 'SUPER_ADMIN';
-  const canConfigureApi = role === 'SUPER_ADMIN' || role === 'MANAGER';
+  const showToast = (text: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage({ text, type });
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4500);
+  };
 
-  // Fetch client dashboard if logged in as CLIENT
-  const fetchClientDashboard = useCallback(async () => {
-    setIsClientDashLoading(true);
-    setError(null);
-    try {
-      const data = await apiClient.getCurrentClientDashboard();
-      setClientDashboard(data);
-    } catch (err: any) {
-      setError(err?.message || 'Failed to load client dashboard.');
-    } finally {
-      setIsClientDashLoading(false);
-    }
-  }, []);
-
-  // Fetch administrative list of clients
-  const fetchClients = useCallback(async () => {
-    if (isClientRole) {
-      fetchClientDashboard();
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-    try {
-      const res = await apiClient.getClients({
-        search: search.trim() || undefined,
-        status: statusFilter,
-        billingType: billingFilter,
-        page,
-        limit,
-      });
-
-      setClients(res.items || []);
-      setTotalPages(res.pagination?.totalPages || 1);
-      setTotalCount(res.pagination?.total || 0);
-
-      if (res.stats) {
-        setStats(res.stats);
-      }
-      if (res.scope) {
-        setScopeInfo(res.scope);
-      }
-    } catch (err: any) {
-      setError(err?.message || 'Failed to load clients list.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [search, statusFilter, billingFilter, page, limit, isClientRole, fetchClientDashboard]);
-
-  useEffect(() => {
-    fetchClients();
-  }, [fetchClients]);
-
-  // Open details modal
-  const handleOpenDetails = async (client: ClientListItem) => {
-    try {
-      const full = await apiClient.getClientById(client.id);
-      setSelectedClient(full);
-      setIsDetailsOpen(true);
-    } catch (err: any) {
-      setError(err?.message || 'Failed to fetch client details.');
+  const getStatusBadgeVariant = (status: ClientStatus) => {
+    switch (status) {
+      case 'ACTIVE':
+        return 'success';
+      case 'PENDING':
+        return 'warning';
+      case 'SUSPENDED':
+      case 'DISABLED':
+        return 'error';
+      default:
+        return 'neutral';
     }
   };
 
-  const handleOpenEdit = async (client: ClientListItem) => {
+  const handleOpenStatusModal = (client: ClientItem | ClientDetail) => {
+    const nextStatus: ClientStatus = client.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
+    setStatusTarget({
+      client,
+      nextStatus,
+    });
+  };
+
+  const handleCreateSubmit = async (payload: CreateClientPayload) => {
     try {
-      const full = await apiClient.getClientById(client.id);
-      setSelectedClient(full);
-      setIsEditOpen(true);
+      await createClient(payload);
+      showToast(`Client "${payload.companyName}" created successfully`);
     } catch (err: any) {
-      setError(err?.message || 'Failed to fetch client details.');
+      showToast(err?.message || 'Failed to create client account', 'error');
+      throw err;
     }
   };
 
-  const handleOpenStatus = async (client: ClientListItem) => {
+  const handleEditSubmit = async (id: string, payload: UpdateClientPayload) => {
     try {
-      const full = await apiClient.getClientById(client.id);
-      setSelectedClient(full);
-      setIsStatusOpen(true);
+      await updateClient(id, payload);
+      showToast('Client profile updated successfully');
     } catch (err: any) {
-      setError(err?.message || 'Failed to fetch client details.');
+      showToast(err?.message || 'Failed to update client', 'error');
+      throw err;
     }
   };
 
-  const handleOpenPassword = async (client: ClientListItem) => {
+  const handleStatusConfirm = async (id: string, newStatus: ClientStatus, reason?: string) => {
     try {
-      const full = await apiClient.getClientById(client.id);
-      setSelectedClient(full);
-      setIsPasswordOpen(true);
+      await updateClientStatus(id, newStatus, reason);
+      showToast(`Client status changed to ${newStatus}`);
     } catch (err: any) {
-      setError(err?.message || 'Failed to fetch client details.');
+      showToast(err?.message || 'Failed to change client status', 'error');
+      throw err;
     }
   };
 
-  const handleOpenPermissions = async (client: ClientListItem) => {
+  const handleAssignAgentConfirm = async (clientId: string, agentId: string | null) => {
     try {
-      const full = await apiClient.getClientById(client.id);
-      setSelectedClient(full);
-      setIsPermissionsOpen(true);
+      await assignAgent(clientId, agentId);
+      showToast('Supervising agent assignment updated successfully');
     } catch (err: any) {
-      setError(err?.message || 'Failed to fetch client details.');
+      showToast(err?.message || 'Failed to assign agent', 'error');
+      throw err;
     }
   };
 
-  const handleOpenApiAccess = async (client: ClientListItem) => {
-    try {
-      const full = await apiClient.getClientById(client.id);
-      setSelectedClient(full);
-      setIsApiAccessOpen(true);
-    } catch (err: any) {
-      setError(err?.message || 'Failed to fetch client details.');
+  // If viewing details for /clients/:id
+  if (selectedClientId) {
+    if (isLoadingDetail) {
+      return (
+        <div className="space-y-6">
+          <Breadcrumbs
+            items={[
+              { label: 'Management', onClick: clearSelectedClient },
+              { label: 'Clients', onClick: clearSelectedClient },
+              { label: 'Loading...' },
+            ]}
+          />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="space-y-4">
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </div>
+            <div className="lg:col-span-2 space-y-4">
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </div>
+          </div>
+        </div>
+      );
     }
-  };
 
-  // ==========================================
-  // CLIENT PORTAL VIEW (For CLIENT User Role)
-  // ==========================================
-  if (isClientRole) {
+    if (selectedClientDetail) {
+      return (
+        <>
+          <ClientDetailsView
+            client={selectedClientDetail}
+            onBack={clearSelectedClient}
+            onEdit={(c) => setEditingClient(c)}
+            onStatusChange={(c) => handleOpenStatusModal(c)}
+            onAssignAgent={(c) => setAssigningAgentTarget(c)}
+            onViewTransactions={(c) => setViewingTransactionsTarget(c)}
+          />
+
+          {/* Edit Modal */}
+          <EditClientModal
+            isOpen={!!editingClient}
+            onClose={() => setEditingClient(null)}
+            client={editingClient}
+            onSubmit={handleEditSubmit}
+            agents={agents}
+          />
+
+          {/* Status Modal */}
+          <ClientStatusModal
+            isOpen={!!statusTarget.client}
+            onClose={() => setStatusTarget({ client: null, nextStatus: null })}
+            client={statusTarget.client}
+            targetStatus={statusTarget.nextStatus}
+            onConfirm={handleStatusConfirm}
+          />
+
+          {/* Assign Agent Modal */}
+          <AssignAgentModal
+            isOpen={!!assigningAgentTarget}
+            onClose={() => setAssigningAgentTarget(null)}
+            client={assigningAgentTarget}
+            agents={agents}
+            onConfirm={handleAssignAgentConfirm}
+          />
+
+          {/* Financial Transactions Modal */}
+          <ClientTransactionsModal
+            isOpen={!!viewingTransactionsTarget}
+            onClose={() => setViewingTransactionsTarget(null)}
+            client={viewingTransactionsTarget}
+          />
+        </>
+      );
+    }
+
+    // Invalid / missing client ID route (e.g. /clients/invalid)
     return (
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                <Building2 className="w-5 h-5" />
-              </span>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-                Client Service Dashboard
-              </h1>
-              <Badge variant="success">Verified Account</Badge>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Real-time balance, allocated numbers, SMS metrics, and API integration endpoints
-            </p>
-          </div>
-
-          <button
-            onClick={fetchClientDashboard}
-            disabled={isClientDashLoading}
-            className="flex items-center gap-2 px-3 py-2 text-xs font-medium bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors shadow-xs"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isClientDashLoading ? 'animate-spin text-indigo-600' : ''}`} />
-            <span>Refresh Telemetry</span>
-          </button>
-        </div>
-
-        {error && (
-          <div className="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2">
-            <ShieldAlert className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {isClientDashLoading && !clientDashboard ? (
-          <div className="flex items-center justify-center py-16 text-xs text-slate-400">
-            <span className="w-4 h-4 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mr-2" />
-            Loading customer telemetry and wallet status...
-          </div>
-        ) : clientDashboard ? (
-          <>
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Balance Card */}
-              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Current Balance</span>
-                  <span className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                    <DollarSign className="w-4 h-4" />
-                  </span>
-                </div>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-slate-900 dark:text-white">
-                    ${clientDashboard.balance.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </span>
-                  <span className="text-xs font-medium text-slate-500">{clientDashboard.balance.currency}</span>
-                </div>
-                <div className="mt-2 text-[11px] text-slate-500 flex items-center justify-between">
-                  <span>Billing: {clientDashboard.balance.billingType}</span>
-                  {clientDashboard.balance.creditLimit > 0 && (
-                    <span>Limit: ${clientDashboard.balance.creditLimit}</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Total SMS Sent */}
-              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Messages Dispatched</span>
-                  <span className="p-2 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                    <Send className="w-4 h-4" />
-                  </span>
-                </div>
-                <div className="mt-2">
-                  <span className="text-2xl font-bold text-slate-900 dark:text-white">
-                    {clientDashboard.smsStatistics.totalSms.toLocaleString()}
-                  </span>
-                </div>
-                <div className="mt-2 text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-medium">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>{clientDashboard.smsStatistics.deliveredSms} delivered successfully</span>
-                </div>
-              </div>
-
-              {/* Assigned Numbers */}
-              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Allocated Numbers</span>
-                  <span className="p-2 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400">
-                    <Phone className="w-4 h-4" />
-                  </span>
-                </div>
-                <div className="mt-2">
-                  <span className="text-2xl font-bold text-slate-900 dark:text-white">
-                    {clientDashboard.assignedNumbers.length}
-                  </span>
-                </div>
-                <div className="mt-2 text-[11px] text-slate-500">
-                  Ready for two-way SMS & inbound callbacks
-                </div>
-              </div>
-
-              {/* API Integration Status */}
-              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">API Gateway Status</span>
-                  <span className="p-2 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                    <Key className="w-4 h-4" />
-                  </span>
-                </div>
-                <div className="mt-2">
-                  <Badge variant={clientDashboard.apiStatus.enabled ? 'success' : 'neutral'}>
-                    {clientDashboard.apiStatus.enabled ? 'Active / Online' : 'Access Suspended'}
-                  </Badge>
-                </div>
-                <div className="mt-2 text-[11px] text-slate-500">
-                  Rate Limit: {clientDashboard.apiStatus.rateLimitPerSecond || 100} req/sec
-                </div>
-              </div>
-            </div>
-
-            {/* Assigned Phone Numbers & Recent SMS Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Numbers Section */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-3 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-purple-500" />
-                    Allocated Phone Numbers
-                  </h3>
-                  <span className="text-xs text-slate-500">{clientDashboard.assignedNumbers.length} numbers</span>
-                </div>
-
-                {clientDashboard.assignedNumbers.length === 0 ? (
-                  <div className="py-8 text-center text-xs text-slate-400">
-                    No numbers allocated to your account yet. Contact your assigned representative.
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {clientDashboard.assignedNumbers.map((num) => (
-                      <div
-                        key={num.id}
-                        className="p-3 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-lg flex items-center justify-between text-xs"
-                      >
-                        <div>
-                          <span className="font-mono font-semibold text-slate-900 dark:text-white">
-                            {num.e164}
-                          </span>
-                          <span className="text-[11px] text-slate-400 ml-2">({num.type || 'LOCAL'})</span>
-                        </div>
-                        <Badge variant={num.status === 'ACTIVE' ? 'success' : 'neutral'}>
-                          {num.status}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Recent SMS History */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-3 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                    <Inbox className="w-4 h-4 text-indigo-500" />
-                    Recent SMS Transmissions
-                  </h3>
-                  <span className="text-xs text-slate-500">Live Traffic Feed</span>
-                </div>
-
-                {clientDashboard.recentSms.length === 0 ? (
-                  <div className="py-8 text-center text-xs text-slate-400">
-                    No recent SMS recorded.
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {clientDashboard.recentSms.map((sms) => (
-                      <div
-                        key={sms.id}
-                        className="p-3 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-lg flex items-start justify-between text-xs"
-                      >
-                        <div>
-                          <div className="flex items-center gap-2 font-mono text-[11px]">
-                            <span className="text-slate-500">To:</span>
-                            <span className="font-medium text-slate-900 dark:text-white">{sms.recipient}</span>
-                          </div>
-                          <p className="text-slate-600 dark:text-slate-400 text-[11px] mt-1 line-clamp-1">
-                            {sms.text}
-                          </p>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <Badge
-                            variant={
-                              sms.status === 'DELIVERED'
-                                ? 'success'
-                                : sms.status === 'PENDING'
-                                ? 'warning'
-                                : 'danger'
-                            }
-                          >
-                            {sms.status}
-                          </Badge>
-                          <span className="text-[10px] text-slate-400 block mt-1">
-                            {new Date(sms.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </>
-        ) : null}
+        <Breadcrumbs
+          items={[
+            { label: 'Management', onClick: clearSelectedClient },
+            { label: 'Clients', onClick: clearSelectedClient },
+            { label: 'Not Found' },
+          ]}
+        />
+        <NotFoundState
+          title="Client Account Not Found"
+          resourceName="Client Profile"
+          resourceId={selectedClientId}
+          onBack={clearSelectedClient}
+        />
       </div>
     );
   }
 
-  // ========================================================
-  // ADMINISTRATIVE / AGENT / MANAGER CLIENT MANAGEMENT VIEW
-  // ========================================================
-  return (
-    <div className="space-y-6">
-      {/* Header with Title and Add Button */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-              <Building2 className="w-5 h-5" />
-            </span>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-              Client Management
-            </h1>
-            <Badge variant="neutral">Phase 07</Badge>
+  // Table Columns Definition
+  const columns: ColumnDef<ClientItem>[] = [
+    {
+      key: 'name',
+      header: 'Client Identity',
+      render: (client) => {
+        const initials = client.companyName
+          .split(' ')
+          .map((n) => n[0])
+          .slice(0, 2)
+          .join('');
+
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[var(--accent-blue-dim)] border border-[var(--border-subtle)] text-[var(--accent-blue)] flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  selectClient(client.id);
+                }}
+                className="font-semibold text-[var(--text-primary)] hover:text-[var(--accent-blue)] transition-colors cursor-pointer truncate"
+              >
+                {client.companyName}
+              </div>
+              <div className="text-[11px] text-[var(--text-muted)] truncate">
+                Contact: {client.name} • <span className="font-mono">{client.id}</span>
+              </div>
+            </div>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Enterprise customer portfolio, assigned agents, wallet ledger, API authorization, and SMS metrics
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={fetchClients}
-            disabled={isLoading}
-            className="flex items-center gap-2 px-3 py-2 text-xs font-medium bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors shadow-xs"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-indigo-600' : ''}`} />
-            <span>Refresh</span>
-          </button>
-
-          {canCreate && (
-            <button
-              onClick={() => setIsCreateOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-xs transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Create Client</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Scope Hierarchy Banner */}
-      {scopeInfo.isScoped && (
-        <div className="p-3 bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 rounded-xl flex items-center justify-between text-xs text-indigo-900 dark:text-indigo-200">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
-            <span>
-              <strong>Access Scope:</strong> Logged in as <strong>{role}</strong>. Viewing clients strictly scoped to your organizational portfolio.
-            </span>
+        );
+      },
+      sortable: true,
+    },
+    {
+      key: 'email',
+      header: 'Operations Email',
+      render: (client) => (
+        <span className="font-mono text-xs text-[var(--text-secondary)]">
+          {client.email}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'agent',
+      header: 'Supervising Agent',
+      render: (client) =>
+        client.agentName ? (
+          <div>
+            <div className="text-xs font-medium text-[var(--text-primary)]">{client.agentName}</div>
+            <div className="text-[10px] text-[var(--text-muted)] font-mono">{client.agentEmail}</div>
           </div>
-          <span className="text-[11px] font-mono bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
-            Enforced Security Boundary
-          </span>
-        </div>
-      )}
-
-      {/* Top Metric Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div className="p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Total Clients</span>
-          <span className="text-xl font-bold text-slate-900 dark:text-white mt-0.5 block">
-            {stats.total.toLocaleString()}
-          </span>
-        </div>
-
-        <div className="p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Active Accounts</span>
-          <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 block">
-            {stats.active.toLocaleString()}
-          </span>
-        </div>
-
-        <div className="p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Suspended</span>
-          <span className="text-xl font-bold text-amber-600 dark:text-amber-400 mt-0.5 block">
-            {stats.suspended.toLocaleString()}
-          </span>
-        </div>
-
-        <div className="p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Assigned Numbers</span>
-          <span className="text-xl font-bold text-purple-600 dark:text-purple-400 mt-0.5 block">
-            {stats.totalNumbers.toLocaleString()}
-          </span>
-        </div>
-
-        <div className="p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Combined Balance</span>
-          <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400 mt-0.5 block">
-            ${stats.totalBalance.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-          </span>
-        </div>
-
-        <div className="p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 block">Total SMS Sent</span>
-          <span className="text-xl font-bold text-slate-900 dark:text-white mt-0.5 block">
-            {stats.totalSmsCount.toLocaleString()}
-          </span>
-        </div>
-      </div>
-
-      {/* Filter and Search Bar */}
-      <div className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-3 shadow-xs">
-        {/* Search */}
-        <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search company, contact, or email..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+        ) : (
+          <Badge variant="neutral" size="sm">Platform Direct</Badge>
+        ),
+      sortable: true,
+    },
+    {
+      key: 'manager',
+      header: 'Manager',
+      render: (client) => (
+        <span className="text-xs text-[var(--text-secondary)]">
+          {client.managerName || 'Operations'}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'billingType',
+      header: 'Billing Model',
+      render: (client) => (
+        <Badge variant={client.billingType === 'POSTPAID' ? 'info' : 'purple'} size="sm">
+          {client.billingType}
+        </Badge>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (client) => (
+        <Badge variant={getStatusBadgeVariant(client.status)} size="sm">
+          {client.status}
+        </Badge>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'numbers',
+      header: 'Assigned DIDs',
+      render: (client) => (
+        <span className="inline-flex items-center gap-1 font-mono text-xs text-[var(--accent-purple)] font-medium">
+          <Phone className="w-3 h-3" />
+          {client.assignedNumbersCount || 0}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'smsCount',
+      header: 'Monthly Volume',
+      render: (client) => (
+        <span className="font-mono text-xs font-semibold text-[var(--text-primary)]">
+          {formatNumber(client.smsCount)} SMS
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'balance',
+      header: 'Wallet Balance',
+      render: (client) => (
+        <span className="font-mono text-xs font-bold text-[var(--accent-emerald)]">
+          {formatCurrency(client.balance)}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'lastActivity',
+      header: 'Last Activity',
+      render: (client) => (
+        <span className="font-mono text-xs text-[var(--text-secondary)]">
+          {client.lastLoginAt ? formatRelativeTime(client.lastLoginAt) : 'Never'}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (client) => (
+        <div className="flex items-center justify-end">
+          <MoreActionsMenu
+            ariaLabel={`Actions for ${client.companyName}`}
+            items={[
+              {
+                id: 'view',
+                label: 'View Client Profile',
+                icon: <Eye className="w-3.5 h-3.5" />,
+                onClick: () => selectClient(client.id),
+              },
+              {
+                id: 'edit',
+                label: 'Edit Client',
+                icon: <Edit2 className="w-3.5 h-3.5" />,
+                onClick: () => setEditingClient(client),
+              },
+              {
+                id: 'agent',
+                label: 'Reassign Agent',
+                icon: <UserCheck className="w-3.5 h-3.5" />,
+                onClick: () => setAssigningAgentTarget(client),
+              },
+              {
+                id: 'status',
+                label: client.status === 'ACTIVE' ? 'Suspend Account' : 'Activate Account',
+                icon: <Power className="w-3.5 h-3.5" />,
+                isDangerous: client.status === 'ACTIVE',
+                confirmTitle: `Suspend Client ${client.companyName}`,
+                confirmMessage: `Are you sure you want to suspend client ${client.companyName}? Inbound message forwarding and API credentials will be temporarily restricted.`,
+                onClick: () => handleOpenStatusModal(client),
+              },
+            ]}
           />
         </div>
+      ),
+    },
+  ];
 
-        {/* Filters */}
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="flex items-center gap-1.5 text-xs">
-            <span className="text-slate-500">Status:</span>
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setPage(1);
-              }}
-              className="px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="ALL">All Statuses</option>
-              <option value="ACTIVE">ACTIVE</option>
-              <option value="SUSPENDED">SUSPENDED</option>
-              <option value="INACTIVE">INACTIVE</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-1.5 text-xs">
-            <span className="text-slate-500">Billing:</span>
-            <select
-              value={billingFilter}
-              onChange={(e) => {
-                setBillingFilter(e.target.value);
-                setPage(1);
-              }}
-              className="px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="ALL">All Models</option>
-              <option value="PREPAID">PREPAID</option>
-              <option value="POSTPAID">POSTPAID</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {error && (
-        <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2">
-          <ShieldAlert className="w-4 h-4 shrink-0" />
-          <span>{error}</span>
+  return (
+    <div className="space-y-6">
+      {/* Toast Feedback */}
+      {toastMessage && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl border shadow-xl backdrop-blur-md flex items-center gap-2.5 text-xs font-semibold animate-in fade-in slide-in-from-bottom-3 ${
+            toastMessage.type === 'success'
+              ? 'bg-[var(--accent-emerald-dim)] border-[var(--accent-emerald)]/30 text-[var(--accent-emerald)]'
+              : 'bg-[var(--accent-rose-dim)] border-[var(--accent-rose)]/30 text-[var(--accent-rose)]'
+          }`}
+          role="status"
+        >
+          {toastMessage.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+          ) : (
+            <AlertCircle className="w-4 h-4 shrink-0" />
+          )}
+          <span>{toastMessage.text}</span>
         </div>
       )}
 
-      {/* Main Table */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
-              <tr>
-                <th className="py-3 px-4">Client Company</th>
-                <th className="py-3 px-4">Contact</th>
-                <th className="py-3 px-4">Hierarchy</th>
-                <th className="py-3 px-4">Billing & Balance</th>
-                <th className="py-3 px-4">Numbers</th>
-                <th className="py-3 px-4">SMS Vol</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4">API Access</th>
-                <th className="py-3 px-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {isLoading && clients.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="py-12 text-center text-slate-400">
-                    <span className="w-4 h-4 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin inline-block mr-2" />
-                    Querying clients securely...
-                  </td>
-                </tr>
-              ) : clients.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="py-12 text-center text-slate-400">
-                    No clients found matching the specified filters.
-                  </td>
-                </tr>
-              ) : (
-                clients.map((client) => (
-                  <tr
-                    key={client.id}
-                    className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
-                  >
-                    {/* Client Company */}
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">
-                          {client.companyName.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <span className="font-semibold text-slate-900 dark:text-white block hover:text-indigo-600 cursor-pointer" onClick={() => handleOpenDetails(client)}>
-                            {client.companyName}
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-mono">
-                            {client.id}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
+      {/* Standard Page Header Pattern */}
+      <PageHeader
+        title="Clients"
+        description="Enterprise customer portfolio, assigned agents, wallet ledger, API authorization, and SMS metrics."
+        breadcrumbs={[{ label: 'Management' }, { label: 'Clients' }]}
+        primaryAction={{
+          label: 'Create Client',
+          onClick: () => setIsCreateOpen(true),
+          icon: <Plus className="w-3.5 h-3.5" />,
+          id: 'btn-create-client',
+        }}
+        secondaryActions={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refresh}
+            isLoading={isRefreshing}
+            leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />}
+            aria-label="Refresh Clients telemetry"
+          >
+            Refresh
+          </Button>
+        }
+      />
 
-                    {/* Contact */}
-                    <td className="py-3 px-4">
-                      <span className="text-slate-800 dark:text-slate-200 font-medium block">
-                        {client.name}
-                      </span>
-                      <span className="text-[11px] text-slate-400 block">
-                        {client.email}
-                      </span>
-                    </td>
-
-                    {/* Hierarchy */}
-                    <td className="py-3 px-4 text-[11px]">
-                      <div>
-                        <span className="text-slate-500">Agent: </span>
-                        <span className="font-medium text-slate-800 dark:text-slate-200">
-                          {client.agentName || 'Platform Direct'}
-                        </span>
-                      </div>
-                      {client.managerName && (
-                        <div className="text-slate-400 text-[10px]">
-                          Mgr: {client.managerName}
-                        </div>
-                      )}
-                    </td>
-
-                    {/* Billing & Balance */}
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-slate-900 dark:text-white">
-                          ${client.balance?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || '0.00'}
-                        </span>
-                        <span className="text-[10px] font-mono text-slate-400">
-                          {client.currency}
-                        </span>
-                      </div>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 mt-0.5 inline-block">
-                        {client.billingType}
-                      </span>
-                    </td>
-
-                    {/* Numbers */}
-                    <td className="py-3 px-4">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 font-medium">
-                        <Phone className="w-3 h-3" />
-                        {client.assignedNumbersCount || 0}
-                      </span>
-                    </td>
-
-                    {/* SMS Volume */}
-                    <td className="py-3 px-4 font-mono font-medium text-slate-700 dark:text-slate-300">
-                      {client.smsStatistics?.totalSms?.toLocaleString() || 0}
-                    </td>
-
-                    {/* Status */}
-                    <td className="py-3 px-4">
-                      <Badge
-                        variant={
-                          client.status === 'ACTIVE'
-                            ? 'success'
-                            : client.status === 'SUSPENDED'
-                            ? 'warning'
-                            : 'neutral'
-                        }
-                      >
-                        {client.status}
-                      </Badge>
-                    </td>
-
-                    {/* API Access */}
-                    <td className="py-3 px-4">
-                      {client.apiAccess?.enabled ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">
-                          <Key className="w-3 h-3" />
-                          <span>Active ({client.apiAccess.rateLimitPerSecond || 100}/s)</span>
-                        </span>
-                      ) : (
-                        <span className="text-[11px] text-slate-400">Disabled</span>
-                      )}
-                    </td>
-
-                    {/* Actions Menu */}
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {/* View Profile */}
-                        <button
-                          title="View Profile & Sub-resources"
-                          onClick={() => handleOpenDetails(client)}
-                          className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-
-                        {/* Edit Profile */}
-                        {canEdit && (
-                          <button
-                            title="Edit Client Information"
-                            onClick={() => handleOpenEdit(client)}
-                            className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                        )}
-
-                        {/* API Access Config */}
-                        {canConfigureApi && (
-                          <button
-                            title="Configure API Access"
-                            onClick={() => handleOpenApiAccess(client)}
-                            className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                          >
-                            <Key className="w-4 h-4" />
-                          </button>
-                        )}
-
-                        {/* Permissions Config */}
-                        {canConfigurePermissions && (
-                          <button
-                            title="Client RBAC Permissions"
-                            onClick={() => handleOpenPermissions(client)}
-                            className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                          >
-                            <ShieldCheck className="w-4 h-4" />
-                          </button>
-                        )}
-
-                        {/* Lifecycle Status Toggle */}
-                        {canModifyStatus && (
-                          <button
-                            title="Toggle Lifecycle Status"
-                            onClick={() => handleOpenStatus(client)}
-                            className={`p-1.5 rounded-lg transition-colors ${
-                              client.status === 'ACTIVE'
-                                ? 'text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30'
-                                : 'text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
-                            }`}
-                          >
-                            <Power className="w-4 h-4" />
-                          </button>
-                        )}
-
-                        {/* Password Reset */}
-                        {canResetPassword && (
-                          <button
-                            title="Reset Client Password"
-                            onClick={() => handleOpenPassword(client)}
-                            className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                          >
-                            <KeyRound className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination Bar */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-          <span>
-            Showing {clients.length > 0 ? (page - 1) * limit + 1 : 0} to{' '}
-            {Math.min(page * limit, totalCount)} of {totalCount} clients
-          </span>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1 || isLoading}
-              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="font-medium text-slate-700 dark:text-slate-300">
-              Page {page} of {totalPages || 1}
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages || isLoading}
-              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 transition-colors"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+      {/* Executive KPI Summary (5 StatCards) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {isLoading ? (
+          <>
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </>
+        ) : (
+          <>
+            <StatCard
+              title="Total Clients"
+              value={formatNumber(kpis.totalClients)}
+              subtext="Enterprise account portfolio"
+              icon={Building2}
+              iconBgColor="bg-[var(--accent-blue-dim)] text-[var(--accent-blue)]"
+              badgeText="Portfolio"
+              badgeVariant="info"
+            />
+            <StatCard
+              title="Active Clients"
+              value={formatNumber(kpis.activeClients)}
+              subtext="Traffic dispatching authorized"
+              icon={CheckCircle2}
+              iconBgColor="bg-[var(--accent-emerald-dim)] text-[var(--accent-emerald)]"
+              badgeText="Operational"
+              badgeVariant="success"
+            />
+            <StatCard
+              title="Suspended Clients"
+              value={formatNumber(kpis.suspendedClients)}
+              subtext="Compliance or credit exhaustion"
+              icon={ShieldAlert}
+              iconBgColor="bg-[var(--accent-rose-dim)] text-[var(--accent-rose)]"
+              badgeText={kpis.suspendedClients > 0 ? 'Review' : 'Zero'}
+              badgeVariant={kpis.suspendedClients > 0 ? 'error' : 'neutral'}
+            />
+            <StatCard
+              title="Total Assigned Numbers"
+              value={formatNumber(kpis.totalAssignedNumbers)}
+              subtext="Allocated E.164 phone lines"
+              icon={Hash}
+              iconBgColor="bg-[var(--accent-purple-dim)] text-[var(--accent-purple)]"
+              badgeText="Inventory"
+              badgeVariant="purple"
+            />
+            <StatCard
+              title="Total Wallet Balance"
+              value={formatCurrency(kpis.totalWalletBalance)}
+              subtext={`Avg. ${formatCurrency(kpis.averageBalance)} • ${formatNumber(kpis.totalSmsCount)} SMS`}
+              icon={DollarSign}
+              iconBgColor="bg-[var(--accent-emerald-dim)] text-[var(--accent-emerald)]"
+              badgeText="Commercial"
+              badgeVariant="success"
+            />
+          </>
+        )}
       </div>
 
-      {/* Modals */}
+      {/* Filter Bar */}
+      <FilterBar
+        searchPlaceholder="Search by client name, email, or company..."
+        searchValue={filterState.search}
+        onSearchChange={(val) => updateFilter('search', val)}
+        filters={[
+          {
+            key: 'status',
+            label: 'Status',
+            value: filterState.status,
+            options: [
+              { label: 'All Statuses', value: 'ALL' },
+              { label: 'Active', value: 'ACTIVE' },
+              { label: 'Pending', value: 'PENDING' },
+              { label: 'Suspended', value: 'SUSPENDED' },
+              { label: 'Disabled', value: 'DISABLED' },
+            ],
+            onChange: (val) => updateFilter('status', val),
+          },
+          {
+            key: 'billingType',
+            label: 'Billing Model',
+            value: filterState.billingType,
+            options: [
+              { label: 'All Models', value: 'ALL' },
+              { label: 'Prepaid (Wallet)', value: 'PREPAID' },
+              { label: 'Postpaid (Credit Line)', value: 'POSTPAID' },
+            ],
+            onChange: (val) => updateFilter('billingType', val),
+          },
+          {
+            key: 'agentId',
+            label: 'Agent',
+            value: filterState.agentId,
+            options: [
+              { label: 'All Agents', value: 'ALL' },
+              { label: 'Platform Direct (Unassigned)', value: 'UNASSIGNED' },
+              ...agents.map((a) => ({ label: `${a.name} (${a.clientsCount} clients)`, value: a.id })),
+            ],
+            onChange: (val) => updateFilter('agentId', val),
+          },
+          {
+            key: 'managerId',
+            label: 'Manager',
+            value: filterState.managerId,
+            options: [
+              { label: 'All Managers', value: 'ALL' },
+              ...managers.map((m) => ({ label: `${m.name} (${m.department})`, value: m.id })),
+            ],
+            onChange: (val) => updateFilter('managerId', val),
+          },
+          {
+            key: 'balanceRange',
+            label: 'Balance Range',
+            value: filterState.balanceRange,
+            options: [
+              { label: 'All Balances', value: 'ALL' },
+              { label: '$0 Balance (Exhausted)', value: 'ZERO' },
+              { label: '$1 - $1,000', value: '1-1000' },
+              { label: '$1,001 - $10,000', value: '1001-10000' },
+              { label: '$10,000+ (High Volume)', value: '10000+' },
+            ],
+            onChange: (val) => updateFilter('balanceRange', val),
+          },
+          {
+            key: 'sortBy',
+            label: 'Sort By',
+            value: filterState.sortBy,
+            options: [
+              { label: 'Date Created', value: 'createdAt' },
+              { label: 'Company Name', value: 'companyName' },
+              { label: 'Contact Name', value: 'name' },
+              { label: 'Wallet Balance', value: 'balance' },
+              { label: 'SMS Volume', value: 'smsCount' },
+              { label: 'Assigned Numbers', value: 'numbers' },
+              { label: 'Last Activity', value: 'lastActivity' },
+            ],
+            onChange: (val) => updateFilter('sortBy', val as ClientsSortField),
+          },
+        ]}
+        onReset={resetFilters}
+      />
+
+      {/* Main Table / State View */}
+      {error ? (
+        <ErrorState
+          title="Failed to Load Clients"
+          message={error}
+          onRetry={refresh}
+        />
+      ) : clients.length === 0 && !isLoading ? (
+        <EmptyState
+          title="No clients found"
+          message="No client enterprise accounts match your active search and filter criteria."
+          icon={Building2}
+          actionLabel="Reset Filters"
+          onAction={resetFilters}
+        />
+      ) : (
+        <div className="space-y-4">
+          <Table
+            columns={columns}
+            data={clients}
+            keyExtractor={(c) => c.id}
+            isLoading={isLoading}
+            onRowClick={(c) => selectClient(c.id)}
+            emptyMessage="No clients available"
+          />
+
+          {/* Pagination */}
+          {totalCount > filterState.limit && (
+            <Pagination
+              currentPage={filterState.page}
+              totalPages={totalPages}
+              onPageChange={(page) => updateFilter('page', page)}
+              pageSize={filterState.limit}
+              totalItems={totalCount}
+            />
+          )}
+        </div>
+      )}
+
+      {/* Create Client Modal */}
       <CreateClientModal
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
-        onClientCreated={() => {
-          setIsCreateOpen(false);
-          fetchClients();
-        }}
-        currentAgentId={role === 'AGENT' ? user?.id : undefined}
+        onSubmit={handleCreateSubmit}
+        agents={agents}
       />
 
+      {/* Edit Client Modal */}
       <EditClientModal
-        isOpen={isEditOpen}
-        onClose={() => setIsEditOpen(false)}
-        client={selectedClient}
-        onClientUpdated={fetchClients}
-        canReassignAgent={role === 'SUPER_ADMIN' || role === 'MANAGER'}
+        isOpen={!!editingClient}
+        onClose={() => setEditingClient(null)}
+        client={editingClient}
+        onSubmit={handleEditSubmit}
+        agents={agents}
       />
 
+      {/* Status Modal */}
       <ClientStatusModal
-        isOpen={isStatusOpen}
-        onClose={() => setIsStatusOpen(false)}
-        client={selectedClient}
-        onStatusUpdated={fetchClients}
+        isOpen={!!statusTarget.client}
+        onClose={() => setStatusTarget({ client: null, nextStatus: null })}
+        client={statusTarget.client}
+        targetStatus={statusTarget.nextStatus}
+        onConfirm={handleStatusConfirm}
       />
 
-      <ClientResetPasswordModal
-        isOpen={isPasswordOpen}
-        onClose={() => setIsPasswordOpen(false)}
-        client={selectedClient}
-      />
-
-      <ClientPermissionsModal
-        isOpen={isPermissionsOpen}
-        onClose={() => setIsPermissionsOpen(false)}
-        client={selectedClient}
-        onPermissionsUpdated={fetchClients}
-      />
-
-      <ClientApiAccessModal
-        isOpen={isApiAccessOpen}
-        onClose={() => setIsApiAccessOpen(false)}
-        client={selectedClient}
-        onApiUpdated={fetchClients}
-      />
-
-      <ClientDetailsModal
-        isOpen={isDetailsOpen}
-        onClose={() => setIsDetailsOpen(false)}
-        client={selectedClient}
+      {/* Assign Agent Modal */}
+      <AssignAgentModal
+        isOpen={!!assigningAgentTarget}
+        onClose={() => setAssigningAgentTarget(null)}
+        client={assigningAgentTarget}
+        agents={agents}
+        onConfirm={handleAssignAgentConfirm}
       />
     </div>
   );

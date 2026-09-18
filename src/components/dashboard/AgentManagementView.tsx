@@ -1,774 +1,646 @@
-import React, { useState, useEffect, useCallback } from 'react';
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState } from 'react';
+import { useAgents } from '../../hooks/useAgents';
 import {
-  AgentListItem,
+  AgentItem,
   AgentDetail,
-  CreateAgentDTO,
-  UpdateAgentDTO,
-} from '../../types/agent';
-import { ManagerListItem } from '../../types/manager';
-import { apiClient } from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
+  AgentStatus,
+  AgentsSortField,
+  CreateAgentPayload,
+  UpdateAgentPayload,
+} from '../../types/agents';
+import { StatCard } from '../ui/Card';
 import { Badge } from '../ui/Badge';
+import { Button } from '../ui/Button';
+import { FilterBar } from '../ui/FilterBar';
+import { Table, ColumnDef } from '../ui/Table';
+import { Pagination } from '../ui/Pagination';
+import { StatCardSkeleton } from '../ui/Skeleton';
+import { EmptyState } from '../ui/EmptyState';
+import { ErrorState } from '../ui/ErrorState';
+import { Breadcrumbs } from '../ui/Breadcrumbs';
+import { NotFoundState } from '../system/NotFoundState';
+import { PageHeader } from '../ui/PageHeader';
+import { MoreActionsMenu } from '../ui/MoreActionsMenu';
+
 import { CreateAgentModal } from './agents/CreateAgentModal';
 import { EditAgentModal } from './agents/EditAgentModal';
 import { AgentStatusModal } from './agents/AgentStatusModal';
-import { AgentResetPasswordModal } from './agents/AgentResetPasswordModal';
-import { AgentPermissionsModal } from './agents/AgentPermissionsModal';
 import { AssignManagerModal } from './agents/AssignManagerModal';
-import { AgentDetailsModal } from './agents/AgentDetailsModal';
+import { AgentClientsModal } from './agents/AgentClientsModal';
+import { AgentDetailsView } from './agents/AgentDetailsView';
+
+import { formatDate, formatNumber, formatCurrency, formatRelativeTime } from '../../utils/formatters';
 import {
   Users,
-  Search,
+  UserCheck,
+  ShieldAlert,
+  Briefcase,
+  Hash,
+  DollarSign,
   Plus,
   RefreshCw,
-  Filter,
   Eye,
   Edit2,
   Power,
-  KeyRound,
-  ShieldCheck,
-  Building,
-  UserCheck,
+  ExternalLink,
   CheckCircle2,
   AlertCircle,
-  Hash,
-  MessageSquare,
-  DollarSign,
-  ChevronLeft,
-  ChevronRight,
-  Sparkles,
+  TrendingUp,
 } from 'lucide-react';
 
 export const AgentManagementView: React.FC = () => {
-  const { user, role } = useAuth();
+  const {
+    agents,
+    totalCount,
+    kpis,
+    managers,
+    filterState,
+    totalPages,
+    isLoading,
+    isRefreshing,
+    error,
+    selectedAgentId,
+    selectedAgentDetail,
+    isLoadingDetail,
+    updateFilter,
+    resetFilters,
+    selectAgent,
+    clearSelectedAgent,
+    createAgent,
+    updateAgent,
+    updateAgentStatus,
+    assignManager,
+    refresh,
+  } = useAgents();
 
-  // State for listing and pagination
-  const [agents, setAgents] = useState<AgentListItem[]>([]);
-  const [stats, setStats] = useState<{
-    total: number;
-    active: number;
-    inactive: number;
-    suspended: number;
-    totalClients: number;
-    totalNumbers: number;
-    totalEarnings: number;
-    totalSms: number;
+  // Modals state
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingAgent, setEditingAgent] = useState<AgentItem | null>(null);
+  const [assigningManagerTarget, setAssigningManagerTarget] = useState<AgentItem | null>(null);
+  const [viewingClientsTarget, setViewingClientsTarget] = useState<AgentDetail | null>(null);
+  const [statusTarget, setStatusTarget] = useState<{
+    agent: AgentItem | null;
+    nextStatus: AgentStatus | null;
   }>({
-    total: 0,
-    active: 0,
-    inactive: 0,
-    suspended: 0,
-    totalClients: 0,
-    totalNumbers: 0,
-    totalEarnings: 0,
-    totalSms: 0,
+    agent: null,
+    nextStatus: null,
   });
 
-  const [scopeInfo, setScopeInfo] = useState<{
-    actorRole: string;
-    isScopedToManager: boolean;
-    managerName?: string;
-    managerId?: string;
-  }>({
-    actorRole: role,
-    isScopedToManager: role === 'MANAGER',
-  });
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
-  const [page, setPage] = useState<number>(1);
-  const [limit, setLimit] = useState<number>(10);
-  const [totalPages, setTotalPages] = useState<number>(1);
-  const [totalCount, setTotalCount] = useState<number>(0);
-
-  // Filters
-  const [search, setSearch] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
-  const [managerFilter, setManagerFilter] = useState<string>('ALL');
-  const [managers, setManagers] = useState<ManagerListItem[]>([]);
-  const [availablePermissions, setAvailablePermissions] = useState<any[]>([]);
-
-  // Loading & Error states
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(
-    null
-  );
-
-  // Selected agent for modals
-  const [selectedAgent, setSelectedAgent] = useState<AgentListItem | null>(null);
-  const [detailedAgent, setDetailedAgent] = useState<AgentDetail | null>(null);
-  const [isLoadingDetail, setIsLoadingDetail] = useState<boolean>(false);
-
-  // Modal visibility states
-  const [isCreateOpen, setIsCreateOpen] = useState<boolean>(false);
-  const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
-  const [isStatusOpen, setIsStatusOpen] = useState<boolean>(false);
-  const [targetStatus, setTargetStatus] = useState<'ACTIVE' | 'SUSPENDED'>('SUSPENDED');
-  const [isResetOpen, setIsResetOpen] = useState<boolean>(false);
-  const [isPermissionsOpen, setIsPermissionsOpen] = useState<boolean>(false);
-  const [isAssignManagerOpen, setIsAssignManagerOpen] = useState<boolean>(false);
-  const [isDetailOpen, setIsDetailOpen] = useState<boolean>(false);
-
-  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
-    setToastMessage({ type, message });
+  const showToast = (text: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage({ text, type });
     setTimeout(() => {
       setToastMessage(null);
-    }, 4000);
+    }, 4500);
   };
 
-  // Fetch agents list
-  const fetchAgents = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await apiClient.getAgents({
-        search: search.trim() || undefined,
-        status: statusFilter !== 'ALL' ? statusFilter : undefined,
-        managerId: managerFilter !== 'ALL' ? managerFilter : undefined,
-        page,
-        limit,
-      });
-
-      setAgents(data.items || []);
-      setTotalPages(data.totalPages || 1);
-      setTotalCount(data.total || 0);
-      if (data.stats) {
-        setStats(data.stats);
-      }
-      if (data.scopeInfo) {
-        setScopeInfo(data.scopeInfo);
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to retrieve agent records.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [search, statusFilter, managerFilter, page, limit]);
-
-  // Initial metadata fetch
-  useEffect(() => {
-    const fetchMetadata = async () => {
-      try {
-        const [mgrsRes, permsRes] = await Promise.all([
-          apiClient.getManagers({ limit: 100 }).catch(() => ({ items: [] })),
-          apiClient.getAvailablePermissions().catch(() => []),
-        ]);
-        setManagers(mgrsRes.items || []);
-        setAvailablePermissions(permsRes || []);
-      } catch {
-        // graceful fallback
-      }
-    };
-    fetchMetadata();
-  }, []);
-
-  useEffect(() => {
-    fetchAgents();
-  }, [fetchAgents]);
-
-  // Handler: Create Agent
-  const handleCreateAgent = async (data: CreateAgentDTO) => {
-    const res = await apiClient.createAgent(data);
-    await fetchAgents();
-    showToast(`Agent ${data.firstName} ${data.lastName} successfully created.`);
-    return res;
-  };
-
-  // Handler: Edit Agent
-  const handleEditAgent = async (id: string, data: UpdateAgentDTO) => {
-    await apiClient.updateAgent(id, data);
-    await fetchAgents();
-    showToast('Agent profile updated successfully.');
-  };
-
-  // Handler: Status Change (Enable / Disable)
-  const handleStatusChange = async (id: string, status: 'ACTIVE' | 'SUSPENDED', reason: string) => {
-    await apiClient.updateAgentStatus(id, status, reason);
-    await fetchAgents();
-    showToast(`Agent status set to ${status}.`);
-  };
-
-  // Handler: Password Reset
-  const handleResetPassword = async (
-    id: string,
-    options: { newPassword?: string; autoGenerate?: boolean }
-  ) => {
-    const res = await apiClient.resetAgentPassword(id, options);
-    showToast('Password reset executed.');
-    return res;
-  };
-
-  // Handler: Assign Permissions
-  const handleUpdatePermissions = async (id: string, perms: string[]) => {
-    await apiClient.updateAgentPermissions(id, perms);
-    await fetchAgents();
-    showToast('Agent permissions updated successfully.');
-  };
-
-  // Handler: Assign Agent to Manager
-  const handleAssignManager = async (id: string, managerId: string | null) => {
-    await apiClient.assignAgentManager(id, managerId);
-    await fetchAgents();
-    showToast('Agent manager assignment updated.');
-  };
-
-  // Handler: Open Details Modal
-  const handleOpenDetails = async (agent: AgentListItem) => {
-    setSelectedAgent(agent);
-    setIsDetailOpen(true);
-    setIsLoadingDetail(true);
-    try {
-      const detail = await apiClient.getAgentById(agent.id);
-      setDetailedAgent(detail);
-    } catch (err: any) {
-      showToast(err.message || 'Failed to load agent details', 'error');
-    } finally {
-      setIsLoadingDetail(false);
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
+  const getStatusBadgeVariant = (status: AgentStatus) => {
     switch (status) {
       case 'ACTIVE':
-        return <Badge variant="success">ACTIVE</Badge>;
+        return 'success';
+      case 'PENDING':
+        return 'warning';
       case 'SUSPENDED':
-        return <Badge variant="danger">SUSPENDED</Badge>;
-      case 'INACTIVE':
+      case 'DISABLED':
+        return 'error';
       default:
-        return <Badge variant="neutral">INACTIVE</Badge>;
+        return 'neutral';
     }
   };
 
-  const isManagerOrAdmin = role === 'SUPER_ADMIN' || role === 'MANAGER';
-  const isSuperAdmin = role === 'SUPER_ADMIN';
+  const handleOpenStatusModal = (agent: AgentItem) => {
+    const nextStatus: AgentStatus = agent.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
+    setStatusTarget({
+      agent,
+      nextStatus,
+    });
+  };
+
+  const handleCreateSubmit = async (payload: CreateAgentPayload) => {
+    try {
+      await createAgent(payload);
+      showToast(`Agent "${payload.name}" created successfully`);
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to create agent', 'error');
+      throw err;
+    }
+  };
+
+  const handleEditSubmit = async (id: string, payload: UpdateAgentPayload) => {
+    try {
+      await updateAgent(id, payload);
+      showToast('Agent profile updated successfully');
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to update agent', 'error');
+      throw err;
+    }
+  };
+
+  const handleStatusConfirm = async (id: string, newStatus: AgentStatus, reason?: string) => {
+    try {
+      await updateAgentStatus(id, newStatus, reason);
+      showToast(`Agent status changed to ${newStatus}`);
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to change agent status', 'error');
+      throw err;
+    }
+  };
+
+  const handleAssignManagerConfirm = async (agentId: string, managerId: string | null) => {
+    try {
+      await assignManager(agentId, managerId);
+      showToast('Supervising manager updated successfully');
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to assign manager', 'error');
+      throw err;
+    }
+  };
+
+  // If viewing details for /agents/:id
+  if (selectedAgentId) {
+    if (isLoadingDetail) {
+      return (
+        <div className="space-y-6">
+          <Breadcrumbs
+            items={[
+              { label: 'Management', onClick: clearSelectedAgent },
+              { label: 'Agents', onClick: clearSelectedAgent },
+              { label: 'Loading...' },
+            ]}
+          />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="space-y-4">
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </div>
+            <div className="lg:col-span-2 space-y-4">
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (selectedAgentDetail) {
+      return (
+        <>
+          <AgentDetailsView
+            agent={selectedAgentDetail}
+            onBack={clearSelectedAgent}
+            onEdit={(a) => setEditingAgent(a)}
+            onStatusChange={(a) => handleOpenStatusModal(a)}
+            onAssignManager={(a) => setAssigningManagerTarget(a)}
+            onViewClients={(a) => setViewingClientsTarget(a)}
+          />
+
+          {/* Edit Modal */}
+          <EditAgentModal
+            isOpen={!!editingAgent}
+            onClose={() => setEditingAgent(null)}
+            agent={editingAgent}
+            onSubmit={handleEditSubmit}
+            managers={managers}
+          />
+
+          {/* Status Modal */}
+          <AgentStatusModal
+            isOpen={!!statusTarget.agent}
+            onClose={() => setStatusTarget({ agent: null, nextStatus: null })}
+            agent={statusTarget.agent}
+            targetStatus={statusTarget.nextStatus}
+            onConfirm={handleStatusConfirm}
+          />
+
+          {/* Assign Manager Modal */}
+          <AssignManagerModal
+            isOpen={!!assigningManagerTarget}
+            onClose={() => setAssigningManagerTarget(null)}
+            agent={assigningManagerTarget}
+            managers={managers}
+            onConfirm={handleAssignManagerConfirm}
+          />
+
+          {/* Client Portfolio Modal */}
+          <AgentClientsModal
+            isOpen={!!viewingClientsTarget}
+            onClose={() => setViewingClientsTarget(null)}
+            agent={viewingClientsTarget}
+            clients={selectedAgentDetail.clients || []}
+          />
+        </>
+      );
+    }
+
+    // Invalid / missing agent ID route (e.g. /agents/invalid)
+    return (
+      <div className="space-y-6">
+        <Breadcrumbs
+          items={[
+            { label: 'Management', onClick: clearSelectedAgent },
+            { label: 'Agents', onClick: clearSelectedAgent },
+            { label: 'Not Found' },
+          ]}
+        />
+        <NotFoundState
+          title="Agent Account Not Found"
+          resourceName="Agent Profile"
+          resourceId={selectedAgentId}
+          onBack={clearSelectedAgent}
+        />
+      </div>
+    );
+  }
+
+  // Table Columns Definition
+  const columns: ColumnDef<AgentItem>[] = [
+    {
+      key: 'name',
+      header: 'Agent',
+      render: (agent) => {
+        const initials = agent.name
+          .split(' ')
+          .map((n) => n[0])
+          .slice(0, 2)
+          .join('');
+
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[var(--accent-purple-dim)] border border-[var(--border-subtle)] text-[var(--accent-purple)] flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  selectAgent(agent.id);
+                }}
+                className="font-semibold text-[var(--text-primary)] hover:text-[var(--accent-purple)] transition-colors cursor-pointer truncate"
+              >
+                {agent.name}
+              </div>
+              <div className="text-[11px] text-[var(--text-muted)] font-mono truncate">
+                {agent.email}
+              </div>
+            </div>
+          </div>
+        );
+      },
+      sortable: true,
+    },
+    {
+      key: 'email',
+      header: 'Email',
+      render: (agent) => (
+        <span className="font-mono text-xs text-[var(--text-secondary)]">
+          {agent.email}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'manager',
+      header: 'Supervising Manager',
+      render: (agent) =>
+        agent.managerName ? (
+          <div>
+            <div className="text-xs font-medium text-[var(--text-primary)]">{agent.managerName}</div>
+            <div className="text-[10px] text-[var(--text-muted)]">{agent.department || 'Operations'}</div>
+          </div>
+        ) : (
+          <Badge variant="neutral" size="sm">Unassigned</Badge>
+        ),
+      sortable: true,
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (agent) => (
+        <Badge variant={getStatusBadgeVariant(agent.status)} size="sm">
+          {agent.status}
+        </Badge>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'clients',
+      header: 'Clients',
+      render: (agent) => (
+        <span className="font-mono text-xs font-bold text-[var(--text-primary)]">
+          {agent.clientsCount} accounts
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'numbers',
+      header: 'Assigned Numbers',
+      render: (agent) => (
+        <span className="font-mono text-xs text-[var(--text-secondary)]">
+          {agent.assignedNumbersCount} E.164
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'earnings',
+      header: 'Commission / Earnings',
+      render: (agent) => (
+        <span className="font-mono text-xs font-bold text-[var(--accent-emerald)]">
+          {formatCurrency(agent.earnings)}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'lastActivity',
+      header: 'Last Activity',
+      render: (agent) => (
+        <span className="font-mono text-xs text-[var(--text-secondary)]">
+          {agent.lastLoginAt ? formatRelativeTime(agent.lastLoginAt) : 'Never'}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (agent) => (
+        <div className="flex items-center justify-end">
+          <MoreActionsMenu
+            ariaLabel={`Actions for ${agent.name}`}
+            items={[
+              {
+                id: 'view',
+                label: 'View Agent Profile',
+                icon: <Eye className="w-3.5 h-3.5" />,
+                onClick: () => selectAgent(agent.id),
+              },
+              {
+                id: 'edit',
+                label: 'Edit Agent',
+                icon: <Edit2 className="w-3.5 h-3.5" />,
+                onClick: () => setEditingAgent(agent),
+              },
+              {
+                id: 'manager',
+                label: 'Reassign Manager',
+                icon: <UserCheck className="w-3.5 h-3.5" />,
+                onClick: () => setAssigningManagerTarget(agent),
+              },
+              {
+                id: 'status',
+                label: agent.status === 'ACTIVE' ? 'Suspend Agent' : 'Activate Agent',
+                icon: <Power className="w-3.5 h-3.5" />,
+                isDangerous: agent.status === 'ACTIVE',
+                confirmTitle: `Suspend Agent ${agent.name}`,
+                confirmMessage: `Are you sure you want to suspend agent ${agent.name}? Their managed clients and commission clearing will be temporarily put on hold.`,
+                onClick: () => handleOpenStatusModal(agent),
+              },
+            ]}
+          />
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6">
-      {/* Toast Notification */}
+      {/* Toast feedback */}
       {toastMessage && (
         <div
-          className={`fixed bottom-5 right-5 z-50 p-4 rounded-xl shadow-lg border text-xs font-semibold flex items-center gap-2 transition-all ${
+          className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl border shadow-xl backdrop-blur-md flex items-center gap-2.5 text-xs font-semibold animate-in fade-in slide-in-from-bottom-3 ${
             toastMessage.type === 'success'
-              ? 'bg-emerald-600 text-white border-emerald-700'
-              : 'bg-rose-600 text-white border-rose-700'
+              ? 'bg-[var(--accent-emerald-dim)] border-[var(--accent-emerald)]/30 text-[var(--accent-emerald)]'
+              : 'bg-[var(--accent-rose-dim)] border-[var(--accent-rose)]/30 text-[var(--accent-rose)]'
           }`}
+          role="status"
         >
           {toastMessage.type === 'success' ? (
-            <CheckCircle2 className="w-4 h-4" />
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
           ) : (
-            <AlertCircle className="w-4 h-4" />
+            <AlertCircle className="w-4 h-4 shrink-0" />
           )}
-          <span>{toastMessage.message}</span>
+          <span>{toastMessage.text}</span>
         </div>
       )}
 
-      {/* Top Header Card */}
-      <div className="p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5 mb-1.5">
-            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800/60">
-              Phase 06 • Agent Management
-            </span>
-            <span className="text-[11px] font-mono text-slate-500 flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-              {scopeInfo.isScopedToManager
-                ? `Manager Scope: ${scopeInfo.managerName || 'Assigned Scope'}`
-                : role === 'AGENT'
-                ? 'Agent Personal Dossier'
-                : 'Super Admin Unrestricted Global Scope'}
-            </span>
-          </div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2">
-            <Users className="w-6 h-6 text-blue-600" />
-            Agent Directory & Operations
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            {role === 'SUPER_ADMIN'
-              ? 'Supervise and control all commercial agents, assign agents to managers, review statistics, number inventories, and client relationships.'
-              : role === 'MANAGER'
-              ? `Manage and monitor agents within your assigned managerial portfolio (${scopeInfo.managerName || 'Your Department'}).`
-              : 'Inspect your active client assignments, leased numbers, commission earnings, and operational telemetry.'}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5 shrink-0">
-          <button
-            onClick={fetchAgents}
-            disabled={isLoading}
-            className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors"
-            title="Refresh Directory"
+      {/* Standard Page Header Pattern */}
+      <PageHeader
+        title="Agents"
+        description="Commercial agent directory, client portfolio oversight, and commission clearing."
+        breadcrumbs={[{ label: 'Management' }, { label: 'Agents' }]}
+        primaryAction={{
+          label: 'Create Agent',
+          onClick: () => setIsCreateOpen(true),
+          icon: <Plus className="w-3.5 h-3.5" />,
+          id: 'btn-create-agent',
+        }}
+        secondaryActions={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refresh}
+            isLoading={isRefreshing}
+            leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />}
+            aria-label="Refresh Agents telemetry"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-          </button>
-          {isManagerOrAdmin && (
-            <button
-              onClick={() => setIsCreateOpen(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Create Agent</span>
-            </button>
+            Refresh
+          </Button>
+        }
+      />
+
+      {/* KPI Summary (4 StatCards) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {isLoading ? (
+          <>
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </>
+        ) : (
+          <>
+            <StatCard
+              title="Total Agents"
+              value={formatNumber(kpis.totalAgents)}
+              subtext="Commercial field representatives"
+              icon={Users}
+              iconBgColor="bg-[var(--accent-purple-dim)] text-[var(--accent-purple)]"
+              badgeText="Hierarchy"
+              badgeVariant="purple"
+            />
+            <StatCard
+              title="Active Agents"
+              value={formatNumber(kpis.activeAgents)}
+              subtext="Generating volume traffic"
+              icon={UserCheck}
+              iconBgColor="bg-[var(--accent-emerald-dim)] text-[var(--accent-emerald)]"
+              badgeText="Operational"
+              badgeVariant="success"
+            />
+            <StatCard
+              title="Suspended Agents"
+              value={formatNumber(kpis.suspendedAgents)}
+              subtext="Held credentials or compliance"
+              icon={ShieldAlert}
+              iconBgColor="bg-[var(--accent-rose-dim)] text-[var(--accent-rose)]"
+              badgeText={kpis.suspendedAgents > 0 ? 'Review' : 'Zero'}
+              badgeVariant={kpis.suspendedAgents > 0 ? 'error' : 'neutral'}
+            />
+            <StatCard
+              title="Total Clients Managed"
+              value={formatNumber(kpis.totalClientsManaged)}
+              subtext={`Avg. ${kpis.averageClientsPerAgent} clients/agent • ${formatCurrency(kpis.totalCommissionEarned)} commission`}
+              icon={Briefcase}
+              iconBgColor="bg-[var(--accent-blue-dim)] text-[var(--accent-blue)]"
+              badgeText="Portfolio"
+              badgeVariant="info"
+            />
+          </>
+        )}
+      </div>
+
+      {/* Filter Bar */}
+      <FilterBar
+        searchPlaceholder="Search by agent name, email, or manager..."
+        searchValue={filterState.search}
+        onSearchChange={(val) => updateFilter('search', val)}
+        filters={[
+          {
+            key: 'status',
+            label: 'Status',
+            value: filterState.status,
+            options: [
+              { label: 'All Statuses', value: 'ALL' },
+              { label: 'Active', value: 'ACTIVE' },
+              { label: 'Pending', value: 'PENDING' },
+              { label: 'Suspended', value: 'SUSPENDED' },
+              { label: 'Disabled', value: 'DISABLED' },
+            ],
+            onChange: (val) => updateFilter('status', val),
+          },
+          {
+            key: 'managerId',
+            label: 'Manager',
+            value: filterState.managerId,
+            options: [
+              { label: 'All Managers', value: 'ALL' },
+              { label: 'Unassigned (Direct)', value: 'UNASSIGNED' },
+              ...managers.map((m) => ({ label: `${m.name} (${m.department})`, value: m.id })),
+            ],
+            onChange: (val) => updateFilter('managerId', val),
+          },
+          {
+            key: 'clientCountRange',
+            label: 'Client Portfolio',
+            value: filterState.clientCountRange,
+            options: [
+              { label: 'All Ranges', value: 'ALL' },
+              { label: '0 Clients (Empty)', value: '0' },
+              { label: '1 - 10 Clients', value: '1-10' },
+              { label: '11 - 20 Clients', value: '11-20' },
+              { label: '20+ Clients (Enterprise)', value: '20+' },
+            ],
+            onChange: (val) => updateFilter('clientCountRange', val),
+          },
+          {
+            key: 'sortBy',
+            label: 'Sort By',
+            value: filterState.sortBy,
+            options: [
+              { label: 'Date Created', value: 'createdAt' },
+              { label: 'Name', value: 'name' },
+              { label: 'Clients Count', value: 'clients' },
+              { label: 'Assigned Numbers', value: 'numbers' },
+              { label: 'Earnings / Commission', value: 'earnings' },
+              { label: 'Last Activity', value: 'lastActivity' },
+            ],
+            onChange: (val) => updateFilter('sortBy', val as AgentsSortField),
+          },
+        ]}
+        onReset={resetFilters}
+      />
+
+      {/* Main Table / State View */}
+      {error ? (
+        <ErrorState
+          title="Failed to Load Agents"
+          message={error}
+          onRetry={refresh}
+        />
+      ) : agents.length === 0 && !isLoading ? (
+        <EmptyState
+          title="No agents found"
+          message="No commercial agent profiles match your active search and filter criteria."
+          icon={Users}
+          actionLabel="Reset Filters"
+          onAction={resetFilters}
+        />
+      ) : (
+        <div className="space-y-4">
+          <Table
+            columns={columns}
+            data={agents}
+            keyExtractor={(a) => a.id}
+            isLoading={isLoading}
+            onRowClick={(a) => selectAgent(a.id)}
+            emptyMessage="No agents available"
+          />
+
+          {/* Pagination */}
+          {totalCount > filterState.limit && (
+            <Pagination
+              currentPage={filterState.page}
+              totalPages={totalPages}
+              onPageChange={(page) => updateFilter('page', page)}
+              pageSize={filterState.limit}
+              totalItems={totalCount}
+            />
           )}
         </div>
-      </div>
-
-      {/* Aggregate Statistics Overview Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-          <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            Total Agents
-          </div>
-          <div className="text-xl font-extrabold text-slate-900 dark:text-slate-100 mt-1 flex items-center gap-1.5">
-            <Users className="w-5 h-5 text-blue-600" />
-            {stats.total}
-          </div>
-          <div className="text-[11px] text-slate-400 mt-1">In authorized scope</div>
-        </div>
-
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-          <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            Active Agents
-          </div>
-          <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1.5">
-            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-            {stats.active}
-          </div>
-          <div className="text-[11px] text-slate-400 mt-1">
-            {stats.suspended} suspended • {stats.inactive} inactive
-          </div>
-        </div>
-
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-          <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            Managed Clients
-          </div>
-          <div className="text-xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-1 flex items-center gap-1.5">
-            <Building className="w-5 h-5 text-indigo-500" />
-            {stats.totalClients}
-          </div>
-          <div className="text-[11px] text-slate-400 mt-1">Active customer orgs</div>
-        </div>
-
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-          <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            Allocated Numbers
-          </div>
-          <div className="text-xl font-extrabold text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1.5">
-            <Hash className="w-5 h-5 text-amber-500" />
-            {stats.totalNumbers}
-          </div>
-          <div className="text-[11px] text-slate-400 mt-1">Dedicated DID pools</div>
-        </div>
-
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-          <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            SMS Volume
-          </div>
-          <div className="text-xl font-extrabold text-purple-600 dark:text-purple-400 mt-1 flex items-center gap-1.5">
-            <MessageSquare className="w-5 h-5 text-purple-500" />
-            {stats.totalSms.toLocaleString()}
-          </div>
-          <div className="text-[11px] text-slate-400 mt-1">Processed messages</div>
-        </div>
-
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-          <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            Total Earnings
-          </div>
-          <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1.5">
-            <DollarSign className="w-5 h-5 text-emerald-500" />
-            ${stats.totalEarnings.toLocaleString(undefined, { minimumFractionDigits: 0 })}
-          </div>
-          <div className="text-[11px] text-slate-400 mt-1">Cumulative commission</div>
-        </div>
-      </div>
-
-      {/* Search & Filter Bar */}
-      <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
-        <div className="flex flex-col md:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search by agent name, username, email, phone..."
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-            {/* Status Filter */}
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setPage(1);
-              }}
-              className="px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="ALL">All Statuses</option>
-              <option value="ACTIVE">ACTIVE</option>
-              <option value="INACTIVE">INACTIVE</option>
-              <option value="SUSPENDED">SUSPENDED</option>
-            </select>
-
-            {/* Manager Filter (Super Admin only) */}
-            {isSuperAdmin && (
-              <select
-                value={managerFilter}
-                onChange={(e) => {
-                  setManagerFilter(e.target.value);
-                  setPage(1);
-                }}
-                className="px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 max-w-48 truncate"
-              >
-                <option value="ALL">All Managers</option>
-                <option value="UNASSIGNED">Unassigned</option>
-                {managers.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
-            )}
-
-            {(search || statusFilter !== 'ALL' || managerFilter !== 'ALL') && (
-              <button
-                onClick={() => {
-                  setSearch('');
-                  setStatusFilter('ALL');
-                  setManagerFilter('ALL');
-                  setPage(1);
-                }}
-                className="px-3 py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-              >
-                Reset
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Agents Data Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
-        {isLoading ? (
-          <div className="py-16 text-center text-xs text-slate-500">
-            <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-2" />
-            Loading agent profiles and hierarchy mappings...
-          </div>
-        ) : error ? (
-          <div className="p-8 text-center text-xs text-rose-500 flex flex-col items-center gap-2">
-            <AlertCircle className="w-6 h-6" />
-            <span>{error}</span>
-          </div>
-        ) : agents.length === 0 ? (
-          <div className="py-16 text-center text-xs text-slate-400">
-            <Users className="w-8 h-8 mx-auto mb-2 text-slate-300 dark:text-slate-700" />
-            No agents found matching your query or current access scope.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                <tr>
-                  <th className="px-4 py-3">Agent Name & Username</th>
-                  <th className="px-4 py-3">Assigned Manager</th>
-                  <th className="px-4 py-3 text-center">Commission</th>
-                  <th className="px-4 py-3 text-center">Status</th>
-                  <th className="px-4 py-3 text-center">Clients</th>
-                  <th className="px-4 py-3 text-center">Numbers</th>
-                  <th className="px-4 py-3 text-right">Earnings</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {agents.map((agent) => (
-                  <tr
-                    key={agent.id}
-                    className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
-                  >
-                    {/* Agent Name & Email */}
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 font-bold flex items-center justify-center border border-blue-200 dark:border-blue-900/60 shrink-0">
-                          {agent.firstName[0]}
-                          {agent.lastName[0]}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="font-bold text-slate-900 dark:text-slate-100 truncate">
-                            {agent.name}
-                          </div>
-                          <div className="text-[11px] text-slate-400 font-mono truncate">
-                            @{agent.username} • {agent.email}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Assigned Manager */}
-                    <td className="px-4 py-3">
-                      {agent.managerName ? (
-                        <div>
-                          <div className="font-medium text-slate-800 dark:text-slate-200 flex items-center gap-1">
-                            <Building className="w-3.5 h-3.5 text-blue-500" />
-                            {agent.managerName}
-                          </div>
-                          <div className="text-[10px] text-slate-400">{agent.department || 'Operations'}</div>
-                        </div>
-                      ) : (
-                        <span className="text-[11px] text-slate-400 italic">Unassigned (Direct)</span>
-                      )}
-                    </td>
-
-                    {/* Commission */}
-                    <td className="px-4 py-3 text-center">
-                      <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded font-mono text-[11px] font-bold">
-                        {(agent.commissionRate * 100).toFixed(1)}%
-                      </span>
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-4 py-3 text-center">{getStatusBadge(agent.status)}</td>
-
-                    {/* Clients Count */}
-                    <td className="px-4 py-3 text-center font-bold text-slate-800 dark:text-slate-200">
-                      {agent.clientsCount}
-                    </td>
-
-                    {/* Numbers Count */}
-                    <td className="px-4 py-3 text-center">
-                      <span className="font-bold text-slate-800 dark:text-slate-200">
-                        {agent.assignedNumbersCount}
-                      </span>
-                      {agent.unassignedNumbersCount > 0 && (
-                        <span className="text-[10px] text-slate-400 ml-1">
-                          (+{agent.unassignedNumbersCount})
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Earnings */}
-                    <td className="px-4 py-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                      ${agent.earnings.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {/* View Details */}
-                        <button
-                          onClick={() => handleOpenDetails(agent)}
-                          className="p-1.5 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg transition-colors"
-                          title="View Agent Details, Statistics & Clients"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-
-                        {/* Edit Agent (Super Admin / Manager) */}
-                        {isManagerOrAdmin && (
-                          <button
-                            onClick={() => {
-                              setSelectedAgent(agent);
-                              setIsEditOpen(true);
-                            }}
-                            className="p-1.5 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 rounded-lg transition-colors"
-                            title="Edit Agent Profile"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                        )}
-
-                        {/* Reassign Manager (Super Admin only) */}
-                        {isSuperAdmin && (
-                          <button
-                            onClick={() => {
-                              setSelectedAgent(agent);
-                              setIsAssignManagerOpen(true);
-                            }}
-                            className="p-1.5 text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/50 rounded-lg transition-colors"
-                            title="Assign to Manager"
-                          >
-                            <Building className="w-4 h-4" />
-                          </button>
-                        )}
-
-                        {/* Reset Password */}
-                        {isManagerOrAdmin && (
-                          <button
-                            onClick={() => {
-                              setSelectedAgent(agent);
-                              setIsResetOpen(true);
-                            }}
-                            className="p-1.5 text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/50 rounded-lg transition-colors"
-                            title="Reset Password"
-                          >
-                            <KeyRound className="w-4 h-4" />
-                          </button>
-                        )}
-
-                        {/* Permissions */}
-                        {isManagerOrAdmin && (
-                          <button
-                            onClick={() => {
-                              setSelectedAgent(agent);
-                              setIsPermissionsOpen(true);
-                            }}
-                            className="p-1.5 text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/50 rounded-lg transition-colors"
-                            title="Assign Permissions"
-                          >
-                            <ShieldCheck className="w-4 h-4" />
-                          </button>
-                        )}
-
-                        {/* Status Toggle (Enable / Disable) */}
-                        {isManagerOrAdmin && (
-                          <button
-                            onClick={() => {
-                              setSelectedAgent(agent);
-                              setTargetStatus(agent.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE');
-                              setIsStatusOpen(true);
-                            }}
-                            className={`p-1.5 rounded-lg transition-colors ${
-                              agent.status === 'ACTIVE'
-                                ? 'text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50'
-                                : 'text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50'
-                            }`}
-                            title={agent.status === 'ACTIVE' ? 'Suspend Agent' : 'Activate Agent'}
-                          >
-                            <Power className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Pagination Footer */}
-        <div className="p-4 bg-slate-50/60 dark:bg-slate-800/40 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500">
-          <div>
-            Showing <span className="font-semibold">{agents.length}</span> of{' '}
-            <span className="font-semibold">{totalCount}</span> agents
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-white dark:hover:bg-slate-800 flex items-center gap-1 transition-colors"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-              Previous
-            </button>
-            <span className="font-medium text-slate-700 dark:text-slate-300">
-              Page {page} of {totalPages}
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-              className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-white dark:hover:bg-slate-800 flex items-center gap-1 transition-colors"
-            >
-              Next
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Modals */}
-      {isCreateOpen && (
-        <CreateAgentModal
-          isOpen={isCreateOpen}
-          onClose={() => setIsCreateOpen(false)}
-          onSubmit={handleCreateAgent}
-          managers={managers}
-          currentRole={role}
-        />
       )}
 
-      {isEditOpen && selectedAgent && (
-        <EditAgentModal
-          isOpen={isEditOpen}
-          onClose={() => {
-            setIsEditOpen(false);
-            setSelectedAgent(null);
-          }}
-          agent={selectedAgent}
-          onSubmit={handleEditAgent}
-          managers={managers}
-          currentRole={role}
-        />
-      )}
+      {/* Create Agent Modal */}
+      <CreateAgentModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onSubmit={handleCreateSubmit}
+        managers={managers}
+      />
 
-      {isStatusOpen && selectedAgent && (
-        <AgentStatusModal
-          isOpen={isStatusOpen}
-          onClose={() => {
-            setIsStatusOpen(false);
-            setSelectedAgent(null);
-          }}
-          agent={selectedAgent}
-          targetStatus={targetStatus}
-          onSubmit={handleStatusChange}
-        />
-      )}
+      {/* Edit Agent Modal */}
+      <EditAgentModal
+        isOpen={!!editingAgent}
+        onClose={() => setEditingAgent(null)}
+        agent={editingAgent}
+        onSubmit={handleEditSubmit}
+        managers={managers}
+      />
 
-      {isResetOpen && selectedAgent && (
-        <AgentResetPasswordModal
-          isOpen={isResetOpen}
-          onClose={() => {
-            setIsResetOpen(false);
-            setSelectedAgent(null);
-          }}
-          agent={selectedAgent}
-          onSubmit={handleResetPassword}
-        />
-      )}
+      {/* Status Modal */}
+      <AgentStatusModal
+        isOpen={!!statusTarget.agent}
+        onClose={() => setStatusTarget({ agent: null, nextStatus: null })}
+        agent={statusTarget.agent}
+        targetStatus={statusTarget.nextStatus}
+        onConfirm={handleStatusConfirm}
+      />
 
-      {isPermissionsOpen && selectedAgent && (
-        <AgentPermissionsModal
-          isOpen={isPermissionsOpen}
-          onClose={() => {
-            setIsPermissionsOpen(false);
-            setSelectedAgent(null);
-          }}
-          agent={selectedAgent}
-          availablePermissions={availablePermissions}
-          onSubmit={handleUpdatePermissions}
-        />
-      )}
-
-      {isAssignManagerOpen && selectedAgent && (
-        <AssignManagerModal
-          isOpen={isAssignManagerOpen}
-          onClose={() => {
-            setIsAssignManagerOpen(false);
-            setSelectedAgent(null);
-          }}
-          agent={selectedAgent}
-          managers={managers}
-          onSubmit={handleAssignManager}
-        />
-      )}
-
-      {isDetailOpen && selectedAgent && (
-        <AgentDetailsModal
-          isOpen={isDetailOpen}
-          onClose={() => {
-            setIsDetailOpen(false);
-            setSelectedAgent(null);
-            setDetailedAgent(null);
-          }}
-          agent={detailedAgent}
-          isLoading={isLoadingDetail}
-        />
-      )}
+      {/* Assign Manager Modal */}
+      <AssignManagerModal
+        isOpen={!!assigningManagerTarget}
+        onClose={() => setAssigningManagerTarget(null)}
+        agent={assigningManagerTarget}
+        managers={managers}
+        onConfirm={handleAssignManagerConfirm}
+      />
     </div>
   );
 };

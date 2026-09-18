@@ -1,643 +1,672 @@
-import React, { useState, useEffect, useCallback } from 'react';
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState } from 'react';
+import { useManagers } from '../../hooks/useManagers';
 import {
-  ManagerListItem,
+  ManagerItem,
   ManagerDetail,
-  CreateManagerDTO,
-  UpdateManagerDTO,
-  PermissionDefinition,
-} from '../../types/manager';
-import { apiClient } from '../../services/api';
+  ManagerStatus,
+  ManagersSortField,
+  CreateManagerPayload,
+  UpdateManagerPayload,
+} from '../../types/managers';
+import { StatCard } from '../ui/Card';
 import { Badge } from '../ui/Badge';
+import { Button } from '../ui/Button';
+import { FilterBar } from '../ui/FilterBar';
+import { Table, ColumnDef } from '../ui/Table';
+import { Pagination } from '../ui/Pagination';
+import { StatCardSkeleton } from '../ui/Skeleton';
+import { EmptyState } from '../ui/EmptyState';
+import { ErrorState } from '../ui/ErrorState';
+import { Breadcrumbs } from '../ui/Breadcrumbs';
+import { NotFoundState } from '../system/NotFoundState';
+import { PageHeader } from '../ui/PageHeader';
+import { MoreActionsMenu } from '../ui/MoreActionsMenu';
+
+import { CapacityIndicator } from './managers/CapacityIndicator';
 import { CreateManagerModal } from './managers/CreateManagerModal';
 import { EditManagerModal } from './managers/EditManagerModal';
-import { StatusChangeModal } from './managers/StatusChangeModal';
-import { ResetPasswordModal } from './managers/ResetPasswordModal';
-import { PermissionsModal } from './managers/PermissionsModal';
-import { ManagerDetailsModal } from './managers/ManagerDetailsModal';
+import { ManagerStatusModal } from './managers/ManagerStatusModal';
+import { ManageAgentsModal } from './managers/ManageAgentsModal';
+import { ManagerDetailsView } from './managers/ManagerDetailsView';
+
+import { formatDate, formatNumber } from '../../utils/formatters';
 import {
   Users,
-  Search,
+  UserCheck,
+  Gauge,
+  Building,
   Plus,
   RefreshCw,
-  Filter,
   Eye,
   Edit2,
   Power,
-  KeyRound,
-  ShieldCheck,
-  Briefcase,
-  Layers,
-  CheckCircle2,
+  Shield,
+  ShieldAlert,
   AlertCircle,
-  Clock,
-  Building,
-  UserCheck,
+  CheckCircle2,
+  UserPlus,
+  MoreHorizontal,
 } from 'lucide-react';
 
 export const ManagerManagementView: React.FC = () => {
-  // State for listing and pagination
-  const [managers, setManagers] = useState<ManagerListItem[]>([]);
-  const [stats, setStats] = useState<{
-    total: number;
-    active: number;
-    suspended: number;
-    pending: number;
-    totalAgentsManaged: number;
-    totalClientsManaged: number;
+  const {
+    managers,
+    totalCount,
+    kpis,
+    departments,
+    filterState,
+    totalPages,
+    isLoading,
+    isRefreshing,
+    error,
+    selectedManagerId,
+    selectedManagerDetail,
+    isLoadingDetail,
+    agentPool,
+    updateFilter,
+    resetFilters,
+    selectManager,
+    clearSelectedManager,
+    createManager,
+    updateManager,
+    updateManagerStatus,
+    assignAgent,
+    unassignAgent,
+    refresh,
+  } = useManagers();
+
+  // Modals state
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingManager, setEditingManager] = useState<ManagerItem | null>(null);
+  const [managingAgentsTarget, setManagingAgentsTarget] = useState<ManagerItem | null>(null);
+  const [statusTarget, setStatusTarget] = useState<{
+    manager: ManagerItem | null;
+    nextStatus: ManagerStatus | null;
   }>({
-    total: 0,
-    active: 0,
-    suspended: 0,
-    pending: 0,
-    totalAgentsManaged: 0,
-    totalClientsManaged: 0,
+    manager: null,
+    nextStatus: null,
   });
 
-  const [page, setPage] = useState<number>(1);
-  const [limit, setLimit] = useState<number>(10);
-  const [totalPages, setTotalPages] = useState<number>(1);
-  const [totalCount, setTotalCount] = useState<number>(0);
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
-  // Filters
-  const [search, setSearch] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
-  const [departmentFilter, setDepartmentFilter] = useState<string>('ALL');
-  const [departments, setDepartments] = useState<string[]>([]);
-  const [availablePermissions, setAvailablePermissions] = useState<PermissionDefinition[]>([]);
-
-  // Loading & Error states
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(
-    null
-  );
-
-  // Modal active manager tracking
-  const [selectedManager, setSelectedManager] = useState<ManagerListItem | null>(null);
-  const [detailedManager, setDetailedManager] = useState<ManagerDetail | null>(null);
-  const [isLoadingDetail, setIsLoadingDetail] = useState<boolean>(false);
-
-  // Modal visibility states
-  const [isCreateOpen, setIsCreateOpen] = useState<boolean>(false);
-  const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
-  const [isStatusOpen, setIsStatusOpen] = useState<boolean>(false);
-  const [targetStatus, setTargetStatus] = useState<'ACTIVE' | 'SUSPENDED'>('SUSPENDED');
-  const [isResetOpen, setIsResetOpen] = useState<boolean>(false);
-  const [isPermissionsOpen, setIsPermissionsOpen] = useState<boolean>(false);
-  const [isDetailOpen, setIsDetailOpen] = useState<boolean>(false);
-
-  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
-    setToastMessage({ type, message });
+  const showToast = (text: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage({ text, type });
     setTimeout(() => {
       setToastMessage(null);
-    }, 4000);
+    }, 4500);
   };
 
-  // Fetch managers list
-  const fetchManagers = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await apiClient.getManagers({
-        search: search.trim() || undefined,
-        status: statusFilter !== 'ALL' ? statusFilter : undefined,
-        department: departmentFilter !== 'ALL' ? departmentFilter : undefined,
-        page,
-        limit,
-      });
-
-      setManagers(data.items || []);
-      setTotalPages(data.totalPages || 1);
-      setTotalCount(data.total || 0);
-      if (data.stats) {
-        setStats(data.stats);
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to retrieve manager records.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [search, statusFilter, departmentFilter, page, limit]);
-
-  // Initial metadata fetch
-  useEffect(() => {
-    const fetchMetadata = async () => {
-      try {
-        const [deptList, permList] = await Promise.all([
-          apiClient.getManagerDepartments().catch(() => []),
-          apiClient.getAvailablePermissions().catch(() => []),
-        ]);
-        setDepartments(deptList);
-        setAvailablePermissions(permList);
-      } catch {
-        // graceful fallback
-      }
-    };
-    fetchMetadata();
-  }, []);
-
-  useEffect(() => {
-    fetchManagers();
-  }, [fetchManagers]);
-
-  // Handler: Create Manager
-  const handleCreateManager = async (data: CreateManagerDTO) => {
-    const res = await apiClient.createManager(data);
-    await fetchManagers();
-    showToast(`Manager ${data.firstName} ${data.lastName} successfully created.`);
-    return res;
-  };
-
-  // Handler: Edit Manager
-  const handleEditManager = async (id: string, data: UpdateManagerDTO) => {
-    await apiClient.updateManager(id, data);
-    await fetchManagers();
-    showToast('Manager profile updated successfully.');
-  };
-
-  // Handler: Status Change (Enable / Disable)
-  const handleStatusChange = async (id: string, status: 'ACTIVE' | 'SUSPENDED', reason: string) => {
-    await apiClient.updateManagerStatus(id, status, reason);
-    await fetchManagers();
-    showToast(`Manager status set to ${status}.`);
-  };
-
-  // Handler: Password Reset
-  const handleResetPassword = async (
-    id: string,
-    options: { newPassword?: string; autoGenerate?: boolean }
-  ) => {
-    const res = await apiClient.resetManagerPassword(id, options);
-    showToast('Password reset executed.');
-    return res;
-  };
-
-  // Handler: Assign Permissions
-  const handleUpdatePermissions = async (id: string, perms: string[]) => {
-    await apiClient.updateManagerPermissions(id, perms);
-    await fetchManagers();
-    showToast('Manager permissions updated successfully.');
-  };
-
-  // Handler: Open Details Modal
-  const handleOpenDetails = async (manager: ManagerListItem) => {
-    setSelectedManager(manager);
-    setIsDetailOpen(true);
-    setIsLoadingDetail(true);
-    try {
-      const detail = await apiClient.getManagerById(manager.id);
-      setDetailedManager(detail);
-    } catch (err: any) {
-      showToast(err.message || 'Failed to load manager details', 'error');
-    } finally {
-      setIsLoadingDetail(false);
+  const getStatusBadgeVariant = (status: ManagerStatus) => {
+    switch (status) {
+      case 'ACTIVE':
+        return 'success';
+      case 'PENDING':
+        return 'warning';
+      case 'SUSPENDED':
+      case 'DISABLED':
+        return 'error';
+      default:
+        return 'neutral';
     }
   };
+
+  const handleOpenStatusModal = (manager: ManagerItem) => {
+    const nextStatus: ManagerStatus = manager.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
+    setStatusTarget({
+      manager,
+      nextStatus,
+    });
+  };
+
+  const handleCreateSubmit = async (payload: CreateManagerPayload) => {
+    try {
+      await createManager(payload);
+      showToast(`Manager "${payload.name}" created successfully`);
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to create manager', 'error');
+      throw err;
+    }
+  };
+
+  const handleEditSubmit = async (id: string, payload: UpdateManagerPayload) => {
+    try {
+      await updateManager(id, payload);
+      showToast('Manager profile updated successfully');
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to update manager', 'error');
+      throw err;
+    }
+  };
+
+  const handleStatusConfirm = async (id: string, newStatus: ManagerStatus, reason?: string) => {
+    try {
+      await updateManagerStatus(id, newStatus, reason);
+      showToast(`Manager status changed to ${newStatus}`);
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to change status', 'error');
+      throw err;
+    }
+  };
+
+  const handleAssignAgent = async (managerId: string, agentId: string) => {
+    try {
+      await assignAgent(managerId, agentId);
+      showToast('Agent assigned to manager team');
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to assign agent', 'error');
+      throw err;
+    }
+  };
+
+  const handleUnassignAgent = async (managerId: string, agentId: string) => {
+    try {
+      await unassignAgent(managerId, agentId);
+      showToast('Agent unassigned from manager team');
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to unassign agent', 'error');
+      throw err;
+    }
+  };
+
+  // If a manager is selected for detail view (/managers/:id)
+  if (selectedManagerId) {
+    if (isLoadingDetail) {
+      return (
+        <div className="space-y-6">
+          <Breadcrumbs
+            items={[
+              { label: 'Management', onClick: clearSelectedManager },
+              { label: 'Managers', onClick: clearSelectedManager },
+              { label: 'Loading...' },
+            ]}
+          />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="space-y-4">
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </div>
+            <div className="lg:col-span-2 space-y-4">
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (selectedManagerDetail) {
+      return (
+        <>
+          <ManagerDetailsView
+            manager={selectedManagerDetail}
+            onBack={clearSelectedManager}
+            onEdit={(m) => setEditingManager(m)}
+            onStatusChange={(m) => handleOpenStatusModal(m)}
+            onManageAgents={(m) => setManagingAgentsTarget(m)}
+          />
+
+          {/* Edit Modal */}
+          <EditManagerModal
+            isOpen={!!editingManager}
+            onClose={() => setEditingManager(null)}
+            manager={editingManager}
+            onSubmit={handleEditSubmit}
+            departments={departments}
+          />
+
+          {/* Status Modal */}
+          <ManagerStatusModal
+            isOpen={!!statusTarget.manager}
+            onClose={() => setStatusTarget({ manager: null, nextStatus: null })}
+            manager={statusTarget.manager}
+            targetStatus={statusTarget.nextStatus}
+            onConfirm={handleStatusConfirm}
+          />
+
+          {/* Manage Agents Modal */}
+          <ManageAgentsModal
+            isOpen={!!managingAgentsTarget}
+            onClose={() => setManagingAgentsTarget(null)}
+            manager={managingAgentsTarget}
+            assignedAgents={selectedManagerDetail.agents || []}
+            availableAgents={agentPool}
+            onAssign={handleAssignAgent}
+            onUnassign={handleUnassignAgent}
+          />
+        </>
+      );
+    }
+
+    // Invalid / missing manager ID route (e.g. /managers/invalid)
+    return (
+      <div className="space-y-6">
+        <Breadcrumbs
+          items={[
+            { label: 'Management', onClick: clearSelectedManager },
+            { label: 'Managers', onClick: clearSelectedManager },
+            { label: 'Not Found' },
+          ]}
+        />
+        <NotFoundState
+          title="Manager Account Not Found"
+          resourceName="Manager Profile"
+          resourceId={selectedManagerId}
+          onBack={clearSelectedManager}
+        />
+      </div>
+    );
+  }
+
+  // Table Columns Definition
+  const columns: ColumnDef<ManagerItem>[] = [
+    {
+      key: 'name',
+      header: 'Manager',
+      render: (manager) => {
+        const initials = manager.name
+          .split(' ')
+          .map((n) => n[0])
+          .slice(0, 2)
+          .join('');
+
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[var(--accent-blue-dim)] border border-[var(--border-subtle)] text-[var(--accent-blue)] flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  selectManager(manager.id);
+                }}
+                className="font-semibold text-[var(--text-primary)] hover:text-[var(--accent-blue)] transition-colors cursor-pointer truncate"
+              >
+                {manager.name}
+              </div>
+              <div className="text-[11px] text-[var(--text-muted)] font-mono truncate">
+                {manager.email}
+              </div>
+            </div>
+          </div>
+        );
+      },
+      sortable: true,
+    },
+    {
+      key: 'email',
+      header: 'Email',
+      render: (manager) => (
+        <span className="font-mono text-xs text-[var(--text-secondary)]">
+          {manager.email}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'department',
+      header: 'Department',
+      render: (manager) => (
+        <div className="flex items-center gap-1.5 text-xs text-[var(--text-primary)]">
+          <Building className="w-3.5 h-3.5 text-[var(--accent-blue)] shrink-0" />
+          <span>{manager.department}</span>
+        </div>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (manager) => (
+        <Badge variant={getStatusBadgeVariant(manager.status)} size="sm">
+          {manager.status}
+        </Badge>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'agents',
+      header: 'Agents',
+      render: (manager) => (
+        <span className="font-mono text-xs font-semibold text-[var(--text-primary)]">
+          {manager.assignedAgentsCount}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'capacity',
+      header: 'Capacity',
+      render: (manager) => (
+        <div className="w-36">
+          <CapacityIndicator
+            current={manager.assignedAgentsCount}
+            max={manager.maxAgents}
+            size="sm"
+            showLabels={true}
+          />
+        </div>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'available',
+      header: 'Available Slots',
+      render: (manager) => (
+        <span
+          className={`font-mono text-xs font-bold ${
+            manager.availableSlots > 0 ? 'text-[var(--accent-emerald)]' : 'text-[var(--accent-rose)]'
+          }`}
+        >
+          {manager.availableSlots} slots
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'createdAt',
+      header: 'Created',
+      render: (manager) => (
+        <span className="font-mono text-xs text-[var(--text-secondary)]">
+          {formatDate(manager.createdAt)}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (manager) => (
+        <div className="flex items-center justify-end">
+          <MoreActionsMenu
+            ariaLabel={`Actions for ${manager.name}`}
+            items={[
+              {
+                id: 'view',
+                label: 'View Manager Profile',
+                icon: <Eye className="w-3.5 h-3.5" />,
+                onClick: () => selectManager(manager.id),
+              },
+              {
+                id: 'edit',
+                label: 'Edit Manager',
+                icon: <Edit2 className="w-3.5 h-3.5" />,
+                onClick: () => setEditingManager(manager),
+              },
+              {
+                id: 'agents',
+                label: 'Manage Supervised Agents',
+                icon: <Users className="w-3.5 h-3.5" />,
+                onClick: () => setManagingAgentsTarget(manager),
+              },
+              {
+                id: 'status',
+                label: manager.status === 'ACTIVE' ? 'Suspend Account' : 'Activate Account',
+                icon: <Power className="w-3.5 h-3.5" />,
+                isDangerous: manager.status === 'ACTIVE',
+                confirmTitle: `Suspend Manager ${manager.name}`,
+                confirmMessage: `Are you sure you want to suspend manager account ${manager.email}? Their supervision scope and management abilities will be frozen.`,
+                onClick: () => handleOpenStatusModal(manager),
+              },
+            ]}
+          />
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6">
-      {/* Toast Notification */}
+      {/* Toast feedback */}
       {toastMessage && (
         <div
-          className={`fixed bottom-5 right-5 z-50 p-4 rounded-xl shadow-lg border text-xs font-semibold flex items-center gap-2 transition-all ${
+          className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl border shadow-xl backdrop-blur-md flex items-center gap-2.5 text-xs font-semibold animate-in fade-in slide-in-from-bottom-3 ${
             toastMessage.type === 'success'
-              ? 'bg-emerald-600 text-white border-emerald-700'
-              : 'bg-rose-600 text-white border-rose-700'
+              ? 'bg-[var(--accent-emerald-dim)] border-[var(--accent-emerald)]/30 text-[var(--accent-emerald)]'
+              : 'bg-[var(--accent-rose-dim)] border-[var(--accent-rose)]/30 text-[var(--accent-rose)]'
           }`}
+          role="status"
         >
           {toastMessage.type === 'success' ? (
-            <CheckCircle2 className="w-4 h-4" />
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
           ) : (
-            <AlertCircle className="w-4 h-4" />
+            <AlertCircle className="w-4 h-4 shrink-0" />
           )}
-          <span>{toastMessage.message}</span>
+          <span>{toastMessage.text}</span>
         </div>
       )}
 
-      {/* Top Header Card */}
-      <div className="p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5 mb-1.5">
-            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800/60">
-              Phase 05 • Manager Management
-            </span>
-            <span className="text-[11px] font-mono text-slate-500 flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-              Super Admin Authorized
-            </span>
-          </div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2">
-            <UserCheck className="w-6 h-6 text-blue-600" />
-            Manager Directory & Hierarchy
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Create, manage, and supervise departmental managers, inspect allocated agents and client portfolios, configure granular permissions, and control security access.
-          </p>
-        </div>
+      {/* Standard Page Header Pattern */}
+      <PageHeader
+        title="Managers"
+        description="Manage manager accounts, capacity and agent supervision."
+        breadcrumbs={[{ label: 'Management' }, { label: 'Managers' }]}
+        primaryAction={{
+          label: 'Create Manager',
+          onClick: () => setIsCreateOpen(true),
+          icon: <Plus className="w-3.5 h-3.5" />,
+          id: 'btn-create-manager',
+        }}
+        secondaryActions={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refresh}
+            isLoading={isRefreshing}
+            leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />}
+            aria-label="Refresh Managers telemetry"
+          >
+            Refresh
+          </Button>
+        }
+      />
 
-        <div className="flex items-center gap-2.5 shrink-0">
-          <button
-            onClick={fetchManagers}
-            disabled={isLoading}
-            className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors"
-            title="Refresh Directory"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-          </button>
-          <button
-            onClick={() => setIsCreateOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Add New Manager
-          </button>
-        </div>
+      {/* KPI Summary (4 StatCards) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {isLoading ? (
+          <>
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </>
+        ) : (
+          <>
+            <StatCard
+              title="Total Managers"
+              value={formatNumber(kpis.totalManagers)}
+              subtext="Platform supervisors"
+              icon={Users}
+              iconBgColor="bg-[var(--accent-blue-dim)] text-[var(--accent-blue)]"
+              badgeText="Hierarchy"
+              badgeVariant="info"
+            />
+            <StatCard
+              title="Active Managers"
+              value={formatNumber(kpis.activeManagers)}
+              subtext="Authorized & operational"
+              icon={UserCheck}
+              iconBgColor="bg-[var(--accent-emerald-dim)] text-[var(--accent-emerald)]"
+              badgeText="Healthy"
+              badgeVariant="success"
+            />
+            <StatCard
+              title="Suspended Managers"
+              value={formatNumber(kpis.suspendedManagers)}
+              subtext="Restricted credentials"
+              icon={ShieldAlert}
+              iconBgColor="bg-[var(--accent-rose-dim)] text-[var(--accent-rose)]"
+              badgeText={kpis.suspendedManagers > 0 ? 'Review' : 'Zero'}
+              badgeVariant={kpis.suspendedManagers > 0 ? 'error' : 'neutral'}
+            />
+            <StatCard
+              title="Available Agent Capacity"
+              value={formatNumber(kpis.availableCapacity)}
+              subtext={`${kpis.totalAssignedAgents} of ${kpis.totalMaxCapacity} assigned`}
+              icon={Gauge}
+              iconBgColor="bg-[var(--accent-purple-dim)] text-[var(--accent-purple)]"
+              badgeText="Slots"
+              badgeVariant="purple"
+            />
+          </>
+        )}
       </div>
 
-      {/* KPI Stats Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
-          <div className="text-[11px] font-medium text-slate-500">Total Managers</div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">
-            {stats.total}
-          </div>
-        </div>
-        <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
-          <div className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">Active Status</div>
-          <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-            {stats.active}
-          </div>
-        </div>
-        <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
-          <div className="text-[11px] font-medium text-rose-600 dark:text-rose-400">Suspended</div>
-          <div className="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">
-            {stats.suspended}
-          </div>
-        </div>
-        <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
-          <div className="text-[11px] font-medium text-amber-600 dark:text-amber-400">Pending Setup</div>
-          <div className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">
-            {stats.pending}
-          </div>
-        </div>
-        <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
-          <div className="text-[11px] font-medium text-slate-500">Agents Managed</div>
-          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">
-            {stats.totalAgentsManaged}
-          </div>
-        </div>
-        <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
-          <div className="text-[11px] font-medium text-slate-500">Clients Portfolio</div>
-          <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">
-            {stats.totalClientsManaged}
-          </div>
-        </div>
-      </div>
+      {/* Filter Bar */}
+      <FilterBar
+        searchPlaceholder="Search by manager name, email, or department..."
+        searchValue={filterState.search}
+        onSearchChange={(val) => updateFilter('search', val)}
+        filters={[
+          {
+            key: 'status',
+            label: 'Status',
+            value: filterState.status,
+            options: [
+              { label: 'All Statuses', value: 'ALL' },
+              { label: 'Active', value: 'ACTIVE' },
+              { label: 'Pending', value: 'PENDING' },
+              { label: 'Suspended', value: 'SUSPENDED' },
+              { label: 'Disabled', value: 'DISABLED' },
+            ],
+            onChange: (val) => updateFilter('status', val),
+          },
+          {
+            key: 'department',
+            label: 'Department',
+            value: filterState.department,
+            options: [
+              { label: 'All Departments', value: 'ALL' },
+              ...departments.map((d) => ({ label: d, value: d })),
+            ],
+            onChange: (val) => updateFilter('department', val),
+          },
+          {
+            key: 'capacityStatus',
+            label: 'Capacity',
+            value: filterState.capacityStatus,
+            options: [
+              { label: 'All Capacities', value: 'ALL' },
+              { label: 'Available Slots', value: 'AVAILABLE' },
+              { label: 'Near Capacity (≥80%)', value: 'NEAR_CAPACITY' },
+              { label: 'Full (100%)', value: 'FULL' },
+            ],
+            onChange: (val) => updateFilter('capacityStatus', val),
+          },
+          {
+            key: 'sortBy',
+            label: 'Sort By',
+            value: filterState.sortBy,
+            options: [
+              { label: 'Date Created', value: 'createdAt' },
+              { label: 'Name', value: 'name' },
+              { label: 'Department', value: 'department' },
+              { label: 'Assigned Agents', value: 'agents' },
+              { label: 'Capacity %', value: 'capacity' },
+              { label: 'Available Slots', value: 'available' },
+            ],
+            onChange: (val) => updateFilter('sortBy', val as ManagersSortField),
+          },
+        ]}
+        onReset={resetFilters}
+      />
 
-      {/* Search & Filter Bar */}
-      <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3">
-        {/* Search */}
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Search by manager name, username, email, contact, or department..."
-            className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-slate-100 placeholder-slate-400"
+      {/* Main Table / State View */}
+      {error ? (
+        <ErrorState
+          title="Failed to Load Managers"
+          message={error}
+          onRetry={refresh}
+        />
+      ) : managers.length === 0 && !isLoading ? (
+        <EmptyState
+          title="No managers found"
+          message="No manager profiles match your active search and status filter criteria."
+          icon={Users}
+          actionLabel="Reset Filters"
+          onAction={resetFilters}
+        />
+      ) : (
+        <div className="space-y-4">
+          <Table
+            columns={columns}
+            data={managers}
+            keyExtractor={(m) => m.id}
+            isLoading={isLoading}
+            onRowClick={(m) => selectManager(m.id)}
+            emptyMessage="No managers available"
           />
-        </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Status Filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setPage(1);
-            }}
-            className="px-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-slate-700 dark:text-slate-300"
-          >
-            <option value="ALL">All Statuses</option>
-            <option value="ACTIVE">Active Only</option>
-            <option value="SUSPENDED">Suspended Only</option>
-            <option value="PENDING">Pending Only</option>
-          </select>
-
-          {/* Department Filter */}
-          <select
-            value={departmentFilter}
-            onChange={(e) => {
-              setDepartmentFilter(e.target.value);
-              setPage(1);
-            }}
-            className="px-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-slate-700 dark:text-slate-300"
-          >
-            <option value="ALL">All Departments</option>
-            {departments.map((dept) => (
-              <option key={dept} value={dept}>
-                {dept}
-              </option>
-            ))}
-          </select>
-
-          {(search || statusFilter !== 'ALL' || departmentFilter !== 'ALL') && (
-            <button
-              onClick={() => {
-                setSearch('');
-                setStatusFilter('ALL');
-                setDepartmentFilter('ALL');
-                setPage(1);
-              }}
-              className="text-xs text-blue-600 dark:text-blue-400 hover:underline px-2 py-1"
-            >
-              Reset Filters
-            </button>
+          {/* Pagination */}
+          {totalCount > filterState.limit && (
+            <Pagination
+              currentPage={filterState.page}
+              totalPages={totalPages}
+              onPageChange={(page) => updateFilter('page', page)}
+              pageSize={filterState.limit}
+              totalItems={totalCount}
+            />
           )}
         </div>
-      </div>
+      )}
 
-      {/* Main Table Card */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
-        {error && (
-          <div className="p-4 bg-rose-50 dark:bg-rose-950/40 border-b border-rose-200 dark:border-rose-800/50 flex items-center gap-2 text-xs text-rose-700 dark:text-rose-300">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {isLoading ? (
-          <div className="py-16 text-center">
-            <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-            <p className="text-xs text-slate-500">Querying manager records and hierarchy stats...</p>
-          </div>
-        ) : managers.length === 0 ? (
-          <div className="py-16 text-center px-4">
-            <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto mb-3">
-              <Users className="w-6 h-6" />
-            </div>
-            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-              No Managers Found
-            </h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-              {search || statusFilter !== 'ALL' || departmentFilter !== 'ALL'
-                ? 'No managers match the current search filters. Try clearing filters or searching another term.'
-                : 'No managers have been provisioned yet. Click "Add New Manager" to create the first manager profile.'}
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50/80 dark:bg-slate-950/50 text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
-                <tr>
-                  <th className="px-5 py-3.5">Manager Profile</th>
-                  <th className="px-4 py-3.5">Contact & Email</th>
-                  <th className="px-4 py-3.5">Department</th>
-                  <th className="px-4 py-3.5">Hierarchy Allocation</th>
-                  <th className="px-4 py-3.5">Account Status</th>
-                  <th className="px-4 py-3.5">Last Login</th>
-                  <th className="px-5 py-3.5 text-right">Super Admin Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                {managers.map((mgr) => (
-                  <tr
-                    key={mgr.id}
-                    className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
-                  >
-                    {/* Manager Name & Username */}
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-bold flex items-center justify-center shrink-0 text-xs">
-                          {mgr.firstName?.[0] || 'M'}
-                          {mgr.lastName?.[0] || 'G'}
-                        </div>
-                        <div>
-                          <div className="font-semibold text-slate-900 dark:text-slate-100">
-                            {mgr.name}
-                          </div>
-                          <div className="font-mono text-[11px] text-slate-400">
-                            @{mgr.username}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Contact & Email */}
-                    <td className="px-4 py-3.5">
-                      <div className="font-mono text-[11px] text-slate-700 dark:text-slate-300">
-                        {mgr.email}
-                      </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">{mgr.contact}</div>
-                    </td>
-
-                    {/* Department */}
-                    <td className="px-4 py-3.5">
-                      <span className="inline-flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-200">
-                        <Building className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        {mgr.department}
-                      </span>
-                    </td>
-
-                    {/* Allocation */}
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40 text-[11px] font-semibold">
-                          {mgr.agentsCount} / {mgr.maxAgents} Agents
-                        </span>
-                        <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/40 text-[11px] font-semibold">
-                          {mgr.clientsCount} Clients
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-4 py-3.5">
-                      <Badge
-                        variant={
-                          mgr.status === 'ACTIVE'
-                            ? 'success'
-                            : mgr.status === 'SUSPENDED'
-                            ? 'error'
-                            : 'warning'
-                        }
-                        size="sm"
-                      >
-                        {mgr.status}
-                      </Badge>
-                    </td>
-
-                    {/* Last Login */}
-                    <td className="px-4 py-3.5 text-slate-500 font-mono text-[11px]">
-                      {mgr.lastLoginAt ? new Date(mgr.lastLoginAt).toLocaleDateString() : 'Never'}
-                    </td>
-
-                    {/* Quick Actions */}
-                    <td className="px-5 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {/* View Details */}
-                        <button
-                          onClick={() => handleOpenDetails(mgr)}
-                          className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                          title="View Full Profile & Hierarchy"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                        </button>
-
-                        {/* Edit Profile */}
-                        <button
-                          onClick={() => {
-                            setSelectedManager(mgr);
-                            setIsEditOpen(true);
-                          }}
-                          className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                          title="Edit Profile"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-
-                        {/* Status Toggle (Enable/Disable) */}
-                        <button
-                          onClick={() => {
-                            setSelectedManager(mgr);
-                            setTargetStatus(mgr.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE');
-                            setIsStatusOpen(true);
-                          }}
-                          className={`p-1.5 rounded-lg transition-colors ${
-                            mgr.status === 'ACTIVE'
-                              ? 'text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-800'
-                              : 'text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-slate-800'
-                          }`}
-                          title={mgr.status === 'ACTIVE' ? 'Suspend Manager' : 'Reactivate Manager'}
-                        >
-                          <Power className="w-3.5 h-3.5" />
-                        </button>
-
-                        {/* Reset Password */}
-                        <button
-                          onClick={() => {
-                            setSelectedManager(mgr);
-                            setIsResetOpen(true);
-                          }}
-                          className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                          title="Reset Password Securely"
-                        >
-                          <KeyRound className="w-3.5 h-3.5" />
-                        </button>
-
-                        {/* Assign Permissions */}
-                        <button
-                          onClick={() => {
-                            setSelectedManager(mgr);
-                            setIsPermissionsOpen(true);
-                          }}
-                          className="p-1.5 text-slate-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                          title="Configure Permissions"
-                        >
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Pagination Footer */}
-        <div className="p-4 bg-slate-50/60 dark:bg-slate-950/40 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-          <div className="text-slate-500">
-            Showing <span className="font-semibold text-slate-800 dark:text-slate-200">{managers.length}</span> of{' '}
-            <span className="font-semibold text-slate-800 dark:text-slate-200">{totalCount}</span> managers
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1 || isLoading}
-              className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 transition-colors"
-            >
-              Previous
-            </button>
-            <span className="text-slate-600 dark:text-slate-400 font-medium px-2">
-              Page {page} of {totalPages}
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages || isLoading}
-              className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 transition-colors"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Modals */}
+      {/* Create Manager Modal */}
       <CreateManagerModal
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
-        onSubmit={handleCreateManager}
+        onSubmit={handleCreateSubmit}
         departments={departments}
       />
 
+      {/* Edit Manager Modal */}
       <EditManagerModal
-        isOpen={isEditOpen}
-        onClose={() => {
-          setIsEditOpen(false);
-          setSelectedManager(null);
-        }}
-        manager={selectedManager}
-        onSubmit={handleEditManager}
+        isOpen={!!editingManager}
+        onClose={() => setEditingManager(null)}
+        manager={editingManager}
+        onSubmit={handleEditSubmit}
         departments={departments}
       />
 
-      <StatusChangeModal
-        isOpen={isStatusOpen}
-        onClose={() => {
-          setIsStatusOpen(false);
-          setSelectedManager(null);
-        }}
-        manager={selectedManager}
-        targetStatus={targetStatus}
-        onSubmit={handleStatusChange}
+      {/* Status Transition Modal */}
+      <ManagerStatusModal
+        isOpen={!!statusTarget.manager}
+        onClose={() => setStatusTarget({ manager: null, nextStatus: null })}
+        manager={statusTarget.manager}
+        targetStatus={statusTarget.nextStatus}
+        onConfirm={handleStatusConfirm}
       />
 
-      <ResetPasswordModal
-        isOpen={isResetOpen}
-        onClose={() => {
-          setIsResetOpen(false);
-          setSelectedManager(null);
-        }}
-        manager={selectedManager}
-        onSubmit={handleResetPassword}
-      />
-
-      <PermissionsModal
-        isOpen={isPermissionsOpen}
-        onClose={() => {
-          setIsPermissionsOpen(false);
-          setSelectedManager(null);
-        }}
-        manager={selectedManager}
-        availablePermissions={availablePermissions}
-        onSubmit={handleUpdatePermissions}
-      />
-
-      <ManagerDetailsModal
-        isOpen={isDetailOpen}
-        onClose={() => {
-          setIsDetailOpen(false);
-          setSelectedManager(null);
-          setDetailedManager(null);
-        }}
-        manager={detailedManager}
-        isLoading={isLoadingDetail}
+      {/* Manage Agents Modal */}
+      <ManageAgentsModal
+        isOpen={!!managingAgentsTarget}
+        onClose={() => setManagingAgentsTarget(null)}
+        manager={managingAgentsTarget}
+        assignedAgents={
+          managingAgentsTarget
+            ? managers.find((m) => m.id === managingAgentsTarget.id)?.assignedAgentsCount
+              ? // Pull from active seed or cached agents
+                agentPool
+                  .filter((a) => a.assignedManagerId === managingAgentsTarget.id)
+                  .map((a) => ({
+                    id: a.id,
+                    userId: `usr-${a.id}`,
+                    name: a.name,
+                    email: a.email,
+                    status: a.status,
+                    assignedAt: new Date().toISOString(),
+                    clientsCount: a.clientsCount,
+                  }))
+              : []
+            : []
+        }
+        availableAgents={agentPool}
+        onAssign={handleAssignAgent}
+        onUnassign={handleUnassignAgent}
       />
     </div>
   );

@@ -22,30 +22,33 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseStyles =
-    'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:opacity-50 disabled:pointer-events-none cursor-pointer select-none';
+    'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-blue)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-deep)] disabled:opacity-40 disabled:pointer-events-none cursor-pointer select-none';
+
+  const isIconOnly = !children && (Boolean(leftIcon) || Boolean(rightIcon) || isLoading);
 
   const sizeStyles = {
-    sm: 'h-8 px-3 text-xs gap-1.5',
-    md: 'h-9 px-4 text-sm gap-2',
-    lg: 'h-11 px-5 text-base gap-2.5',
+    sm: isIconOnly ? 'h-8 w-8 p-0 text-xs' : 'h-8 px-3 text-xs gap-1.5',
+    md: isIconOnly ? 'h-9 w-9 p-0 text-sm' : 'h-9 px-4 text-sm gap-2',
+    lg: isIconOnly ? 'h-11 w-11 p-0 text-base' : 'h-11 px-5 text-base gap-2.5',
   };
 
   const variantStyles = {
     primary:
-      'bg-slate-900 text-white hover:bg-slate-800 active:bg-slate-950 shadow-sm dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-white',
+      'bg-[var(--accent-blue)] text-white hover:bg-blue-500 active:bg-blue-600 shadow-[0_0_20px_var(--accent-blue-dim)]',
     secondary:
-      'bg-slate-100 text-slate-900 hover:bg-slate-200 active:bg-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700',
+      'bg-[var(--glass-bg-active)] text-[var(--text-primary)] border border-[var(--glass-border)] hover:bg-[var(--glass-bg-hover)] hover:border-[var(--glass-border-hover)]',
     outline:
-      'border border-slate-200 bg-transparent hover:bg-slate-50 text-slate-800 dark:border-slate-800 dark:hover:bg-slate-900 dark:text-slate-200',
+      'border border-[var(--glass-border)] bg-transparent hover:bg-[var(--glass-bg)] hover:border-[var(--glass-border-hover)] text-[var(--text-primary)]',
     ghost:
-      'bg-transparent hover:bg-slate-100 text-slate-700 active:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800',
+      'bg-transparent hover:bg-[var(--glass-bg)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
     danger:
-      'bg-rose-600 text-white hover:bg-rose-700 active:bg-rose-800 shadow-sm',
+      'bg-[var(--accent-rose-dim)] text-[var(--accent-rose)] border border-[rgba(244,63,94,0.2)] hover:bg-[rgba(244,63,94,0.25)] hover:border-[rgba(244,63,94,0.3)]',
   };
 
   return (
     <button
       id={id}
+      type={props.type || 'button'}
       disabled={disabled || isLoading}
       className={`${baseStyles} ${sizeStyles[size]} ${variantStyles[variant]} ${className}`}
       {...props}
@@ -55,7 +58,7 @@ export const Button: React.FC<ButtonProps> = ({
       ) : (
         leftIcon
       )}
-      <span>{children}</span>
+      {children && <span>{children}</span>}
       {!isLoading && rightIcon}
     </button>
   );

@@ -64,11 +64,13 @@ export class AuditService {
         await prisma.auditLog.create({
           data: {
             id: record.id,
-            userId: validDbUserId,
+            organizationId: '00000000-0000-0000-0000-000000000001',
+            performedById: validDbUserId,
+            entityName: event.entityType || 'AUTH_SESSION',
+            entityId: event.entityId || event.userId || 'SYSTEM',
             action: event.action,
-            entityType: event.entityType || 'AUTH_SESSION',
-            entityId: event.entityId || event.userId || null,
-            metadata: {
+            result: event.action.includes('FAILED') ? 'FAILURE' : 'SUCCESS',
+            changes: {
               email: event.email,
               reason: event.reason,
               ...(event.metadata || {}),
@@ -108,17 +110,18 @@ export class AuditService {
         const dbLogs = await prisma.auditLog.findMany({
           take: limit,
           orderBy: { createdAt: 'desc' },
-          include: { user: { select: { email: true } } },
+          include: { performedBy: { select: { email: true } } },
         });
 
         for (const log of dbLogs) {
           if (!combined.some((r) => r.id === log.id)) {
+            const changes = log.changes as Record<string, any> | null;
             combined.push({
               id: log.id,
-              userId: log.userId || undefined,
-              email: (log.metadata as any)?.email || log.user?.email || 'system',
+              userId: log.performedById || undefined,
+              email: changes?.email || log.performedBy?.email || 'system',
               action: log.action as any,
-              reason: (log.metadata as any)?.reason,
+              reason: changes?.reason,
               ipAddress: log.ipAddress || undefined,
               userAgent: log.userAgent || undefined,
               timestamp: log.createdAt.toISOString(),

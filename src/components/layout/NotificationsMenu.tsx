@@ -78,13 +78,13 @@ export const NotificationsMenu: React.FC<NotificationsMenuProps> = ({ onNavigate
   const renderIcon = (type: AppNotification['type']) => {
     switch (type) {
       case 'SUCCESS':
-        return <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />;
+        return <CheckCircle2 className="w-4 h-4 text-[var(--accent-emerald)] shrink-0" />;
       case 'WARNING':
-        return <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />;
+        return <AlertTriangle className="w-4 h-4 text-[var(--accent-amber)] shrink-0" />;
       case 'ERROR':
-        return <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />;
+        return <AlertCircle className="w-4 h-4 text-[var(--accent-rose)] shrink-0" />;
       default:
-        return <Info className="w-4 h-4 text-blue-500 shrink-0" />;
+        return <Info className="w-4 h-4 text-[var(--accent-blue)] shrink-0" />;
     }
   };
 
@@ -104,12 +104,12 @@ export const NotificationsMenu: React.FC<NotificationsMenuProps> = ({ onNavigate
       <button
         id="btn-notifications-toggle"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        className="relative p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-lg hover:bg-[var(--glass-bg)] transition-colors"
         aria-label="View notifications"
       >
         <Bell className="w-4 h-4" />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center font-mono animate-pulse">
+          <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-[var(--accent-blue)] text-white text-[10px] font-bold flex items-center justify-center font-mono shadow-[0_0_8px_var(--accent-blue-dim)]">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -117,11 +117,11 @@ export const NotificationsMenu: React.FC<NotificationsMenuProps> = ({ onNavigate
 
       {/* Popover Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-50 overflow-hidden">
+        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] z-50 overflow-hidden animate-fade-in backdrop-blur-xl">
           {/* Header */}
-          <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div className="p-4 border-b border-[var(--glass-border)] flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h4 className="text-xs font-semibold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+              <h4 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider">
                 Notifications
               </h4>
               {unreadCount > 0 && (
@@ -135,7 +135,7 @@ export const NotificationsMenu: React.FC<NotificationsMenuProps> = ({ onNavigate
               <button
                 onClick={handleMarkAllRead}
                 disabled={isLoading}
-                className="text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 disabled:opacity-50"
+                className="text-[11px] font-medium text-[var(--accent-blue)] hover:underline flex items-center gap-1 disabled:opacity-50"
               >
                 <CheckCheck className="w-3 h-3" />
                 <span>Mark all read</span>
@@ -144,13 +144,13 @@ export const NotificationsMenu: React.FC<NotificationsMenuProps> = ({ onNavigate
           </div>
 
           {/* Filter Tabs */}
-          <div className="px-4 py-2 bg-slate-50/70 dark:bg-slate-950/40 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2 text-xs">
+          <div className="px-4 py-2 bg-[rgba(0,0,0,0.15)] border-b border-[var(--glass-border)] flex items-center gap-2 text-xs">
             <button
               onClick={() => setActiveFilter('ALL')}
               className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
                 activeFilter === 'ALL'
-                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  ? 'bg-[var(--glass-bg-active)] text-[var(--text-primary)]'
+                  : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'
               }`}
             >
               All ({notifications.length})
@@ -159,8 +159,8 @@ export const NotificationsMenu: React.FC<NotificationsMenuProps> = ({ onNavigate
               onClick={() => setActiveFilter('UNREAD')}
               className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
                 activeFilter === 'UNREAD'
-                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  ? 'bg-[var(--glass-bg-active)] text-[var(--text-primary)]'
+                  : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'
               }`}
             >
               Unread ({unreadCount})
@@ -168,14 +168,14 @@ export const NotificationsMenu: React.FC<NotificationsMenuProps> = ({ onNavigate
           </div>
 
           {/* List */}
-          <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
+          <div className="max-h-80 overflow-y-auto divide-y divide-[var(--glass-border)]">
             {filteredNotifications.length === 0 ? (
-              <div className="p-8 text-center text-slate-400 dark:text-slate-500">
+              <div className="p-8 text-center text-[var(--text-tertiary)]">
                 <Bell className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                <p className="text-xs font-medium text-[var(--text-secondary)]">
                   {activeFilter === 'UNREAD' ? 'No unread notifications' : 'No notifications yet'}
                 </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className="text-[11px] text-[var(--text-tertiary)] mt-0.5">
                   Platform alerts and security notices will appear here.
                 </p>
               </div>
@@ -191,35 +191,35 @@ export const NotificationsMenu: React.FC<NotificationsMenuProps> = ({ onNavigate
                   }}
                   className={`p-3.5 transition-colors flex items-start gap-3 text-xs ${
                     notif.isRead
-                      ? 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-600 dark:text-slate-400'
-                      : 'bg-blue-50/40 dark:bg-blue-950/20 hover:bg-blue-50/70 dark:hover:bg-blue-950/40 text-slate-800 dark:text-slate-200'
+                      ? 'hover:bg-[var(--glass-bg-hover)] text-[var(--text-secondary)]'
+                      : 'bg-[var(--accent-blue-dim)] hover:bg-[rgba(59,130,246,0.12)] text-[var(--text-primary)]'
                   } ${notif.actionUrl ? 'cursor-pointer' : ''}`}
                 >
                   <div className="mt-0.5">{renderIcon(notif.type)}</div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1">
-                      <span className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+                      <span className="font-semibold text-[var(--text-primary)] truncate">
                         {notif.title}
                       </span>
-                      <span className="text-[10px] text-slate-400 shrink-0 font-mono">
+                      <span className="text-[10px] text-[var(--text-tertiary)] shrink-0 font-mono">
                         {formatTimeAgo(notif.createdAt)}
                       </span>
                     </div>
 
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                    <p className="text-xs text-[var(--text-secondary)] mt-1 leading-relaxed">
                       {notif.message}
                     </p>
 
                     <div className="mt-2 flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-mono font-medium uppercase px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                      <span className="text-[10px] font-mono font-medium uppercase px-1.5 py-0.5 rounded bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-tertiary)]">
                         {notif.category}
                       </span>
 
                       {!notif.isRead && (
                         <button
                           onClick={(e) => handleMarkRead(notif.id, e)}
-                          className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                          className="text-[11px] text-[var(--accent-blue)] hover:underline flex items-center gap-1"
                         >
                           <Check className="w-3 h-3" />
                           <span>Mark read</span>

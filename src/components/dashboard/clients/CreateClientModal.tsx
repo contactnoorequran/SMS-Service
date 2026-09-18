@@ -1,423 +1,404 @@
-import React, { useState, useEffect } from 'react';
-import { CreateClientDTO } from '../../../types/client';
-import { AgentListItem } from '../../../types/agent';
-import { apiClient } from '../../../services/api';
-import { X, Building2, User, Mail, Phone, DollarSign, Shield, Key, AlertCircle } from 'lucide-react';
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState } from 'react';
+import { Modal } from '../../ui/Modal';
+import { Button } from '../../ui/Button';
+import {
+  CreateClientPayload,
+  ClientStatus,
+  BillingType,
+  AgentSummary,
+} from '../../../types/clients';
+import {
+  Building2,
+  Mail,
+  User,
+  Phone,
+  DollarSign,
+  Briefcase,
+  AlertCircle,
+  Shield,
+} from 'lucide-react';
 
 interface CreateClientModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onClientCreated: () => void;
-  currentAgentId?: string | null;
+  onSubmit: (payload: CreateClientPayload) => Promise<void>;
+  agents: AgentSummary[];
 }
+
+const RFC_EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
 export const CreateClientModal: React.FC<CreateClientModalProps> = ({
   isOpen,
   onClose,
-  onClientCreated,
-  currentAgentId,
+  onSubmit,
+  agents,
 }) => {
-  const [companyName, setCompanyName] = useState('');
-  const [contactName, setContactName] = useState('');
-  const [email, setEmail] = useState('');
-  const [contact, setContact] = useState('');
-  const [billingType, setBillingType] = useState<'PREPAID' | 'POSTPAID'>('PREPAID');
-  const [creditLimit, setCreditLimit] = useState<number>(0);
-  const [currency, setCurrency] = useState('USD');
-  const [agentId, setAgentId] = useState<string>(currentAgentId || '');
-  const [initialBalance, setInitialBalance] = useState<number>(100);
-  const [generateApiKey, setGenerateApiKey] = useState(true);
-  const [password, setPassword] = useState('');
-  const [autoGeneratePassword, setAutoGeneratePassword] = useState(true);
-
-  const [availableAgents, setAvailableAgents] = useState<AgentListItem[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const [createdResult, setCreatedResult] = useState<{
-    clientName: string;
+  const [formData, setFormData] = useState<{
+    name: string;
     email: string;
-    generatedPassword?: string;
-    apiKey?: { key: string; secretPlain?: string };
-  } | null>(null);
+    companyName: string;
+    contactPhone: string;
+    billingType: BillingType;
+    initialBalance: string;
+    creditLimit: string;
+    agentId: string;
+    status: ClientStatus;
+  }>({
+    name: '',
+    email: '',
+    companyName: '',
+    contactPhone: '',
+    billingType: 'PREPAID',
+    initialBalance: '100',
+    creditLimit: '0',
+    agentId: '',
+    status: 'ACTIVE',
+  });
 
-  useEffect(() => {
-    if (isOpen) {
-      apiClient.getAgents({ limit: 100, status: 'ACTIVE' })
-        .then((res) => {
-          setAvailableAgents(res.items || []);
-          if (!agentId && res.items && res.items.length > 0) {
-            setAgentId(res.items[0].id);
-          }
-        })
-        .catch(() => {
-          setAvailableAgents([]);
-        });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      email: '',
+      companyName: '',
+      contactPhone: '',
+      billingType: 'PREPAID',
+      initialBalance: '100',
+      creditLimit: '0',
+      agentId: '',
+      status: 'ACTIVE',
+    });
+    setErrors({});
+    setIsSubmitting(false);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  const validate = (): boolean => {
+    const errs: Record<string, string> = {};
+
+    if (!formData.name.trim()) {
+      errs.name = 'Contact representative name is required.';
     }
-  }, [isOpen]);
 
-  if (!isOpen) return null;
+    if (!formData.companyName.trim()) {
+      errs.companyName = 'Company or legal organization name is required.';
+    }
+
+    if (!formData.email.trim()) {
+      errs.email = 'Email address is required.';
+    } else if (!RFC_EMAIL_REGEX.test(formData.email.trim())) {
+      errs.email = 'Please provide a valid RFC-compliant email address.';
+    }
+
+    if (!formData.contactPhone.trim()) {
+      errs.contactPhone = 'Contact phone number is required.';
+    }
+
+    const initBal = parseFloat(formData.initialBalance);
+    if (isNaN(initBal) || initBal < 0) {
+      errs.initialBalance = 'Initial balance must be a non-negative number.';
+    }
+
+    if (formData.billingType === 'POSTPAID') {
+      const credLim = parseFloat(formData.creditLimit);
+      if (isNaN(credLim) || credLim < 0) {
+        errs.creditLimit = 'Postpaid accounts require a valid credit limit ($0 or more).';
+      }
+    }
+
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    if (!validate()) return;
+
     setIsSubmitting(true);
-
     try {
-      const parts = contactName.trim().split(' ');
-      const firstName = parts[0] || 'Client';
-      const lastName = parts.slice(1).join(' ') || 'User';
-      const username = email.trim().split('@')[0] || `client_${Date.now()}`;
-
-      const payload: CreateClientDTO = {
-        username,
-        firstName,
-        lastName,
-        email: email.trim(),
-        companyName: companyName.trim(),
-        contact: contact.trim(),
-        billingType,
-        agentId: agentId || undefined,
-        initialBalance: billingType === 'PREPAID' ? initialBalance : 0,
-        enableApiAccess: generateApiKey,
-        password: autoGeneratePassword ? undefined : password,
-      };
-
-      const res = await apiClient.createClient(payload);
-
-      setCreatedResult({
-        clientName: res.client.companyName,
-        email: res.client.email,
-        generatedPassword: res.generatedPassword,
-        apiKey: res.generatedApiKey,
+      await onSubmit({
+        name: formData.name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        companyName: formData.companyName.trim(),
+        contactPhone: formData.contactPhone.trim(),
+        billingType: formData.billingType,
+        initialBalance: parseFloat(formData.initialBalance) || 0,
+        creditLimit: formData.billingType === 'POSTPAID' ? parseFloat(formData.creditLimit) || 0 : 0,
+        agentId: formData.agentId ? formData.agentId : null,
+        status: formData.status,
       });
-
-      onClientCreated();
-    } catch (err: any) {
-      setError(err?.message || 'Failed to create client.');
+      handleClose();
+    } catch {
+      // Error handled by parent toast
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleClose = () => {
-    setCreatedResult(null);
-    setCompanyName('');
-    setContactName('');
-    setEmail('');
-    setContact('');
-    setPassword('');
-    setError(null);
-    onClose();
-  };
+  const selectedAgent = agents.find((a) => a.id === formData.agentId);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden my-8">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-xl">
-              <Building2 className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Provision New Client</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Enroll a customer account with assigned agent hierarchy, billing ledger, and API credentials
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={handleClose}
-            className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Create Enterprise Client Account"
+      size="lg"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+        {/* Tier Callout Banner */}
+        <div className="p-3 bg-[var(--accent-blue-dim)] border border-[var(--accent-blue)]/20 rounded-xl flex items-center gap-2.5 text-xs text-[var(--accent-blue)]">
+          <Shield className="w-4 h-4 shrink-0" />
+          <span>
+            New client will be initialized in the commercial hierarchy:{' '}
+            <strong>SUPER_ADMIN → MANAGER → AGENT → CLIENT</strong>.
+          </span>
         </div>
 
-        {/* Success Screen after creation */}
-        {createdResult ? (
-          <div className="p-6 space-y-6">
-            <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-xl">
-              <h3 className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">
-                Client Successfully Provisioned!
-              </h3>
-              <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-1">
-                Account created for <strong>{createdResult.clientName}</strong> ({createdResult.email}). Save the credentials below.
+        {/* Company and Contact Person Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+              Company Name <span className="text-[var(--accent-rose)]">*</span>
+            </label>
+            <div className="relative">
+              <Building2 className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
+              <input
+                type="text"
+                placeholder="e.g. Alpha Express Logistics Ltd"
+                value={formData.companyName}
+                onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                className={`w-full pl-9 pr-3 py-2 text-xs bg-[var(--bg-glass-card)] border rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)] transition-all ${
+                  errors.companyName ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
+                }`}
+              />
+            </div>
+            {errors.companyName && (
+              <p className="text-[11px] text-[var(--accent-rose)] mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {errors.companyName}
               </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+              Primary Contact Name <span className="text-[var(--accent-rose)]">*</span>
+            </label>
+            <div className="relative">
+              <User className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
+              <input
+                type="text"
+                placeholder="e.g. Marcus Vance"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className={`w-full pl-9 pr-3 py-2 text-xs bg-[var(--bg-glass-card)] border rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)] transition-all ${
+                  errors.name ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
+                }`}
+              />
+            </div>
+            {errors.name && (
+              <p className="text-[11px] text-[var(--accent-rose)] mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {errors.name}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Email and Phone Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+              Billing & Operations Email <span className="text-[var(--accent-rose)]">*</span>
+            </label>
+            <div className="relative">
+              <Mail className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
+              <input
+                type="email"
+                placeholder="e.g. billing@alphaexpress.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className={`w-full pl-9 pr-3 py-2 text-xs bg-[var(--bg-glass-card)] border rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)] transition-all ${
+                  errors.email ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
+                }`}
+              />
+            </div>
+            {errors.email && (
+              <p className="text-[11px] text-[var(--accent-rose)] mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {errors.email}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+              Contact Phone <span className="text-[var(--accent-rose)]">*</span>
+            </label>
+            <div className="relative">
+              <Phone className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
+              <input
+                type="text"
+                placeholder="e.g. +44 20 7946 0912"
+                value={formData.contactPhone}
+                onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
+                className={`w-full pl-9 pr-3 py-2 text-xs bg-[var(--bg-glass-card)] border rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)] transition-all ${
+                  errors.contactPhone ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
+                }`}
+              />
+            </div>
+            {errors.contactPhone && (
+              <p className="text-[11px] text-[var(--accent-rose)] mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {errors.contactPhone}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Commercial Model & Financial Allocation */}
+        <div className="p-3.5 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-[var(--accent-emerald)]" />
+              Commercial & Billing Configuration
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs text-[var(--text-secondary)] mb-1 font-medium">
+                Billing Model
+              </label>
+              <select
+                value={formData.billingType}
+                onChange={(e) => setFormData({ ...formData, billingType: e.target.value as BillingType })}
+                className="w-full px-3 py-2 text-xs bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)]"
+              >
+                <option value="PREPAID">PREPAID (Wallet top-up)</option>
+                <option value="POSTPAID">POSTPAID (Credit line / invoice)</option>
+              </select>
             </div>
 
-            {createdResult.generatedPassword && (
-              <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl">
-                <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  <Key className="w-4 h-4 text-amber-500" />
-                  <span>Temporary Access Password</span>
-                </div>
-                <div className="font-mono text-sm bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-800 text-amber-600 dark:text-amber-400 select-all break-all">
-                  {createdResult.generatedPassword}
-                </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  The client will be required to change this password on first login.
-                </p>
-              </div>
-            )}
+            <div>
+              <label className="block text-xs text-[var(--text-secondary)] mb-1 font-medium">
+                Initial Balance ($ USD)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.initialBalance}
+                onChange={(e) => setFormData({ ...formData, initialBalance: e.target.value })}
+                className={`w-full px-3 py-2 text-xs bg-[var(--bg-glass-card)] border rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)] ${
+                  errors.initialBalance ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
+                }`}
+              />
+              {errors.initialBalance && (
+                <p className="text-[10px] text-[var(--accent-rose)] mt-1">{errors.initialBalance}</p>
+              )}
+            </div>
 
-            {createdResult.apiKey && (
-              <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl">
-                <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  <Shield className="w-4 h-4 text-indigo-500" />
-                  <span>Generated API Key & Secret</span>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[11px] text-slate-500 dark:text-slate-400">API Key ID</label>
-                  <div className="font-mono text-xs bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-200 select-all">
-                    {createdResult.apiKey.key}
-                  </div>
-                </div>
-                {createdResult.apiKey.secretPlain && (
-                  <div className="space-y-1 mt-2">
-                    <label className="text-[11px] text-slate-500 dark:text-slate-400">API Secret (Shown once)</label>
-                    <div className="font-mono text-xs bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-800 text-indigo-600 dark:text-indigo-400 select-all break-all">
-                      {createdResult.apiKey.secretPlain}
-                    </div>
-                  </div>
+            {formData.billingType === 'POSTPAID' ? (
+              <div>
+                <label className="block text-xs text-[var(--text-secondary)] mb-1 font-medium">
+                  Credit Limit ($ USD)
+                </label>
+                <input
+                  type="number"
+                  step="100"
+                  min="0"
+                  value={formData.creditLimit}
+                  onChange={(e) => setFormData({ ...formData, creditLimit: e.target.value })}
+                  className={`w-full px-3 py-2 text-xs bg-[var(--bg-glass-card)] border rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)] ${
+                    errors.creditLimit ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
+                  }`}
+                />
+                {errors.creditLimit && (
+                  <p className="text-[10px] text-[var(--accent-rose)] mt-1">{errors.creditLimit}</p>
                 )}
               </div>
+            ) : (
+              <div>
+                <label className="block text-xs text-[var(--text-secondary)] mb-1 font-medium">
+                  Initial Status
+                </label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as ClientStatus })}
+                  className="w-full px-3 py-2 text-xs bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)]"
+                >
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="PENDING">PENDING REVIEW</option>
+                </select>
+              </div>
             )}
-
-            <div className="flex justify-end pt-2">
-              <button
-                type="button"
-                onClick={handleClose}
-                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs rounded-xl shadow-xs transition-colors"
-              >
-                Done & Return to Clients
-              </button>
-            </div>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            {error && (
-              <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
+        </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Company Name */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Company / Organization <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <Building2 className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-                  <input
-                    type="text"
-                    required
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                    placeholder="e.g. Acme FinTech Corp"
-                    className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
+        {/* Supervising Agent Selection */}
+        <div className="p-3.5 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl space-y-3">
+          <label className="block text-xs font-semibold text-[var(--text-primary)] flex items-center gap-2">
+            <Briefcase className="w-4 h-4 text-[var(--accent-purple)]" />
+            Supervising Commercial Agent
+          </label>
+          <select
+            value={formData.agentId}
+            onChange={(e) => setFormData({ ...formData, agentId: e.target.value })}
+            className="w-full px-3 py-2 text-xs bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)]"
+          >
+            <option value="">Unassigned (Direct Platform Operations)</option>
+            {agents.map((agent) => (
+              <option key={agent.id} value={agent.id}>
+                {agent.name} — {agent.department || 'Operations'} ({agent.clientsCount} clients)
+              </option>
+            ))}
+          </select>
 
-              {/* Primary Contact Name */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Contact Person <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <User className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-                  <input
-                    type="text"
-                    required
-                    value={contactName}
-                    onChange={(e) => setContactName(e.target.value)}
-                    placeholder="e.g. Sarah Jenkins"
-                    className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
+          {selectedAgent && (
+            <div className="p-2.5 rounded-lg bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] text-[11px] space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[var(--text-secondary)]">Agent Email:</span>
+                <span className="font-mono text-[var(--text-primary)]">{selectedAgent.email}</span>
               </div>
-
-              {/* Email Address */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Email Address <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="sarah@acmefintech.com"
-                    className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
-
-              {/* Phone Contact */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Phone Contact <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <Phone className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-                  <input
-                    type="text"
-                    required
-                    value={contact}
-                    onChange={(e) => setContact(e.target.value)}
-                    placeholder="+1 (555) 234-5678"
-                    className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
-
-              {/* Assigned Agent */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Assigned Agent Portfolio
-                </label>
-                <select
-                  value={agentId}
-                  onChange={(e) => setAgentId(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="">Unassigned (Direct Platform Client)</option>
-                  {availableAgents.map((ag) => (
-                    <option key={ag.id} value={ag.id}>
-                      {ag.name} ({ag.companyName || ag.email})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Billing Type */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Billing Model <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={billingType}
-                  onChange={(e) => setBillingType(e.target.value as 'PREPAID' | 'POSTPAID')}
-                  className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="PREPAID">PREPAID (Top-up Balance Required)</option>
-                  <option value="POSTPAID">POSTPAID (Invoiced with Credit Limit)</option>
-                </select>
-              </div>
-
-              {/* Balance / Credit Limit */}
-              {billingType === 'PREPAID' ? (
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Initial Deposit Balance ($)
-                  </label>
-                  <div className="relative">
-                    <DollarSign className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-                    <input
-                      type="number"
-                      min="0"
-                      step="10"
-                      value={initialBalance}
-                      onChange={(e) => setInitialBalance(parseFloat(e.target.value) || 0)}
-                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Credit Limit ($)
-                  </label>
-                  <div className="relative">
-                    <DollarSign className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-                    <input
-                      type="number"
-                      min="0"
-                      step="100"
-                      value={creditLimit}
-                      onChange={(e) => setCreditLimit(parseFloat(e.target.value) || 0)}
-                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </div>
+              {selectedAgent.managerName && (
+                <div className="flex items-center justify-between">
+                  <span className="text-[var(--text-secondary)]">Supervising Manager:</span>
+                  <span className="font-medium text-[var(--text-primary)]">{selectedAgent.managerName}</span>
                 </div>
               )}
-
-              {/* Password configuration */}
-              <div className="md:col-span-2 p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    Authentication Credentials
-                  </label>
-                  <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={autoGeneratePassword}
-                      onChange={(e) => setAutoGeneratePassword(e.target.checked)}
-                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <span>Auto-generate secure temporary password</span>
-                  </label>
-                </div>
-                {!autoGeneratePassword && (
-                  <input
-                    type="password"
-                    placeholder="Enter manual initial password (min 8 characters)"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                  />
-                )}
-              </div>
-
-              {/* API Access Option */}
-              <div className="md:col-span-2 flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800">
-                <input
-                  type="checkbox"
-                  id="genApi"
-                  checked={generateApiKey}
-                  onChange={(e) => setGenerateApiKey(e.target.checked)}
-                  className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                />
-                <label htmlFor="genApi" className="text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
-                  <span className="font-semibold">Provision REST API Access Key:</span> Automatically issue a production API key with 100 req/sec limit.
-                </label>
-              </div>
             </div>
+          )}
+        </div>
 
-            {/* Actions */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-              <button
-                type="button"
-                onClick={handleClose}
-                disabled={isSubmitting}
-                className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-5 py-2.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-xs transition-colors flex items-center gap-2 disabled:opacity-50"
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Provisioning...</span>
-                  </>
-                ) : (
-                  <span>Create Client Account</span>
-                )}
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
-    </div>
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-2 pt-3 border-t border-[var(--border-subtle)]">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={handleClose}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            size="sm"
+            isLoading={isSubmitting}
+          >
+            Create Client
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 };

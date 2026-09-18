@@ -70,24 +70,24 @@ export const ClientPermissionsModal: React.FC<ClientPermissionsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-surface)]/60 backdrop-blur-xs p-4 overflow-y-auto">
+      <div className="bg-[var(--glass-bg)] backdrop-blur-md border border-[var(--glass-border)] rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden my-8">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+        <div className="flex items-center justify-between p-6 border-b border-[var(--glass-border)] bg-[var(--glass-bg)]/50">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-xl">
+            <div className="p-2 bg-indigo-500/10 bg-indigo-500/20 text-indigo-600 text-[var(--accent-violet)] rounded-xl">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Configure Client Permissions</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)] text-white">Configure Client Permissions</h2>
+              <p className="text-xs text-[var(--text-secondary)]">
                 Grant or restrict capability scopes for {client.companyName}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] rounded-lg hover:bg-[var(--glass-bg-hover)] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -95,29 +95,29 @@ export const ClientPermissionsModal: React.FC<ClientPermissionsModalProps> = ({
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2">
+            <div className="p-3 bg-[var(--accent-rose-dim)] border border-rose-200 border-rose-800/60 rounded-xl text-xs text-rose-700 text-rose-300 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           <div className="flex items-center justify-between pb-2">
-            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <span className="text-xs font-semibold text-[var(--text-secondary)]">
               Active Capabilities ({selectedPermissions.length} selected)
             </span>
             <div className="flex items-center gap-3 text-xs">
               <button
                 type="button"
                 onClick={handleSelectAll}
-                className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+                className="text-indigo-600 text-[var(--accent-violet)] hover:underline font-medium"
               >
                 Select All
               </button>
-              <span className="text-slate-300 dark:text-slate-700">|</span>
+              <span className="text-[var(--text-secondary)] text-[var(--text-secondary)]">|</span>
               <button
                 type="button"
                 onClick={handleClearAll}
-                className="text-slate-500 hover:underline"
+                className="text-[var(--text-secondary)] hover:underline"
               >
                 Clear All
               </button>
@@ -133,27 +133,27 @@ export const ClientPermissionsModal: React.FC<ClientPermissionsModalProps> = ({
                   onClick={() => handleToggle(perm.id)}
                   className={`p-3 rounded-xl border transition-all cursor-pointer flex items-start gap-3 ${
                     isChecked
-                      ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30'
-                      : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                      ? 'border-indigo-500 bg-[var(--accent-violet-dim)]'
+                      : 'border-[var(--glass-border)] hover:bg-[var(--glass-bg-hover)]/50'
                   }`}
                 >
                   <div className={`w-4 h-4 rounded border mt-0.5 flex items-center justify-center transition-colors ${
                     isChecked
                       ? 'bg-indigo-600 border-indigo-600 text-white'
-                      : 'border-slate-300 dark:border-slate-600'
+                      : 'border-[var(--glass-border)] border-[var(--glass-border)]'
                   }`}>
                     {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-slate-900 dark:text-white">
+                      <span className="text-xs font-semibold text-[var(--text-primary)] text-white">
                         {perm.label}
                       </span>
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[var(--glass-bg-active)] text-[var(--text-secondary)]">
                         {perm.id}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">
                       {perm.desc}
                     </p>
                   </div>
@@ -162,12 +162,12 @@ export const ClientPermissionsModal: React.FC<ClientPermissionsModalProps> = ({
             })}
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--glass-border)]">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+              className="px-4 py-2 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--glass-bg-hover)] rounded-xl transition-colors"
             >
               Cancel
             </button>

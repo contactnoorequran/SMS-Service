@@ -1,16 +1,21 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import React, { useState, useEffect } from 'react';
-import { AgentListItem, UpdateAgentDTO } from '../../../types/agent';
 import { Modal } from '../../ui/Modal';
-import { AlertCircle, UserCheck, Percent } from 'lucide-react';
-import { ManagerListItem } from '../../../types/manager';
+import { Button } from '../../ui/Button';
+import { Badge } from '../../ui/Badge';
+import { AgentItem, UpdateAgentPayload, AgentStatus, ManagerSummary } from '../../../types/agents';
+import { Lock, Building, AlertCircle, Users } from 'lucide-react';
 
 interface EditAgentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  agent: AgentListItem | null;
-  onSubmit: (id: string, data: UpdateAgentDTO) => Promise<void>;
-  managers: ManagerListItem[];
-  currentRole: string;
+  agent: AgentItem | null;
+  onSubmit: (id: string, payload: UpdateAgentPayload) => Promise<void>;
+  managers: ManagerSummary[];
 }
 
 export const EditAgentModal: React.FC<EditAgentModalProps> = ({
@@ -19,60 +24,63 @@ export const EditAgentModal: React.FC<EditAgentModalProps> = ({
   agent,
   onSubmit,
   managers,
-  currentRole,
 }) => {
-  const [formData, setFormData] = useState<UpdateAgentDTO>({
-    firstName: '',
-    lastName: '',
-    contact: '',
-    commissionRate: 0.05,
-    managerId: null,
-    status: 'ACTIVE',
+  const [formData, setFormData] = useState({
+    name: '',
+    managerId: '',
+    status: 'ACTIVE' as AgentStatus,
+    commissionRate: 5,
   });
 
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (agent) {
       setFormData({
-        firstName: agent.firstName,
-        lastName: agent.lastName,
-        contact: agent.contact || '',
-        commissionRate: agent.commissionRate,
-        managerId: agent.managerId,
+        name: agent.name,
+        managerId: agent.managerId || '',
         status: agent.status,
+        commissionRate: agent.commissionRate ? Math.round(agent.commissionRate * 100) : 5,
       });
-      setError(null);
+      setErrors({});
     }
   }, [agent]);
 
   if (!agent) return null;
 
+  const validate = (): boolean => {
+    const errs: Record<string, string> = {};
+
+    if (!formData.name.trim()) {
+      errs.name = 'Full name is required';
+    }
+
+    if (formData.commissionRate < 0 || formData.commissionRate > 50 || isNaN(formData.commissionRate)) {
+      errs.commissionRate = 'Commission rate must be between 0% and 50%';
+    }
+
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setIsLoading(true);
+    if (!validate()) return;
 
+    setIsSubmitting(true);
     try {
-      const payload: UpdateAgentDTO = {
-        firstName: formData.firstName?.trim(),
-        lastName: formData.lastName?.trim(),
-        contact: formData.contact?.trim(),
-        commissionRate: Number(formData.commissionRate),
+      await onSubmit(agent.id, {
+        name: formData.name.trim(),
+        managerId: formData.managerId || null,
         status: formData.status,
-      };
-
-      if (currentRole === 'SUPER_ADMIN') {
-        payload.managerId = formData.managerId || null;
-      }
-
-      await onSubmit(agent.id, payload);
+        commissionRate: formData.commissionRate / 100,
+      });
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to update agent profile.');
+      setErrors({ form: err?.message || 'Failed to update agent profile' });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -80,141 +88,124 @@ export const EditAgentModal: React.FC<EditAgentModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Edit Agent: ${agent.name}`}
-      subtitle={`Update operational profile, contact parameters, commission rate, and managerial mapping`}
-      maxWidth="md"
+      title="Edit Agent Profile"
+      description={`Update configuration and supervisor assignment for ${agent.name}.`}
+      size="md"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        {error && (
-          <div className="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200 dark:border-rose-800 flex items-center gap-2 text-xs text-rose-700 dark:text-rose-400">
+        {errors.form && (
+          <div className="p-3 bg-[var(--accent-rose-dim)] border border-[var(--accent-rose)]/30 rounded-xl flex items-center gap-2 text-xs text-[var(--accent-rose)]">
             <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
+            <span>{errors.form}</span>
           </div>
         )}
 
-        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
-          <div>
-            <span className="font-semibold text-slate-700 dark:text-slate-300">Username / Email:</span>
-            <div className="font-mono text-slate-500 mt-0.5">{agent.username} • {agent.email}</div>
-          </div>
-          <span className="text-[11px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-mono">
-            ID: {agent.id}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              First Name
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.firstName || ''}
-              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Last Name
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.lastName || ''}
-              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Contact Phone
-            </label>
-            <input
-              type="text"
-              value={formData.contact || ''}
-              onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
-              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Commission Rate
-            </label>
-            <div className="relative">
-              <input
-                type="number"
-                step="0.005"
-                min="0"
-                max="1"
-                value={formData.commissionRate || 0}
-                onChange={(e) => setFormData({ ...formData, commissionRate: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500"
-              />
-              <span className="absolute right-3 top-2 text-xs text-slate-400 font-mono">
-                {((formData.commissionRate || 0) * 100).toFixed(1)}%
-              </span>
+        {/* Read-Only Email */}
+        <div>
+          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+            Email Address (Immutable Identity)
+          </label>
+          <div className="px-3 py-2 bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl flex items-center justify-between text-sm">
+            <span className="text-[var(--text-muted)] font-mono">{agent.email}</span>
+            <div className="flex items-center gap-1 text-[var(--text-muted)] text-xs">
+              <Lock className="w-3.5 h-3.5" />
+              <span>Locked</span>
             </div>
           </div>
         </div>
 
-        {currentRole === 'SUPER_ADMIN' && (
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Assigned Manager
-            </label>
-            <select
-              value={formData.managerId || ''}
-              onChange={(e) => setFormData({ ...formData, managerId: e.target.value || null })}
-              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Unassigned (Direct Super Admin Supervision)</option>
-              {managers.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name} ({m.department || 'Operations'})
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
+        {/* Full Name */}
         <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-            Status
+          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+            Full Name <span className="text-[var(--accent-rose)]">*</span>
+          </label>
+          <input
+            type="text"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            className={`w-full px-3 py-2 bg-[var(--bg-glass-input)] border ${
+              errors.name ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
+            } rounded-xl text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] transition-colors`}
+          />
+          {errors.name && <p className="text-[11px] text-[var(--accent-rose)] mt-1">{errors.name}</p>}
+        </div>
+
+        {/* Supervising Manager */}
+        <div>
+          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+            Supervising Manager
           </label>
           <select
-            value={formData.status || 'ACTIVE'}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-            className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500"
+            value={formData.managerId}
+            onChange={(e) => setFormData({ ...formData, managerId: e.target.value })}
+            className="w-full px-3 py-2 bg-[var(--bg-glass-input)] border border-[var(--border-subtle)] rounded-xl text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] transition-colors"
           >
-            <option value="ACTIVE">ACTIVE</option>
-            <option value="INACTIVE">INACTIVE</option>
-            <option value="SUSPENDED">SUSPENDED</option>
+            <option value="" className="bg-[var(--bg-card)] text-[var(--text-muted)]">
+              -- Unassigned (Direct Pool) --
+            </option>
+            {managers.map((m) => (
+              <option
+                key={m.id}
+                value={m.id}
+                className="bg-[var(--bg-card)] text-[var(--text-primary)]"
+              >
+                {m.name} ({m.department})
+              </option>
+            ))}
           </select>
         </div>
 
-        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isLoading}
-            className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+        {/* Commission Rate */}
+        <div>
+          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+            Commission Rate (%)
+          </label>
+          <div className="relative">
+            <input
+              type="number"
+              min="0"
+              max="50"
+              step="0.5"
+              value={formData.commissionRate}
+              onChange={(e) => setFormData({ ...formData, commissionRate: parseFloat(e.target.value) || 0 })}
+              className={`w-full px-3 py-2 bg-[var(--bg-glass-input)] border ${
+                errors.commissionRate ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
+              } rounded-xl text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] transition-colors`}
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] font-mono">
+              %
+            </span>
+          </div>
+          {errors.commissionRate && (
+            <p className="text-[11px] text-[var(--accent-rose)] mt-1">{errors.commissionRate}</p>
+          )}
+        </div>
+
+        {/* Status */}
+        <div>
+          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+            Account Status
+          </label>
+          <select
+            value={formData.status}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value as AgentStatus })}
+            className="w-full px-3 py-2 bg-[var(--bg-glass-input)] border border-[var(--border-subtle)] rounded-xl text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] transition-colors"
           >
+            <option value="ACTIVE" className="bg-[var(--bg-card)] text-[var(--text-primary)]">ACTIVE</option>
+            <option value="PENDING" className="bg-[var(--bg-card)] text-[var(--text-primary)]">PENDING</option>
+            <option value="SUSPENDED" className="bg-[var(--bg-card)] text-[var(--text-primary)]">SUSPENDED</option>
+            <option value="DISABLED" className="bg-[var(--bg-card)] text-[var(--text-primary)]">DISABLED</option>
+          </select>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-subtle)] mt-6">
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
             Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
-          >
-            {isLoading ? 'Saving Changes...' : 'Save Changes'}
-          </button>
+          </Button>
+          <Button type="submit" variant="primary" isLoading={isSubmitting}>
+            Save Changes
+          </Button>
         </div>
       </form>
     </Modal>

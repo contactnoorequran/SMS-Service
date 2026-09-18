@@ -1,13 +1,20 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../../ui/Modal';
-import { ManagerListItem, UpdateManagerDTO } from '../../../types/manager';
-import { AlertCircle } from 'lucide-react';
+import { Button } from '../../ui/Button';
+import { Badge } from '../../ui/Badge';
+import { ManagerItem, UpdateManagerPayload, ManagerStatus } from '../../../types/managers';
+import { Building, Lock, AlertCircle, Users } from 'lucide-react';
 
 interface EditManagerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  manager: ManagerListItem | null;
-  onSubmit: (id: string, data: UpdateManagerDTO) => Promise<void>;
+  manager: ManagerItem | null;
+  onSubmit: (id: string, payload: UpdateManagerPayload) => Promise<void>;
   departments: string[];
 }
 
@@ -18,173 +25,183 @@ export const EditManagerModal: React.FC<EditManagerModalProps> = ({
   onSubmit,
   departments,
 }) => {
-  const [formData, setFormData] = useState<UpdateManagerDTO>({
-    firstName: '',
-    lastName: '',
-    username: '',
-    contact: '',
+  const [formData, setFormData] = useState({
+    name: '',
     department: '',
-    maxAgents: 50,
+    maxAgents: 10,
+    status: 'ACTIVE' as ManagerStatus,
   });
 
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (manager) {
       setFormData({
-        firstName: manager.firstName,
-        lastName: manager.lastName,
-        username: manager.username,
-        contact: manager.contact,
+        name: manager.name,
         department: manager.department,
         maxAgents: manager.maxAgents,
+        status: manager.status,
       });
-      setError(null);
+      setErrors({});
     }
   }, [manager]);
 
+  if (!manager) return null;
+
+  const validate = (): boolean => {
+    const errs: Record<string, string> = {};
+
+    if (!formData.name.trim()) {
+      errs.name = 'Full name is required';
+    }
+
+    if (!formData.department.trim()) {
+      errs.department = 'Department is required';
+    }
+
+    if (formData.maxAgents === undefined || formData.maxAgents < 0 || isNaN(formData.maxAgents)) {
+      errs.maxAgents = 'Maximum agents must be a non-negative number';
+    } else if (formData.maxAgents < manager.assignedAgentsCount) {
+      errs.maxAgents = `Cannot reduce capacity below currently assigned agents (${manager.assignedAgentsCount})`;
+    } else if (formData.maxAgents > 100) {
+      errs.maxAgents = 'Maximum agents capacity cannot exceed 100';
+    }
+
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!manager) return;
-    setError(null);
-
-    if (!formData.username || formData.username.length < 3) {
-      setError('Username must be at least 3 characters.');
-      return;
-    }
+    if (!validate()) return;
 
     setIsSubmitting(true);
     try {
-      await onSubmit(manager.id, formData);
+      await onSubmit(manager.id, {
+        name: formData.name.trim(),
+        department: formData.department.trim(),
+        maxAgents: Number(formData.maxAgents),
+        status: formData.status,
+      });
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to update manager profile');
+      setErrors({ form: err?.message || 'Failed to update manager profile' });
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  if (!manager) return null;
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title="Edit Manager Profile"
-      subtitle={`Update credentials and department settings for ${manager.name}`}
-      maxWidth="lg"
+      description={`Update settings and quota configuration for ${manager.name}.`}
+      size="md"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        {error && (
-          <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 rounded-lg flex items-center gap-2 text-xs text-rose-700 dark:text-rose-300">
+        {errors.form && (
+          <div className="p-3 bg-[var(--accent-rose-dim)] border border-[var(--accent-rose)]/30 rounded-xl flex items-center gap-2 text-xs text-[var(--accent-rose)]">
             <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
+            <span>{errors.form}</span>
           </div>
         )}
 
-        <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs space-y-1">
-          <div className="text-slate-500">Corporate Email (Immutable)</div>
-          <div className="font-mono font-medium text-slate-800 dark:text-slate-200">{manager.email}</div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-              First Name *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.firstName}
-              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-              className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Last Name *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.lastName}
-              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-              className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-            />
+        {/* Read-Only Identity / Email */}
+        <div>
+          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+            Email Address (Immutable Identity)
+          </label>
+          <div className="px-3 py-2 bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl flex items-center justify-between text-sm">
+            <span className="text-[var(--text-muted)] font-mono">{manager.email}</span>
+            <div className="flex items-center gap-1 text-[var(--text-muted)] text-xs">
+              <Lock className="w-3.5 h-3.5" />
+              <span>Locked</span>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Username *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.username}
-              onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase() })}
-              className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-mono"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Contact Phone *
-            </label>
-            <input
-              type="tel"
-              required
-              value={formData.contact}
-              onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
-              className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+        {/* Full Name */}
+        <div>
+          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+            Full Name <span className="text-[var(--accent-rose)]">*</span>
+          </label>
+          <input
+            type="text"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            className={`w-full px-3 py-2 bg-[var(--bg-glass-input)] border ${
+              errors.name ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
+            } rounded-xl text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] transition-colors`}
+          />
+          {errors.name && <p className="text-[11px] text-[var(--accent-rose)] mt-1">{errors.name}</p>}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Department *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.department}
-              onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-              className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Max Agents Limit
-            </label>
-            <input
-              type="number"
-              min="1"
-              max="500"
-              value={formData.maxAgents}
-              onChange={(e) => setFormData({ ...formData, maxAgents: parseInt(e.target.value) || 50 })}
-              className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+        {/* Department */}
+        <div>
+          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+            Department <span className="text-[var(--accent-rose)]">*</span>
+          </label>
+          <input
+            type="text"
+            value={formData.department}
+            onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+            className={`w-full px-3 py-2 bg-[var(--bg-glass-input)] border ${
+              errors.department ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
+            } rounded-xl text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] transition-colors`}
+          />
+          {errors.department && <p className="text-[11px] text-[var(--accent-rose)] mt-1">{errors.department}</p>}
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+        {/* Maximum Agent Capacity */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-semibold text-[var(--text-secondary)]">
+              Maximum Agent Capacity <span className="text-[var(--accent-rose)]">*</span>
+            </label>
+            <span className="text-[11px] text-[var(--text-muted)]">
+              Currently Assigned: <strong className="text-[var(--text-primary)]">{manager.assignedAgentsCount}</strong>
+            </span>
+          </div>
+          <input
+            type="number"
+            min={manager.assignedAgentsCount}
+            max="100"
+            value={formData.maxAgents}
+            onChange={(e) => setFormData({ ...formData, maxAgents: parseInt(e.target.value, 10) || 0 })}
+            className={`w-full px-3 py-2 bg-[var(--bg-glass-input)] border ${
+              errors.maxAgents ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
+            } rounded-xl text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] transition-colors`}
+          />
+          {errors.maxAgents && <p className="text-[11px] text-[var(--accent-rose)] mt-1">{errors.maxAgents}</p>}
+        </div>
+
+        {/* Status Selection */}
+        <div>
+          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+            Account Status
+          </label>
+          <select
+            value={formData.status}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value as ManagerStatus })}
+            className="w-full px-3 py-2 bg-[var(--bg-glass-input)] border border-[var(--border-subtle)] rounded-xl text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] transition-colors"
           >
+            <option value="ACTIVE" className="bg-[var(--bg-card)] text-[var(--text-primary)]">ACTIVE</option>
+            <option value="PENDING" className="bg-[var(--bg-card)] text-[var(--text-primary)]">PENDING</option>
+            <option value="SUSPENDED" className="bg-[var(--bg-card)] text-[var(--text-primary)]">SUSPENDED</option>
+            <option value="DISABLED" className="bg-[var(--bg-card)] text-[var(--text-primary)]">DISABLED</option>
+          </select>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-subtle)] mt-6">
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
             Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
-          >
-            {isSubmitting ? 'Saving Changes...' : 'Save Changes'}
-          </button>
+          </Button>
+          <Button type="submit" variant="primary" isLoading={isSubmitting}>
+            Save Changes
+          </Button>
         </div>
       </form>
     </Modal>

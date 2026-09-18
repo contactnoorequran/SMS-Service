@@ -727,20 +727,20 @@ export const DatabaseSchemaViewer: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header Banner */}
-      <div className="p-6 bg-slate-900 rounded-xl text-white border border-slate-800 shadow-sm">
+      <div className="p-6 bg-[var(--bg-surface)] rounded-xl text-white border border-[var(--glass-border)] shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Badge variant="success" size="sm">
                 <CheckCircle2 className="w-3.5 h-3.5" /> Phase 02 Schema Ready
               </Badge>
-              <span className="text-xs text-slate-400 font-mono">Prisma ORM 6.x • PostgreSQL Normalized DDL</span>
+              <span className="text-xs text-[var(--text-tertiary)] font-mono">Prisma ORM 6.x • PostgreSQL Normalized DDL</span>
             </div>
             <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
               <Database className="w-5 h-5 text-indigo-400" />
               Database Architecture & Entity Relationship Directory
             </h1>
-            <p className="text-xs text-slate-300 max-w-3xl leading-relaxed">
+            <p className="text-xs text-[var(--text-secondary)] max-w-3xl leading-relaxed">
               Fully normalized relational design implementing 28 entities across 8 core domains. Enforces strict UUID primary keys,
               E.164 unique constraints, double-entry immutable financial ledgers, zero plaintext passwords, and high-throughput indexes.
             </p>
@@ -750,7 +750,7 @@ export const DatabaseSchemaViewer: React.FC = () => {
             <button
               onClick={fetchArchitectureData}
               disabled={isLoadingApi}
-              className="flex items-center gap-2 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 rounded-lg border border-slate-700 transition-colors"
+              className="flex items-center gap-2 px-3.5 py-2 bg-[var(--glass-bg)] hover:bg-[var(--glass-bg-hover)] text-xs text-[var(--text-primary)] rounded-lg border border-[var(--glass-border)] transition-colors"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isLoadingApi ? 'animate-spin' : ''}`} />
               Verify Schema API
@@ -759,21 +759,21 @@ export const DatabaseSchemaViewer: React.FC = () => {
         </div>
 
         {/* Quick Stats Strip */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-4 border-t border-slate-800/80">
-          <div className="bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/60">
-            <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Total Models</div>
-            <div className="text-lg font-bold text-slate-100 mt-0.5">28 Models</div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-4 border-t border-[var(--glass-border)]">
+          <div className="bg-[var(--glass-bg)]/60 p-2.5 rounded-lg border border-[var(--glass-border)]">
+            <div className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider font-semibold">Total Models</div>
+            <div className="text-lg font-bold text-[var(--text-primary)] mt-0.5">28 Models</div>
           </div>
-          <div className="bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/60">
-            <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Architecture Tests</div>
-            <div className="text-lg font-bold text-emerald-400 mt-0.5">51 / 51 Passed (100%)</div>
+          <div className="bg-[var(--glass-bg)]/60 p-2.5 rounded-lg border border-[var(--glass-border)]">
+            <div className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider font-semibold">Architecture Tests</div>
+            <div className="text-lg font-bold text-[var(--accent-emerald)] mt-0.5">51 / 51 Passed (100%)</div>
           </div>
-          <div className="bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/60">
-            <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Financial Precision</div>
+          <div className="bg-[var(--glass-bg)]/60 p-2.5 rounded-lg border border-[var(--glass-border)]">
+            <div className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider font-semibold">Financial Precision</div>
             <div className="text-lg font-bold text-amber-300 mt-0.5">Decimal(18, 6)</div>
           </div>
-          <div className="bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/60">
-            <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Migration DDL</div>
+          <div className="bg-[var(--glass-bg)]/60 p-2.5 rounded-lg border border-[var(--glass-border)]">
+            <div className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider font-semibold">Migration DDL</div>
             <div className="text-lg font-bold text-blue-400 mt-0.5">833 Lines SQL</div>
           </div>
         </div>
@@ -781,41 +781,41 @@ export const DatabaseSchemaViewer: React.FC = () => {
 
       {/* Core Architectural Invariants Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-100">
-            <Radio className="w-4 h-4 text-indigo-500" />
+        <div className="p-4 bg-[var(--glass-bg)] backdrop-blur-md rounded-xl border border-[var(--glass-border)] space-y-2">
+          <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-primary)]">
+            <Radio className="w-4 h-4 text-[var(--accent-violet)]" />
             <span>1:N Telephony Hierarchy</span>
           </div>
-          <p className="text-xs text-slate-600 dark:text-slate-400 leading-normal">
+          <p className="text-xs text-[var(--text-secondary)] leading-normal">
             <strong>Provider</strong> has many <strong>Ranges</strong>, which have many <strong>Numbers</strong>. Numbers link strictly to one Provider and Range at a time.
           </p>
-          <div className="text-[11px] font-mono text-slate-500 bg-slate-50 dark:bg-slate-800/60 p-1.5 rounded">
+          <div className="text-[11px] font-mono text-[var(--text-secondary)] bg-[var(--glass-bg)]/60 p-1.5 rounded">
             Provider [1] ──&lt; Range [N] ──&lt; Number [N]
           </div>
         </div>
 
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-100">
-            <DollarSign className="w-4 h-4 text-emerald-500" />
+        <div className="p-4 bg-[var(--glass-bg)] backdrop-blur-md rounded-xl border border-[var(--glass-border)] space-y-2">
+          <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-primary)]">
+            <DollarSign className="w-4 h-4 text-[var(--accent-emerald)]" />
             <span>Immutable Financial Ledger</span>
           </div>
-          <p className="text-xs text-slate-600 dark:text-slate-400 leading-normal">
+          <p className="text-xs text-[var(--text-secondary)] leading-normal">
             Wallet balances are never silently overwritten. Every transaction stores <strong>balanceBefore</strong> and <strong>balanceAfter</strong> with auditable reference links.
           </p>
-          <div className="text-[11px] font-mono text-slate-500 bg-slate-50 dark:bg-slate-800/60 p-1.5 rounded">
+          <div className="text-[11px] font-mono text-[var(--text-secondary)] bg-[var(--glass-bg)]/60 p-1.5 rounded">
             CDR / Txn: Payout - Cost - Commission = Net
           </div>
         </div>
 
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-100">
-            <Lock className="w-4 h-4 text-amber-500" />
+        <div className="p-4 bg-[var(--glass-bg)] backdrop-blur-md rounded-xl border border-[var(--glass-border)] space-y-2">
+          <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-primary)]">
+            <Lock className="w-4 h-4 text-[var(--accent-amber)]" />
             <span>Encrypted Credentials Vault</span>
           </div>
-          <p className="text-xs text-slate-600 dark:text-slate-400 leading-normal">
+          <p className="text-xs text-[var(--text-secondary)] leading-normal">
             Carrier keys and passwords use AES-256 ciphertext, IVs, and masked strings. API tokens store SHA-256 digests with safe prefixes.
           </p>
-          <div className="text-[11px] font-mono text-slate-500 bg-slate-50 dark:bg-slate-800/60 p-1.5 rounded">
+          <div className="text-[11px] font-mono text-[var(--text-secondary)] bg-[var(--glass-bg)]/60 p-1.5 rounded">
             Zero Plaintext Passwords or Secrets
           </div>
         </div>
@@ -826,8 +826,8 @@ export const DatabaseSchemaViewer: React.FC = () => {
         {/* Left Column: Domain Filter & Model Selector */}
         <div className="lg:col-span-4 space-y-4">
           {/* Domain Filter */}
-          <div className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
-            <div className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+          <div className="p-4 bg-[var(--glass-bg)] backdrop-blur-md rounded-xl border border-[var(--glass-border)] space-y-3">
+            <div className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
               Filter by Domain
             </div>
             <div className="space-y-1">
@@ -837,12 +837,12 @@ export const DatabaseSchemaViewer: React.FC = () => {
                   onClick={() => setSelectedDomain(domain.id)}
                   className={`w-full flex items-center justify-between px-3 py-2 text-xs rounded-lg transition-colors text-left ${
                     selectedDomain === domain.id
-                      ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 font-semibold border border-indigo-200 dark:border-indigo-800'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                      ? 'bg-[var(--accent-violet-dim)] text-[var(--accent-violet)] font-semibold border border-[rgba(139,92,246,0.25)]'
+                      : 'text-[var(--text-secondary)] hover:bg-[var(--glass-bg-hover)]/50'
                   }`}
                 >
                   <span className="truncate">{domain.name}</span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-[var(--glass-bg)] bg-[var(--glass-bg)] text-[var(--text-secondary)]">
                     {domain.count}
                   </span>
                 </button>
@@ -851,19 +851,19 @@ export const DatabaseSchemaViewer: React.FC = () => {
           </div>
 
           {/* Model Search & List */}
-          <div className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
+          <div className="p-4 bg-[var(--glass-bg)] backdrop-blur-md rounded-xl border border-[var(--glass-border)] space-y-3">
             <div className="relative">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
+              <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-[var(--text-tertiary)]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search models, tables, fields..."
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
             </div>
 
-            <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+            <div className="text-[10px] uppercase font-bold text-[var(--text-tertiary)] tracking-wider">
               Models ({filteredModels.length})
             </div>
 
@@ -875,16 +875,16 @@ export const DatabaseSchemaViewer: React.FC = () => {
                   className={`w-full flex items-center justify-between px-3 py-2 text-xs rounded-lg transition-colors text-left ${
                     selectedModelName === model.name
                       ? 'bg-indigo-600 text-white font-semibold'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      : 'text-[var(--text-secondary)] hover:bg-[var(--glass-bg-hover)]'
                   }`}
                 >
                   <div>
                     <div className="font-mono text-xs">{model.name}</div>
-                    <div className={`text-[10px] ${selectedModelName === model.name ? 'text-indigo-200' : 'text-slate-400'}`}>
+                    <div className={`text-[10px] ${selectedModelName === model.name ? 'text-indigo-200' : 'text-[var(--text-tertiary)]'}`}>
                       table: {model.tableName}
                     </div>
                   </div>
-                  <ArrowRight className={`w-3 h-3 ${selectedModelName === model.name ? 'text-white' : 'text-slate-400'}`} />
+                  <ArrowRight className={`w-3 h-3 ${selectedModelName === model.name ? 'text-white' : 'text-[var(--text-tertiary)]'}`} />
                 </button>
               ))}
             </div>
@@ -893,12 +893,12 @@ export const DatabaseSchemaViewer: React.FC = () => {
 
         {/* Right Column: Model Details & Relations Inspector */}
         <div className="lg:col-span-8 space-y-4">
-          <div className="p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-5">
+          <div className="p-5 bg-[var(--glass-bg)] backdrop-blur-md rounded-xl border border-[var(--glass-border)] space-y-5">
             {/* Model Title & Table Metadata */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[var(--glass-border)]">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold font-mono text-slate-900 dark:text-slate-100">
+                  <span className="text-lg font-bold font-mono text-[var(--text-primary)]">
                     {currentModel.name}
                   </span>
                   <Badge variant="neutral" size="sm">
@@ -908,13 +908,13 @@ export const DatabaseSchemaViewer: React.FC = () => {
                     PK: {currentModel.primaryKey}
                   </Badge>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
+                <p className="text-xs text-[var(--text-secondary)]">
                   {currentModel.description}
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-[11px] text-slate-400 font-mono">
+                <span className="text-[11px] text-[var(--text-tertiary)] font-mono">
                   {currentModel.fields.length} Columns
                 </span>
               </div>
@@ -922,14 +922,14 @@ export const DatabaseSchemaViewer: React.FC = () => {
 
             {/* Field Schema Table */}
             <div>
-              <div className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <FileCode className="w-3.5 h-3.5 text-indigo-500" />
+              <div className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <FileCode className="w-3.5 h-3.5 text-[var(--accent-violet)]" />
                 <span>Column Definitions & Attributes</span>
               </div>
 
-              <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
+              <div className="overflow-x-auto border border-[var(--glass-border)] rounded-lg">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 font-semibold text-slate-700 dark:text-slate-300">
+                  <thead className="bg-[var(--glass-bg)]/60 border-b border-[var(--glass-border)] font-semibold text-[var(--text-secondary)]">
                     <tr>
                       <th className="px-3 py-2 font-mono">Field Name</th>
                       <th className="px-3 py-2">Data Type</th>
@@ -937,19 +937,19 @@ export const DatabaseSchemaViewer: React.FC = () => {
                       <th className="px-3 py-2">Operational Note</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-[11px]">
+                  <tbody className="divide-y divide-[var(--glass-border)] font-mono text-[11px]">
                     {currentModel.fields.map((field) => (
-                      <tr key={field.name} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                        <td className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100">
+                      <tr key={field.name} className="hover:bg-[var(--glass-bg)]/50 /30">
+                        <td className="px-3 py-2 font-semibold text-[var(--text-primary)]">
                           {field.name}
                         </td>
-                        <td className="px-3 py-2 text-indigo-600 dark:text-indigo-400">
+                        <td className="px-3 py-2 text-indigo-600 text-[var(--accent-violet)]">
                           {field.type}
                         </td>
-                        <td className="px-3 py-2 text-slate-600 dark:text-slate-400">
+                        <td className="px-3 py-2 text-[var(--text-secondary)]">
                           {field.attributes}
                         </td>
-                        <td className="px-3 py-2 font-sans text-[11px] text-slate-500">
+                        <td className="px-3 py-2 font-sans text-[11px] text-[var(--text-secondary)]">
                           {field.note || '—'}
                         </td>
                       </tr>
@@ -962,21 +962,21 @@ export const DatabaseSchemaViewer: React.FC = () => {
             {/* Entity Relationships */}
             {currentModel.relations.length > 0 && (
               <div>
-                <div className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-blue-500" />
+                <div className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-[var(--accent-blue)]" />
                   <span>Foreign Key Cardinality & Cascade Rules</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {currentModel.relations.map((rel, idx) => (
                     <div
                       key={idx}
-                      className="p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700/60 text-xs flex items-center justify-between"
+                      className="p-2.5 bg-[var(--glass-bg)]/50 rounded-lg border border-[var(--glass-border)]/60 text-xs flex items-center justify-between"
                     >
                       <div>
-                        <div className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
+                        <div className="font-semibold text-[var(--text-primary)] font-mono">
                           {rel.target}
                         </div>
-                        <div className="text-[10px] text-slate-500">{rel.rule}</div>
+                        <div className="text-[10px] text-[var(--text-secondary)]">{rel.rule}</div>
                       </div>
                       <Badge variant="neutral" size="sm">
                         {rel.type}
@@ -990,15 +990,15 @@ export const DatabaseSchemaViewer: React.FC = () => {
             {/* Database Indexes */}
             {currentModel.indexes.length > 0 && (
               <div>
-                <div className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <Key className="w-3.5 h-3.5 text-amber-500" />
+                <div className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <Key className="w-3.5 h-3.5 text-[var(--accent-amber)]" />
                   <span>Performance Indexes & Unique Constraints</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {currentModel.indexes.map((idxStr, i) => (
                     <span
                       key={i}
-                      className="px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-[10px] text-slate-700 dark:text-slate-300"
+                      className="px-2.5 py-1 rounded bg-[var(--glass-bg-active)] border border-[var(--glass-border)] font-mono text-[10px] text-[var(--text-secondary)]"
                     >
                       {idxStr}
                     </span>
@@ -1009,10 +1009,10 @@ export const DatabaseSchemaViewer: React.FC = () => {
           </div>
 
           {/* Live Express API Response Preview */}
-          <div className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
+          <div className="p-4 bg-[var(--glass-bg)] backdrop-blur-md rounded-xl border border-[var(--glass-border)] space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-slate-100">
-                <Shield className="w-4 h-4 text-emerald-500" />
+              <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-primary)]">
+                <Shield className="w-4 h-4 text-[var(--accent-emerald)]" />
                 <span>Live Backend Schema Verification (/api/database/architecture)</span>
               </div>
               <Badge variant={apiResponse?.status === 'READY' ? 'success' : 'neutral'} size="sm">
@@ -1020,11 +1020,11 @@ export const DatabaseSchemaViewer: React.FC = () => {
               </Badge>
             </div>
 
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[var(--text-secondary)]">
               The backend Express gateway dynamically validates and serves the database schema specification:
             </p>
 
-            <pre className="p-3 bg-slate-950 text-emerald-400 font-mono text-[11px] rounded-lg overflow-x-auto max-h-48 border border-slate-800">
+            <pre className="p-3 bg-[rgba(0,0,0,0.4)] text-[var(--accent-emerald)] font-mono text-[11px] rounded-lg overflow-x-auto max-h-48 border border-[var(--glass-border)]">
               {JSON.stringify(apiResponse || { message: 'Loading live database architecture from backend...' }, null, 2)}
             </pre>
           </div>

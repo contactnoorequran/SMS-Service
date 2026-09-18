@@ -1,5 +1,10 @@
 import { Response } from 'express';
 
+// Enable global JSON serialization for BigInt values
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
+};
+
 export interface ApiSuccessResponse<T> {
   success: true;
   status: number;

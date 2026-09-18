@@ -43,7 +43,7 @@ export const SystemHealthCard: React.FC<SystemHealthCardProps> = ({
       <CardHeader
         title="Infrastructure & API Gateway Status"
         subtitle="Real-time Node.js runtime, process memory, and Prisma database telemetry"
-        icon={<Activity className="w-4 h-4 text-blue-500" />}
+        icon={<Activity className="w-4 h-4 text-[var(--accent-blue)]" />}
         action={
           <Badge
             variant={
@@ -61,75 +61,75 @@ export const SystemHealthCard: React.FC<SystemHealthCardProps> = ({
       />
       <CardContent>
         {isLoading && !health ? (
-          <div className="py-8 text-center text-sm text-slate-500">
+          <div className="py-8 text-center text-sm text-[var(--text-secondary)]">
             Querying server health endpoint (/api/health)...
           </div>
         ) : health ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Metric 1: API Response & Latency */}
-            <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
-              <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+            <div className="p-3.5 bg-[var(--glass-bg)]/50 rounded-lg border border-[var(--glass-border)]">
+              <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] mb-1">
                 <span>API Roundtrip</span>
-                <Clock className="w-3.5 h-3.5 text-slate-400" />
+                <Clock className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
               </div>
-              <div className="text-xl font-semibold text-slate-900 dark:text-slate-100 font-mono">
+              <div className="text-xl font-semibold text-[var(--text-primary)] font-mono">
                 {latency !== null ? `${latency} ms` : '--'}
               </div>
-              <div className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+              <div className="text-[11px] text-[var(--accent-emerald)] mt-1 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                 Express 4 Gateway
               </div>
             </div>
 
             {/* Metric 2: Uptime */}
-            <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
-              <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+            <div className="p-3.5 bg-[var(--glass-bg)]/50 rounded-lg border border-[var(--glass-border)]">
+              <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] mb-1">
                 <span>Process Uptime</span>
-                <Cpu className="w-3.5 h-3.5 text-slate-400" />
+                <Cpu className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
               </div>
-              <div className="text-xl font-semibold text-slate-900 dark:text-slate-100 font-mono">
+              <div className="text-xl font-semibold text-[var(--text-primary)] font-mono">
                 {health.uptimeFormatted}
               </div>
-              <div className="text-[11px] text-slate-500 mt-1">
+              <div className="text-[11px] text-[var(--text-secondary)] mt-1">
                 Node {health.system.nodeVersion}
               </div>
             </div>
 
             {/* Metric 3: Memory Usage */}
-            <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
-              <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+            <div className="p-3.5 bg-[var(--glass-bg)]/50 rounded-lg border border-[var(--glass-border)]">
+              <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] mb-1">
                 <span>Heap Memory</span>
-                <HardDrive className="w-3.5 h-3.5 text-slate-400" />
+                <HardDrive className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
               </div>
-              <div className="text-xl font-semibold text-slate-900 dark:text-slate-100 font-mono">
+              <div className="text-xl font-semibold text-[var(--text-primary)] font-mono">
                 {health.system.memory.heapUsedMb} MB
               </div>
-              <div className="text-[11px] text-slate-500 mt-1">
+              <div className="text-[11px] text-[var(--text-secondary)] mt-1">
                 Total Allocated: {health.system.memory.heapTotalMb} MB
               </div>
             </div>
 
             {/* Metric 4: Database Connection */}
-            <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
-              <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+            <div className="p-3.5 bg-[var(--glass-bg)]/50 rounded-lg border border-[var(--glass-border)]">
+              <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] mb-1">
                 <span>PostgreSQL / Prisma</span>
-                <Database className="w-3.5 h-3.5 text-slate-400" />
+                <Database className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
               </div>
               <div className="mt-1">{getDbBadge(health.database.status)}</div>
-              <div className="text-[11px] text-slate-500 mt-1 truncate" title={health.database.message}>
+              <div className="text-[11px] text-[var(--text-secondary)] mt-1 truncate" title={health.database.message}>
                 {health.database.message || 'Prisma ORM v6.19'}
               </div>
             </div>
           </div>
         ) : (
-          <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-xs">
+          <div className="p-4 bg-[var(--accent-rose-dim)] border border-[rgba(244,63,94,0.25)] text-[var(--accent-rose)] rounded-lg text-xs">
             Unable to connect to /api/health. Please verify that the Express backend server is running.
           </div>
         )}
       </CardContent>
       {health && (
         <CardFooter className="flex items-center justify-between">
-          <span>Environment: <strong className="font-mono text-slate-700 dark:text-slate-300">{health.environment}</strong></span>
+          <span>Environment: <strong className="font-mono text-[var(--text-secondary)]">{health.environment}</strong></span>
           <span className="font-mono text-[11px]">Last verified: {new Date(health.timestamp).toLocaleTimeString()}</span>
         </CardFooter>
       )}

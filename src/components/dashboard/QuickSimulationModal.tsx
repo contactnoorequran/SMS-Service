@@ -68,12 +68,12 @@ export const QuickSimulationModal: React.FC<QuickSimulationModalProps> = ({
           <div
             className={`p-3 rounded-xl border text-xs flex items-start gap-2.5 ${
               result.success
-                ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200'
-                : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200'
+                ? 'bg-[var(--accent-emerald-dim)] border-emerald-200 border-emerald-800 text-emerald-800 text-emerald-200'
+                : 'bg-[var(--accent-rose-dim)] border-rose-200 border-rose-800 text-rose-800 text-rose-200'
             }`}
           >
             {result.success ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-4 h-4 text-[var(--accent-emerald)] shrink-0 mt-0.5" />
             ) : (
               <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
             )}
@@ -82,13 +82,13 @@ export const QuickSimulationModal: React.FC<QuickSimulationModalProps> = ({
         )}
 
         <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
             Carrier Gateway Source
           </label>
           <select
             value={providerSlug}
             onChange={(e) => setProviderSlug(e.target.value)}
-            className="w-full text-xs p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+            className="w-full text-xs p-2.5 rounded-lg border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-primary)]"
           >
             <option value="telco-direct-global">TelcoDirect Global Carrier (HTTP/REST Webhook)</option>
             <option value="nexus-smpp-hub">Nexus SMPP Hub (SMPP Short Message Peer-to-Peer)</option>
@@ -97,7 +97,7 @@ export const QuickSimulationModal: React.FC<QuickSimulationModalProps> = ({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
               Sender Address (CLI)
             </label>
             <input
@@ -106,12 +106,12 @@ export const QuickSimulationModal: React.FC<QuickSimulationModalProps> = ({
               onChange={(e) => setSender(e.target.value)}
               placeholder="+12025550189"
               required
-              className="w-full text-xs font-mono p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+              className="w-full text-xs font-mono p-2.5 rounded-lg border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-primary)]"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
               Destination DID Number
             </label>
             <input
@@ -120,13 +120,13 @@ export const QuickSimulationModal: React.FC<QuickSimulationModalProps> = ({
               onChange={(e) => setDestination(e.target.value)}
               placeholder="+12025550110"
               required
-              className="w-full text-xs font-mono p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+              className="w-full text-xs font-mono p-2.5 rounded-lg border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-primary)]"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
             SMS Message Payload
           </label>
           <textarea
@@ -134,14 +134,14 @@ export const QuickSimulationModal: React.FC<QuickSimulationModalProps> = ({
             onChange={(e) => setMessageText(e.target.value)}
             rows={3}
             required
-            className="w-full text-xs p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-mono"
+            className="w-full text-xs p-2.5 rounded-lg border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-primary)] font-mono"
           />
-          <span className="text-[11px] text-slate-400">
+          <span className="text-[11px] text-[var(--text-tertiary)]">
             Length: {messageText.length} chars (1 SMS Segment)
           </span>
         </div>
 
-        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5">
+        <div className="pt-3 border-t border-[var(--glass-border)] flex items-center justify-end gap-2.5">
           <Button variant="ghost" size="sm" type="button" onClick={onClose}>
             Cancel
           </Button>

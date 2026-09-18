@@ -39,31 +39,49 @@ export function Table<T>({
   onRowClick,
 }: TableProps<T>) {
   return (
-    <div id={id} className={`w-full overflow-hidden border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 shadow-xs ${className}`}>
-      <div className="overflow-x-auto min-w-full">
+    <div id={id} className={`w-full overflow-hidden border border-[var(--glass-border)] rounded-xl bg-[var(--glass-bg)] backdrop-blur-md ${className}`}>
+      <div className="overflow-x-auto min-w-full table-scroll-container">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">
+            <tr className="bg-[rgba(255,255,255,0.03)] border-b border-[var(--glass-border)] text-[var(--text-secondary)] uppercase tracking-wider font-semibold text-[11px]">
               {columns.map((col) => {
                 const isSorted = sortKey === col.key;
                 return (
                   <th
                     key={col.key}
                     scope="col"
+                    aria-sort={
+                      isSorted
+                        ? sortDirection === 'asc'
+                          ? 'ascending'
+                          : 'descending'
+                        : col.sortable
+                        ? 'none'
+                        : undefined
+                    }
+                    tabIndex={col.sortable ? 0 : undefined}
+                    onKeyDown={(e) => {
+                      if (col.sortable && onSort && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault();
+                        onSort(col.key);
+                      }
+                    }}
                     onClick={() => col.sortable && onSort && onSort(col.key)}
                     className={`px-4 py-3.5 select-none ${col.className || ''} ${
-                      col.sortable ? 'cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 transition-colors' : ''
+                      col.sortable
+                        ? 'cursor-pointer hover:text-[var(--text-primary)] transition-colors focus-visible:outline-none focus-visible:bg-[var(--glass-bg-hover)]'
+                        : ''
                     }`}
                   >
                     <div className="flex items-center gap-1.5">
                       <span>{col.header}</span>
                       {col.sortable && (
-                        <span className="text-slate-400">
+                        <span className="text-[var(--text-tertiary)]">
                           {isSorted ? (
                             sortDirection === 'asc' ? (
-                              <ArrowUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                              <ArrowUp className="w-3.5 h-3.5 text-[var(--accent-blue)]" />
                             ) : (
-                              <ArrowDown className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                              <ArrowDown className="w-3.5 h-3.5 text-[var(--accent-blue)]" />
                             )
                           ) : (
                             <ArrowUpDown className="w-3 h-3 opacity-40" />
@@ -76,22 +94,22 @@ export function Table<T>({
               })}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
+          <tbody className="divide-y divide-[var(--glass-border)]">
             {isLoading ? (
               Array.from({ length: 4 }).map((_, rIdx) => (
-                <tr key={`loading-row-${rIdx}`} className="animate-pulse">
+                <tr key={`loading-row-${rIdx}`}>
                   {columns.map((col) => (
                     <td key={`loading-col-${col.key}`} className="px-4 py-3.5">
-                      <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-3/4"></div>
+                      <div className="h-4 glass-skeleton w-3/4"></div>
                     </td>
                   ))}
                 </tr>
               ))
             ) : data.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{emptyMessage}</p>
-                  <p className="text-xs text-slate-400 mt-1">{emptySubtext}</p>
+                <td colSpan={columns.length} className="px-6 py-12 text-center text-[var(--text-secondary)]">
+                  <p className="text-sm font-medium text-[var(--text-primary)]">{emptyMessage}</p>
+                  <p className="text-xs text-[var(--text-tertiary)] mt-1">{emptySubtext}</p>
                 </td>
               </tr>
             ) : (
@@ -99,12 +117,12 @@ export function Table<T>({
                 <tr
                   key={keyExtractor(item, index)}
                   onClick={() => onRowClick && onRowClick(item)}
-                  className={`transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40 ${
+                  className={`transition-colors hover:bg-[var(--glass-bg-hover)] ${
                     onRowClick ? 'cursor-pointer' : ''
                   }`}
                 >
                   {columns.map((col) => (
-                    <td key={`${col.key}-${keyExtractor(item, index)}`} className={`px-4 py-3.5 text-slate-700 dark:text-slate-300 ${col.className || ''}`}>
+                    <td key={`${col.key}-${keyExtractor(item, index)}`} className={`px-4 py-3.5 text-[var(--text-secondary)] ${col.className || ''}`}>
                       {col.render ? col.render(item, index) : (item as any)[col.key]}
                     </td>
                   ))}

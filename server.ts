@@ -11,14 +11,6 @@ import { UserRepository } from './server/services/user.repository';
 import { ClientService } from './server/services/client.service';
 
 async function startServer() {
-  // Initialize repository seed users, agents, and clients
-  await UserRepository.initializeSeedUsers().catch((err) => {
-    logger.warn('Seed users initialization encountered non-fatal warning:', err);
-  });
-  await ClientService.initializeSeedClients().catch((err) => {
-    logger.warn('Seed clients initialization encountered non-fatal warning:', err);
-  });
-
   const app = express();
   const PORT = 3000;
 

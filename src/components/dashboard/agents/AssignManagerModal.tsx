@@ -1,15 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { AgentListItem } from '../../../types/agent';
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState } from 'react';
 import { Modal } from '../../ui/Modal';
-import { UserCheck, AlertCircle, Building, ShieldCheck } from 'lucide-react';
-import { ManagerListItem } from '../../../types/manager';
+import { Button } from '../../ui/Button';
+import { Badge } from '../../ui/Badge';
+import { CapacityIndicator } from '../managers/CapacityIndicator';
+import { AgentItem, ManagerSummary } from '../../../types/agents';
+import {
+  UserCheck,
+  Building,
+  ArrowRight,
+  AlertCircle,
+  CheckCircle2,
+  Users,
+  Shield,
+} from 'lucide-react';
 
 interface AssignManagerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  agent: AgentListItem | null;
-  managers: ManagerListItem[];
-  onSubmit: (id: string, managerId: string | null) => Promise<void>;
+  agent: AgentItem | null;
+  managers: ManagerSummary[];
+  onConfirm: (agentId: string, managerId: string | null) => Promise<void>;
 }
 
 export const AssignManagerModal: React.FC<AssignManagerModalProps> = ({
@@ -17,33 +32,35 @@ export const AssignManagerModal: React.FC<AssignManagerModalProps> = ({
   onClose,
   agent,
   managers,
-  onSubmit,
+  onConfirm,
 }) => {
-  const [selectedManagerId, setSelectedManagerId] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [selectedManagerId, setSelectedManagerId] = useState<string>(
+    agent?.managerId || ''
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
+  // Sync selected manager on open
+  React.useEffect(() => {
     if (agent) {
       setSelectedManagerId(agent.managerId || '');
-      setError(null);
     }
   }, [agent]);
 
   if (!agent) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsLoading(true);
+  const currentManager = managers.find((m) => m.id === agent.managerId) || null;
+  const newManager = managers.find((m) => m.id === selectedManagerId) || null;
 
+  const isChanging = (agent.managerId || '') !== selectedManagerId;
+  const isSelectedFull = newManager ? newManager.availableSlots <= 0 && newManager.id !== agent.managerId : false;
+
+  const handleAssign = async () => {
+    setIsSubmitting(true);
     try {
-      await onSubmit(agent.id, selectedManagerId || null);
+      await onConfirm(agent.id, selectedManagerId || null);
       onClose();
-    } catch (err: any) {
-      setError(err.message || 'Failed to reassign manager.');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -51,68 +68,141 @@ export const AssignManagerModal: React.FC<AssignManagerModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Assign Manager: ${agent.name}`}
-      subtitle="Reallocate supervisory hierarchy and department grouping"
-      maxWidth="md"
+      title="Supervising Manager Assignment"
+      description={`Allocate or reassign supervisory responsibility for agent ${agent.name}.`}
+      size="md"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {error && (
-          <div className="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200 dark:border-rose-800 flex items-center gap-2 text-xs text-rose-700 dark:text-rose-400">
+      <div className="space-y-4">
+        {/* Manager Transition Preview */}
+        <div className="p-4 bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl flex items-center justify-between">
+          <div>
+            <div className="text-xs text-[var(--text-muted)] mb-1">Current Manager</div>
+            {currentManager ? (
+              <div>
+                <div className="text-xs font-bold text-[var(--text-primary)]">{currentManager.name}</div>
+                <div className="text-[10px] text-[var(--text-muted)]">{currentManager.department}</div>
+              </div>
+            ) : (
+              <Badge variant="neutral" size="sm">Unassigned</Badge>
+            )}
+          </div>
+
+          <div className="flex items-center text-[var(--text-muted)] px-2">
+            <ArrowRight className="w-5 h-5" />
+          </div>
+
+          <div>
+            <div className="text-xs text-[var(--text-muted)] mb-1">New Manager</div>
+            {newManager ? (
+              <div>
+                <div className="text-xs font-bold text-[var(--accent-blue)]">{newManager.name}</div>
+                <div className="text-[10px] text-[var(--text-muted)]">{newManager.department}</div>
+              </div>
+            ) : (
+              <Badge variant="neutral" size="sm">Unassigned (Direct)</Badge>
+            )}
+          </div>
+        </div>
+
+        {/* Manager Selection List with Capacity Indicators */}
+        <div className="space-y-2">
+          <label className="block text-xs font-semibold text-[var(--text-secondary)]">
+            Select Supervising Manager
+          </label>
+
+          <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+            {/* Direct Unassigned Option */}
+            <div
+              onClick={() => setSelectedManagerId('')}
+              className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                selectedManagerId === ''
+                  ? 'bg-[var(--accent-blue-dim)] border-[var(--accent-blue)] text-[var(--text-primary)]'
+                  : 'bg-[var(--bg-glass-card)] border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold">Unassigned (Direct Pool)</span>
+                {selectedManagerId === '' && <CheckCircle2 className="w-4 h-4 text-[var(--accent-blue)]" />}
+              </div>
+              <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                Agent reports directly to platform operations without an intermediary manager.
+              </p>
+            </div>
+
+            {/* Available Managers List */}
+            {managers.map((mgr) => {
+              const isSelected = selectedManagerId === mgr.id;
+              const isCurrent = agent.managerId === mgr.id;
+              const isFull = mgr.availableSlots <= 0 && !isCurrent;
+
+              return (
+                <div
+                  key={mgr.id}
+                  onClick={() => !isFull && setSelectedManagerId(mgr.id)}
+                  className={`p-3 rounded-xl border transition-all ${
+                    isFull ? 'opacity-50 cursor-not-allowed bg-[var(--bg-glass-card)] border-[var(--border-subtle)]' : 'cursor-pointer'
+                  } ${
+                    isSelected
+                      ? 'bg-[var(--accent-blue-dim)] border-[var(--accent-blue)] text-[var(--text-primary)]'
+                      : 'bg-[var(--bg-glass-card)] border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div>
+                      <div className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
+                        <span>{mgr.name}</span>
+                        {isCurrent && <Badge variant="info" size="sm">Current</Badge>}
+                      </div>
+                      <div className="text-[11px] text-[var(--text-muted)]">{mgr.department}</div>
+                    </div>
+
+                    <div className="text-right">
+                      <span
+                        className={`text-xs font-bold font-mono ${
+                          mgr.availableSlots > 0 ? 'text-[var(--accent-emerald)]' : 'text-[var(--accent-rose)]'
+                        }`}
+                      >
+                        {mgr.availableSlots} slots left
+                      </span>
+                    </div>
+                  </div>
+
+                  <CapacityIndicator
+                    current={mgr.assignedAgentsCount}
+                    max={mgr.maxAgents}
+                    size="sm"
+                    showLabels={false}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Warning if capacity exceeded */}
+        {isSelectedFull && (
+          <div className="p-3 bg-[var(--accent-rose-dim)] border border-[var(--accent-rose)]/30 rounded-xl flex items-center gap-2 text-xs text-[var(--accent-rose)]">
             <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
+            <span>Selected manager has reached 100% capacity. Please select another supervisor.</span>
           </div>
         )}
 
-        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-slate-700 dark:text-slate-300">Agent:</span>
-            <span className="font-bold text-slate-900 dark:text-slate-100">{agent.name}</span>
-          </div>
-          <div className="flex items-center justify-between mt-1 text-slate-500">
-            <span>Current Assignment:</span>
-            <span className="font-medium text-blue-600 dark:text-blue-400">{agent.managerName || 'Unassigned'}</span>
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-            Select Supervisory Manager *
-          </label>
-          <select
-            value={selectedManagerId}
-            onChange={(e) => setSelectedManagerId(e.target.value)}
-            className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Unassigned (Direct Super Admin Supervision)</option>
-            {managers.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name} — {m.department || 'Operations'} ({m.email})
-              </option>
-            ))}
-          </select>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-            Agents inherit routing supervision and departmental tiering based on their assigned manager.
-          </p>
-        </div>
-
-        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isLoading}
-            className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
-          >
+        {/* Modal Actions */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-subtle)]">
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
             Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            onClick={handleAssign}
+            disabled={!isChanging || isSelectedFull}
+            isLoading={isSubmitting}
           >
-            {isLoading ? 'Saving...' : 'Update Assignment'}
-          </button>
+            Confirm Reassignment
+          </Button>
         </div>
-      </form>
+      </div>
     </Modal>
   );
 };

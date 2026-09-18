@@ -26,17 +26,17 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   return (
     <div
       id={id}
-      className={`p-6 bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/50 rounded-2xl text-center flex flex-col items-center justify-center ${className}`}
+      className={`p-6 bg-[var(--accent-rose-dim)] border border-[rgba(244,63,94,0.2)] rounded-2xl text-center flex flex-col items-center justify-center ${className}`}
     >
-      <div className="w-11 h-11 rounded-full bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-3">
+      <div className="w-11 h-11 rounded-full bg-[rgba(244,63,94,0.2)] text-[var(--accent-rose)] flex items-center justify-center mb-3 glow-rose">
         <AlertTriangle className="w-5 h-5" />
       </div>
 
-      <h4 className="text-sm font-semibold text-rose-950 dark:text-rose-200 mb-1">
+      <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-1">
         {title}
       </h4>
 
-      <p className="text-xs text-rose-700/80 dark:text-rose-300/70 max-w-md mb-4">
+      <p className="text-xs text-[var(--text-secondary)] max-w-md mb-4">
         {message}
       </p>
 
@@ -55,7 +55,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         {errorString && (
           <button
             onClick={() => setShowDetails(!showDetails)}
-            className="flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400 hover:underline font-medium"
+            className="flex items-center gap-1 text-xs text-[var(--accent-rose)] hover:underline font-medium"
           >
             <span>{showDetails ? 'Hide details' : 'Show details'}</span>
             {showDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -64,7 +64,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
       </div>
 
       {showDetails && errorString && (
-        <pre className="mt-4 p-3 bg-rose-950/80 text-rose-200 text-[11px] font-mono rounded-lg text-left w-full max-w-xl overflow-x-auto">
+        <pre className="mt-4 p-3 bg-[rgba(0,0,0,0.4)] text-[var(--accent-rose)] text-[11px] font-mono rounded-lg text-left w-full max-w-xl overflow-x-auto border border-[rgba(244,63,94,0.15)]">
           {errorString}
         </pre>
       )}

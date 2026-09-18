@@ -541,6 +541,209 @@ class ApiClient {
     const response = await this.request<any[]>('/audit-logs');
     return response.data;
   }
+
+  // Enterprise Providers (Phase 10-12)
+  async getProviders(query: { search?: string; status?: string; type?: string; page?: number; limit?: number } = {}): Promise<any> {
+    const params = new URLSearchParams();
+    if (query.search) params.set('search', query.search);
+    if (query.status && query.status !== 'ALL') params.set('status', query.status);
+    if (query.type && query.type !== 'ALL') params.set('type', query.type);
+    if (query.page) params.set('page', query.page.toString());
+    if (query.limit) params.set('limit', query.limit.toString());
+    const qs = params.toString();
+    const response = await this.request<any>(`/providers${qs ? `?${qs}` : ''}`);
+    return response.data;
+  }
+
+  async getProviderById(id: string): Promise<any> {
+    const response = await this.request<any>(`/providers/${id}`);
+    return response.data;
+  }
+
+  async createProvider(data: any): Promise<any> {
+    const response = await this.request<any>('/providers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return response.data;
+  }
+
+  async updateProvider(id: string, data: any): Promise<any> {
+    const response = await this.request<any>(`/providers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    return response.data;
+  }
+
+  async deleteProvider(id: string): Promise<any> {
+    const response = await this.request<any>(`/providers/${id}`, {
+      method: 'DELETE',
+    });
+    return response.data;
+  }
+
+  async testProviderConnection(id: string): Promise<any> {
+    const response = await this.request<any>(`/providers/${id}/test-connection`, {
+      method: 'POST',
+    });
+    return response.data;
+  }
+
+  // Enterprise Numbers (Phase 13-15)
+  async getNumbers(query: { search?: string; status?: string; countryId?: string; operatorId?: string; clientId?: string; page?: number; limit?: number } = {}): Promise<any> {
+    const params = new URLSearchParams();
+    if (query.search) params.set('search', query.search);
+    if (query.status && query.status !== 'ALL') params.set('status', query.status);
+    if (query.countryId && query.countryId !== 'ALL') params.set('countryId', query.countryId);
+    if (query.operatorId && query.operatorId !== 'ALL') params.set('operatorId', query.operatorId);
+    if (query.clientId && query.clientId !== 'ALL') params.set('clientId', query.clientId);
+    if (query.page) params.set('page', query.page.toString());
+    if (query.limit) params.set('limit', query.limit.toString());
+    const qs = params.toString();
+    const response = await this.request<any>(`/numbers${qs ? `?${qs}` : ''}`);
+    return response.data;
+  }
+
+  async getNumberById(id: string): Promise<any> {
+    const response = await this.request<any>(`/numbers/${id}`);
+    return response.data;
+  }
+
+  async assignNumber(id: string, data: { clientId: string; agentId?: string }): Promise<any> {
+    const response = await this.request<any>(`/numbers/${id}/assign`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return response.data;
+  }
+
+  async releaseNumber(id: string, data: { reason?: string } = {}): Promise<any> {
+    const response = await this.request<any>(`/numbers/${id}/release`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return response.data;
+  }
+
+  async reassignNumber(id: string, data: { newClientId: string; newAgentId?: string; reason?: string }): Promise<any> {
+    const response = await this.request<any>(`/numbers/${id}/reassign`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return response.data;
+  }
+
+  async getNumberHistory(id: string): Promise<any> {
+    const response = await this.request<any>(`/numbers/${id}/history`);
+    return response.data;
+  }
+
+  async getCountries(): Promise<any[]> {
+    const response = await this.request<{ countries: any[] }>('/numbers/countries');
+    return response.data.countries;
+  }
+
+  async getOperators(): Promise<any[]> {
+    const response = await this.request<{ operators: any[] }>('/numbers/operators');
+    return response.data.operators;
+  }
+
+  // Enterprise Inbound Messaging (Phase 16-17)
+  async getInboundMessages(query: { search?: string; status?: string; billingStatus?: string; providerId?: string; clientId?: string; page?: number; limit?: number } = {}): Promise<any> {
+    const params = new URLSearchParams();
+    if (query.search) params.set('search', query.search);
+    if (query.status && query.status !== 'ALL') params.set('status', query.status);
+    if (query.billingStatus && query.billingStatus !== 'ALL') params.set('billingStatus', query.billingStatus);
+    if (query.providerId && query.providerId !== 'ALL') params.set('providerId', query.providerId);
+    if (query.clientId && query.clientId !== 'ALL') params.set('clientId', query.clientId);
+    if (query.page) params.set('page', query.page.toString());
+    if (query.limit) params.set('limit', query.limit.toString());
+    const qs = params.toString();
+    const response = await this.request<any>(`/messages${qs ? `?${qs}` : ''}`);
+    return response.data;
+  }
+
+  async getInboundMessageById(id: string): Promise<any> {
+    const response = await this.request<any>(`/messages/${id}`);
+    return response.data;
+  }
+
+  async ingestInboundMessage(data: { providerId: string; providerMessageId?: string; fromNumber: string; toNumber: string; body?: string }): Promise<any> {
+    const response = await this.request<any>('/messages/inbound', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return response.data;
+  }
+
+  // Enterprise CDR & Margin Accounting (Phase 18)
+  async getCdrs(query: { search?: string; status?: string; clientId?: string; providerId?: string; page?: number; limit?: number } = {}): Promise<any> {
+    const params = new URLSearchParams();
+    if (query.search) params.set('search', query.search);
+    if (query.status && query.status !== 'ALL') params.set('status', query.status);
+    if (query.clientId && query.clientId !== 'ALL') params.set('clientId', query.clientId);
+    if (query.providerId && query.providerId !== 'ALL') params.set('providerId', query.providerId);
+    if (query.page) params.set('page', query.page.toString());
+    if (query.limit) params.set('limit', query.limit.toString());
+    const qs = params.toString();
+    const response = await this.request<any>(`/cdr${qs ? `?${qs}` : ''}`);
+    return response.data;
+  }
+
+  async getCdrById(id: string): Promise<any> {
+    const response = await this.request<any>(`/cdr/${id}`);
+    return response.data;
+  }
+
+  async getCdrSummary(): Promise<any> {
+    const response = await this.request<any>('/cdr/summary');
+    return response.data;
+  }
+
+  // Enterprise Billing & Multi-Party Wallets (Phase 19-20)
+  async getWallets(): Promise<any[]> {
+    const response = await this.request<{ wallets: any[] }>('/billing/wallets');
+    return response.data.wallets;
+  }
+
+  async getWalletById(id: string): Promise<any> {
+    const response = await this.request<any>(`/billing/wallets/${id}`);
+    return response.data;
+  }
+
+  async getWalletLedger(id: string, query: { page?: number; limit?: number } = {}): Promise<any> {
+    const params = new URLSearchParams();
+    if (query.page) params.set('page', query.page.toString());
+    if (query.limit) params.set('limit', query.limit.toString());
+    const qs = params.toString();
+    const response = await this.request<any>(`/billing/wallets/${id}/ledger${qs ? `?${qs}` : ''}`);
+    return response.data;
+  }
+
+  async adjustWalletBalance(data: { walletId: string; amount: number; direction: 'CREDIT' | 'DEBIT'; description?: string }): Promise<any> {
+    const response = await this.request<any>('/billing/wallets/adjust', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return response.data;
+  }
+
+  async getBillingEvents(query: { status?: string; eventType?: string; page?: number; limit?: number } = {}): Promise<any> {
+    const params = new URLSearchParams();
+    if (query.status && query.status !== 'ALL') params.set('status', query.status);
+    if (query.eventType && query.eventType !== 'ALL') params.set('eventType', query.eventType);
+    if (query.page) params.set('page', query.page.toString());
+    if (query.limit) params.set('limit', query.limit.toString());
+    const qs = params.toString();
+    const response = await this.request<any>(`/billing/events${qs ? `?${qs}` : ''}`);
+    return response.data;
+  }
+
+  async getBillingSummary(): Promise<any> {
+    const response = await this.request<any>('/billing/summary');
+    return response.data;
+  }
 }
 
 export const apiClient = new ApiClient();

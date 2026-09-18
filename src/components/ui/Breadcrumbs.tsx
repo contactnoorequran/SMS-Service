@@ -24,11 +24,11 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
     <nav
       id={id}
       aria-label="Breadcrumb"
-      className={`flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 ${className}`}
+      className={`flex items-center gap-1.5 text-xs text-[var(--text-secondary)] ${className}`}
     >
       <button
         onClick={onHomeClick}
-        className="flex items-center gap-1 hover:text-slate-900 dark:hover:text-slate-100 transition-colors p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
+        className="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors p-1 rounded hover:bg-[var(--glass-bg)]"
         title="Dashboard Home"
       >
         <Home className="w-3.5 h-3.5" />
@@ -38,15 +38,15 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
         const isLast = index === items.length - 1;
         return (
           <React.Fragment key={item.id}>
-            <ChevronRight className="w-3 h-3 text-slate-400 opacity-60 shrink-0" />
+            <ChevronRight className="w-3 h-3 text-[var(--text-tertiary)] opacity-60 shrink-0" />
             {isLast ? (
-              <span className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+              <span className="font-semibold text-[var(--text-primary)] truncate">
                 {item.label}
               </span>
             ) : (
               <button
                 onClick={item.onClick}
-                className="hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 transition-colors truncate"
+                className="hover:text-[var(--text-primary)] text-[var(--text-secondary)] transition-colors truncate"
               >
                 {item.label}
               </button>

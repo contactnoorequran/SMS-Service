@@ -79,16 +79,16 @@ export const AgentPermissionsModal: React.FC<AgentPermissionsModalProps> = ({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200 dark:border-rose-800 flex items-center gap-2 text-xs text-rose-700 dark:text-rose-400">
+          <div className="p-3 bg-[var(--accent-rose-dim)] rounded-xl border border-rose-200 border-rose-800 flex items-center gap-2 text-xs text-[var(--accent-rose)]">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
+        <div className="flex items-center justify-between p-3 bg-[var(--glass-bg)]/60 rounded-xl border border-[var(--glass-border)] text-xs">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-blue-600" />
-            <span className="font-semibold text-slate-800 dark:text-slate-200">
+            <ShieldCheck className="w-4 h-4 text-[var(--accent-blue)]" />
+            <span className="font-semibold text-[var(--text-primary)]">
               Active Grants: {selectedPermissions.length} of {availablePermissions.length}
             </span>
           </div>
@@ -96,15 +96,15 @@ export const AgentPermissionsModal: React.FC<AgentPermissionsModalProps> = ({
             <button
               type="button"
               onClick={handleSelectAll}
-              className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+              className="text-[11px] font-semibold text-[var(--accent-blue)] hover:underline"
             >
               Select All
             </button>
-            <span className="text-slate-300 dark:text-slate-700">•</span>
+            <span className="text-[var(--text-secondary)] text-[var(--text-secondary)]">•</span>
             <button
               type="button"
               onClick={handleClearAll}
-              className="text-[11px] font-semibold text-slate-500 hover:underline"
+              className="text-[11px] font-semibold text-[var(--text-secondary)] hover:underline"
             >
               Clear All
             </button>
@@ -113,8 +113,8 @@ export const AgentPermissionsModal: React.FC<AgentPermissionsModalProps> = ({
 
         <div className="max-h-80 overflow-y-auto space-y-4 pr-1">
           {Object.entries(grouped).map(([module, perms]) => (
-            <div key={module} className="border border-slate-200 dark:border-slate-800 rounded-xl p-3">
-              <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+            <div key={module} className="border border-[var(--glass-border)] rounded-xl p-3">
+              <div className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
                 {module}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -125,19 +125,19 @@ export const AgentPermissionsModal: React.FC<AgentPermissionsModalProps> = ({
                       key={p.code}
                       className={`flex items-start gap-2.5 p-2 rounded-lg border text-xs cursor-pointer transition-colors ${
                         isChecked
-                          ? 'bg-blue-50/70 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900/60 text-blue-900 dark:text-blue-200'
-                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
+                          ? 'bg-[var(--accent-blue-dim)] border-[rgba(59,130,246,0.2)] text-[var(--accent-blue)]'
+                          : 'bg-[var(--glass-bg)] backdrop-blur-md border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-bg)]'
                       }`}
                     >
                       <input
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => togglePermission(p.code)}
-                        className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        className="mt-0.5 rounded border-[var(--glass-border)] text-[var(--accent-blue)] focus:ring-blue-500"
                       />
                       <div className="min-w-0">
                         <div className="font-mono text-[11px] font-bold">{p.code}</div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-snug">
+                        <div className="text-[10px] text-[var(--text-secondary)] leading-snug">
                           {p.description}
                         </div>
                       </div>
@@ -149,12 +149,12 @@ export const AgentPermissionsModal: React.FC<AgentPermissionsModalProps> = ({
           ))}
         </div>
 
-        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[var(--glass-border)]">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+            className="px-4 py-2 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--glass-bg-hover)] rounded-xl transition-colors"
           >
             Cancel
           </button>

@@ -82,24 +82,24 @@ export const ClientApiAccessModal: React.FC<ClientApiAccessModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-surface)]/60 backdrop-blur-xs p-4 overflow-y-auto">
+      <div className="bg-[var(--glass-bg)] backdrop-blur-md border border-[var(--glass-border)] rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden my-8">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+        <div className="flex items-center justify-between p-6 border-b border-[var(--glass-border)] bg-[var(--glass-bg)]/50">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-xl">
+            <div className="p-2 bg-indigo-500/10 bg-indigo-500/20 text-indigo-600 text-[var(--accent-violet)] rounded-xl">
               <Key className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">API Access & Integration</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)] text-white">API Access & Integration</h2>
+              <p className="text-xs text-[var(--text-secondary)]">
                 Configure programmatic REST API keys and rate limits for {client.companyName}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] rounded-lg hover:bg-[var(--glass-bg-hover)] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -107,7 +107,7 @@ export const ClientApiAccessModal: React.FC<ClientApiAccessModalProps> = ({
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2">
+            <div className="p-3 bg-[var(--accent-rose-dim)] border border-rose-200 border-rose-800/60 rounded-xl text-xs text-rose-700 text-rose-300 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -115,20 +115,20 @@ export const ClientApiAccessModal: React.FC<ClientApiAccessModalProps> = ({
 
           {/* New Secret Notice */}
           {generatedSecret && (
-            <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-xl space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-900 dark:text-emerald-200">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <div className="p-4 bg-[var(--accent-emerald-dim)] border border-emerald-200 border-emerald-800/60 rounded-xl space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-900 text-emerald-200">
+                <ShieldCheck className="w-4 h-4 text-[var(--accent-emerald)]" />
                 <span>New API Secret Generated</span>
               </div>
-              <p className="text-xs text-emerald-700 dark:text-emerald-400">
+              <p className="text-xs text-[var(--accent-emerald)]">
                 Copy this secret key immediately. It will not be visible again.
               </p>
-              <div className="flex items-center justify-between font-mono text-xs bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 select-all break-all">
+              <div className="flex items-center justify-between font-mono text-xs bg-[var(--glass-bg)] backdrop-blur-md p-2.5 rounded-lg border border-emerald-300 border-emerald-800 text-emerald-800 text-emerald-300 select-all break-all">
                 <span>{generatedSecret}</span>
                 <button
                   type="button"
                   onClick={handleCopySecret}
-                  className="ml-2 text-xs text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1"
+                  className="ml-2 text-xs text-indigo-600 text-[var(--accent-violet)] font-medium flex items-center gap-1"
                 >
                   {copiedSecret ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copiedSecret ? 'Copied' : 'Copy'}</span>
@@ -139,12 +139,12 @@ export const ClientApiAccessModal: React.FC<ClientApiAccessModalProps> = ({
 
           <div className="space-y-4">
             {/* Toggle Enable/Disable */}
-            <div className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between p-3.5 bg-[var(--glass-bg)]/40 rounded-xl border border-[var(--glass-border)]">
               <div>
-                <span className="text-xs font-semibold text-slate-900 dark:text-white block">
+                <span className="text-xs font-semibold text-[var(--text-primary)] text-white block">
                   Enable REST API Ingestion
                 </span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                <span className="text-[11px] text-[var(--text-secondary)]">
                   Allow client systems to submit SMS and query delivery receipts via HTTP API
                 </span>
               </div>
@@ -155,31 +155,31 @@ export const ClientApiAccessModal: React.FC<ClientApiAccessModalProps> = ({
                   onChange={(e) => setEnabled(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-hidden rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                <div className="w-11 h-6 bg-[var(--glass-bg)] peer-focus:outline-hidden rounded-full peer bg-[var(--glass-bg-active)] peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[var(--glass-bg)] after:border-[var(--glass-border)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--glass-border)] peer-checked:bg-indigo-600"></div>
               </label>
             </div>
 
             {/* Current API Key ID */}
             {client.apiAccess?.apiKey && (
-              <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1">
+              <div className="p-3 bg-[var(--glass-bg)]/40 rounded-xl border border-[var(--glass-border)] space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <span className="text-xs font-semibold text-[var(--text-secondary)]">
                     Active API Key Identifier
                   </span>
                   <button
                     type="button"
                     onClick={handleCopyKey}
-                    className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 font-medium"
+                    className="flex items-center gap-1 text-xs text-indigo-600 text-[var(--accent-violet)] font-medium"
                   >
                     {copiedKey ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{copiedKey ? 'Copied' : 'Copy'}</span>
                   </button>
                 </div>
-                <div className="font-mono text-xs text-slate-600 dark:text-slate-400 select-all">
+                <div className="font-mono text-xs text-[var(--text-secondary)] select-all">
                   {client.apiAccess.apiKey}
                 </div>
                 {client.apiAccess.lastUsedAt && (
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[10px] text-[var(--text-tertiary)]">
                     Last utilized: {new Date(client.apiAccess.lastUsedAt).toLocaleString()}
                   </p>
                 )}
@@ -188,7 +188,7 @@ export const ClientApiAccessModal: React.FC<ClientApiAccessModalProps> = ({
 
             {/* Rate Limiting */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
                 Rate Limit Threshold (Requests / Second)
               </label>
               <input
@@ -198,15 +198,15 @@ export const ClientApiAccessModal: React.FC<ClientApiAccessModalProps> = ({
                 step="10"
                 value={rateLimit}
                 onChange={(e) => setRateLimit(parseInt(e.target.value) || 100)}
-                className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 text-xs bg-[var(--glass-bg)]/60 border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
               />
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-[11px] text-[var(--text-secondary)] mt-1">
                 Protects platform downstream carrier gateways from bursts exceeding contract tiers.
               </p>
             </div>
 
             {/* Rotate Secret Checkbox */}
-            <div className="flex items-center gap-3 p-3 bg-amber-50/50 dark:bg-amber-950/20 rounded-xl border border-amber-200 dark:border-amber-800/40">
+            <div className="flex items-center gap-3 p-3 bg-[var(--accent-amber-dim)] rounded-xl border border-amber-200 border-amber-800/40">
               <input
                 type="checkbox"
                 id="rotateSecret"
@@ -214,18 +214,18 @@ export const ClientApiAccessModal: React.FC<ClientApiAccessModalProps> = ({
                 onChange={(e) => setRotateSecret(e.target.checked)}
                 className="rounded border-amber-400 text-amber-600 focus:ring-amber-500"
               />
-              <label htmlFor="rotateSecret" className="text-xs text-amber-900 dark:text-amber-200 cursor-pointer">
+              <label htmlFor="rotateSecret" className="text-xs text-amber-900 text-amber-200 cursor-pointer">
                 <span className="font-semibold">Rotate API Key & Secret:</span> Invalidate existing tokens and generate a fresh production credential pair.
               </label>
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--glass-border)]">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+              className="px-4 py-2 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--glass-bg-hover)] rounded-xl transition-colors"
             >
               {generatedSecret ? 'Done' : 'Cancel'}
             </button>

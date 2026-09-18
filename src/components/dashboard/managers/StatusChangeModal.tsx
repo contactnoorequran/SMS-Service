@@ -56,7 +56,7 @@ export const StatusChangeModal: React.FC<StatusChangeModalProps> = ({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 rounded-lg text-xs text-rose-700 dark:text-rose-300">
+          <div className="p-3 bg-[var(--accent-rose-dim)] border border-[rgba(244,63,94,0.2)] rounded-lg text-xs text-rose-700 text-rose-300">
             {error}
           </div>
         )}
@@ -64,26 +64,26 @@ export const StatusChangeModal: React.FC<StatusChangeModalProps> = ({
         <div
           className={`p-4 rounded-xl border flex items-start gap-3 ${
             isSuspending
-              ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/50'
-              : 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/50'
+              ? 'bg-[var(--accent-rose-dim)] border-[rgba(244,63,94,0.2)]'
+              : 'bg-[var(--accent-emerald-dim)] border-[rgba(16,185,129,0.2)]'
           }`}
         >
           {isSuspending ? (
-            <ShieldAlert className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+            <ShieldAlert className="w-5 h-5 text-[var(--accent-rose)] shrink-0 mt-0.5" />
           ) : (
-            <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+            <ShieldCheck className="w-5 h-5 text-[var(--accent-emerald)] shrink-0 mt-0.5" />
           )}
           <div className="text-xs space-y-1">
             <h4
               className={`font-semibold ${
-                isSuspending ? 'text-rose-900 dark:text-rose-200' : 'text-emerald-900 dark:text-emerald-200'
+                isSuspending ? 'text-rose-900 text-rose-200' : 'text-emerald-900 text-emerald-200'
               }`}
             >
               {isSuspending ? 'Immediate Access Revocation' : 'Restoration of Operational Privileges'}
             </h4>
             <p
               className={`${
-                isSuspending ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'
+                isSuspending ? 'text-rose-700 text-rose-300' : 'text-[var(--accent-emerald)]'
               }`}
             >
               {isSuspending
@@ -94,7 +94,7 @@ export const StatusChangeModal: React.FC<StatusChangeModalProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
             Audit Reason *
           </label>
           <textarea
@@ -107,15 +107,15 @@ export const StatusChangeModal: React.FC<StatusChangeModalProps> = ({
                 ? 'e.g. Account suspended due to security compliance audit pending review'
                 : 'e.g. Account reactivated after security verification completed'
             }
-            className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 text-xs bg-[var(--glass-bg)] backdrop-blur-md border border-[var(--glass-border)] border-[var(--glass-border)] rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+        <div className="flex items-center justify-end gap-3 pt-3 border-t border-[var(--glass-border)]">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            className="px-4 py-2 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--glass-bg-hover)] rounded-lg transition-colors"
           >
             Cancel
           </button>

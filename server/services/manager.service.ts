@@ -42,6 +42,7 @@ interface StoredManagerRecord {
 // In-memory persistent registry for manager profiles
 const managerRegistry: Map<string, StoredManagerRecord> = new Map();
 let isInitialized = false;
+let initPromise: Promise<void> | null = null;
 
 export class ManagerService {
   /**
@@ -49,9 +50,11 @@ export class ManagerService {
    */
   static async initializeSeedManagers(): Promise<void> {
     if (isInitialized) return;
+    if (initPromise) return initPromise;
 
-    await UserRepository.initializeSeedUsers();
-    logger.info('Initializing Manager Management profiles and hierarchy...');
+    initPromise = (async () => {
+      await UserRepository.initializeSeedUsers();
+      logger.info('Initializing Manager Management profiles and hierarchy...');
 
     // Find Elena Rostova (the primary Operations Manager from seed)
     const elenaUser = await UserRepository.findByEmail(env.SEED_MANAGER_EMAIL);
@@ -275,6 +278,9 @@ export class ManagerService {
 
     isInitialized = true;
     logger.info(`Manager repository successfully initialized with ${managerRegistry.size} manager profiles.`);
+    })();
+
+    return initPromise;
   }
 
   /**

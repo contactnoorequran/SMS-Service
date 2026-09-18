@@ -6,6 +6,11 @@ import { usersRouter } from './users.routes';
 import { managerRouter } from './manager.routes';
 import agentRouter from './agent.routes';
 import clientRouter from './client.routes';
+import { providerRouter } from './provider.routes';
+import { numberRouter } from './number.routes';
+import { messagingRouter } from './messaging.routes';
+import { cdrRouter } from './cdr.routes';
+import { billingRouter } from './billing.routes';
 import { auditRouter } from './audit.routes';
 import { demoRouter } from './demo.routes';
 import { dashboardRouter } from './dashboard.routes';
@@ -21,7 +26,7 @@ apiRouter.get('/', (_req, res) => {
   sendSuccess(res, {
     name: APP_CONFIG.name,
     version: APP_CONFIG.version,
-    currentPhase: 'PHASE_07_CLIENT_MANAGEMENT',
+    currentPhase: 'PHASE_40_ENTERPRISE_PRODUCTION_HARDENED',
     endpoints: {
       health: '/api/health',
       dashboard: '/api/dashboard/stats',
@@ -33,6 +38,41 @@ apiRouter.get('/', (_req, res) => {
         currentUser: 'GET /api/auth/me',
         permissions: 'GET /api/auth/permissions',
       },
+      providers: {
+        list: 'GET /api/providers',
+        create: 'POST /api/providers',
+        getById: 'GET /api/providers/:id',
+        update: 'PUT /api/providers/:id',
+        testConnection: 'POST /api/providers/:id/test-connection',
+      },
+      numbers: {
+        countries: 'GET /api/numbers/countries',
+        operators: 'GET /api/numbers/operators',
+        ranges: 'GET /api/numbers/ranges',
+        list: 'GET /api/numbers',
+        getById: 'GET /api/numbers/:id',
+        assign: 'POST /api/numbers/:id/assign',
+        reassign: 'POST /api/numbers/:id/reassign',
+        release: 'POST /api/numbers/:id/release',
+        history: 'GET /api/numbers/:id/history',
+      },
+      messaging: {
+        inbound: 'POST /api/messages/inbound',
+        list: 'GET /api/messages',
+        getById: 'GET /api/messages/:id',
+      },
+      cdr: {
+        list: 'GET /api/cdr',
+        getById: 'GET /api/cdr/:id',
+        summary: 'GET /api/cdr/summary',
+      },
+      billing: {
+        rates: 'GET /api/billing/rates',
+        createRate: 'POST /api/billing/rates',
+        wallets: 'GET /api/billing/wallets',
+        walletLedger: 'GET /api/billing/wallets/:id/ledger',
+        adjustBalance: 'POST /api/billing/wallets/adjust',
+      },
       managers: {
         list: 'GET /api/managers',
         create: 'POST /api/managers',
@@ -41,11 +81,6 @@ apiRouter.get('/', (_req, res) => {
         updateStatus: 'PATCH /api/managers/:id/status',
         resetPassword: 'POST /api/managers/:id/reset-password',
         updatePermissions: 'PUT /api/managers/:id/permissions',
-        agents: 'GET /api/managers/:id/agents',
-        clients: 'GET /api/managers/:id/clients',
-        activity: 'GET /api/managers/:id/activity',
-        departments: 'GET /api/managers/departments',
-        availablePermissions: 'GET /api/managers/available-permissions',
       },
       agents: {
         list: 'GET /api/agents',
@@ -56,10 +91,6 @@ apiRouter.get('/', (_req, res) => {
         resetPassword: 'POST /api/agents/:id/reset-password',
         updatePermissions: 'PUT /api/agents/:id/permissions',
         assignManager: 'PATCH /api/agents/:id/assign-manager',
-        clients: 'GET /api/agents/:id/clients',
-        numbers: 'GET /api/agents/:id/numbers',
-        statistics: 'GET /api/agents/:id/statistics',
-        activity: 'GET /api/agents/:id/activity',
       },
       clients: {
         list: 'GET /api/clients',
@@ -70,11 +101,6 @@ apiRouter.get('/', (_req, res) => {
         resetPassword: 'POST /api/clients/:id/reset-password',
         updatePermissions: 'PUT /api/clients/:id/permissions',
         apiAccess: 'POST /api/clients/:id/api-access',
-        dashboard: 'GET /api/clients/:id/dashboard',
-        numbers: 'GET /api/clients/:id/numbers',
-        statistics: 'GET /api/clients/:id/statistics',
-        balance: 'GET /api/clients/:id/balance',
-        activity: 'GET /api/clients/:id/activity',
       },
       users: {
         list: 'GET /api/users',
@@ -82,16 +108,8 @@ apiRouter.get('/', (_req, res) => {
         updateStatus: 'PATCH /api/users/:id/status',
       },
       auditLogs: 'GET /api/audit-logs',
-      demoRbac: {
-        public: 'GET /api/demo/public',
-        authenticated: 'GET /api/demo/authenticated',
-        adminOnly: 'GET /api/demo/admin-only',
-        managerPermission: 'GET /api/demo/manager-permission',
-        billingManage: 'GET /api/demo/billing-manage',
-        clientApiManage: 'GET /api/demo/client-api-manage',
-      },
     },
-    documentation: 'Phase 07 Client Management operational.',
+    documentation: 'SMS Platform Enterprise Backend API Operational.',
   });
 });
 
@@ -101,6 +119,13 @@ apiRouter.use('/dashboard', dashboardRouter);
 apiRouter.use('/notifications', notificationsRouter);
 apiRouter.use('/database', databaseRouter);
 apiRouter.use('/auth', authRouter);
+apiRouter.use('/providers', providerRouter);
+apiRouter.use('/numbers', numberRouter);
+apiRouter.use('/messages', messagingRouter);
+apiRouter.use('/cdr', cdrRouter);
+apiRouter.use('/billing', billingRouter);
+apiRouter.use('/rates', billingRouter);
+apiRouter.use('/wallets', billingRouter);
 apiRouter.use('/managers', managerRouter);
 apiRouter.use('/agents', agentRouter);
 apiRouter.use('/clients', clientRouter);

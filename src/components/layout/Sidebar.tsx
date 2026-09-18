@@ -1,24 +1,44 @@
-import React from 'react';
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard,
-  Activity,
-  Layers,
   Users,
   UserCheck,
-  Globe,
-  Hash,
-  Radio,
-  MessageSquare,
-  DollarSign,
-  ShieldCheck,
+  UserCog,
   Building2,
+  Radio,
+  Cable,
+  Globe,
   Server,
-  Lock,
-  Database,
+  Layers,
+  Hash,
+  MessageSquare,
+  Receipt,
+  Tag,
+  Wallet,
+  DollarSign,
+  CreditCard,
+  FileText,
+  Bell,
+  Code,
+  BarChart3,
+  ShieldCheck,
+  Settings,
   X,
   Shield,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
-import { PLATFORM_NAV_ITEMS, NavItem } from '../../types/navigation';
+import {
+  PLATFORM_NAV_ITEMS,
+  PLATFORM_NAV_GROUPS,
+  NavItem,
+  NavGroup,
+} from '../../types/navigation';
 import { Badge } from '../ui/Badge';
 import { useAuth } from '../../context/AuthContext';
 
@@ -27,6 +47,8 @@ interface SidebarProps {
   onSelectTab: (tabId: string) => void;
   isOpen: boolean;
   onClose: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -34,211 +56,267 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectTab,
   isOpen,
   onClose,
+  isCollapsed: externalCollapsed,
+  onToggleCollapse: externalToggleCollapse,
 }) => {
-  const { user, role, hasPermission, hasRole } = useAuth();
+  const { role, hasPermission } = useAuth();
+  const [internalCollapsed, setInternalCollapsed] = useState(false);
+
+  const isCollapsed = externalCollapsed !== undefined ? externalCollapsed : internalCollapsed;
+  const toggleCollapse = externalToggleCollapse || (() => setInternalCollapsed((prev) => !prev));
+
+  // Dynamic notification/attention counts (only display when requiring attention)
+  const attentionCounts: Record<string, number> = {
+    messages: 12,
+    'payment-requests': 3,
+    notifications: 2,
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          onClose();
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, onClose]);
 
   const renderIcon = (name: string, className: string = 'w-4 h-4') => {
     switch (name) {
       case 'LayoutDashboard':
         return <LayoutDashboard className={className} />;
-      case 'Activity':
-        return <Activity className={className} />;
-      case 'Database':
-        return <Database className={className} />;
-      case 'Layers':
-        return <Layers className={className} />;
       case 'Users':
         return <Users className={className} />;
       case 'UserCheck':
         return <UserCheck className={className} />;
-      case 'Globe':
-        return <Globe className={className} />;
-      case 'Hash':
-        return <Hash className={className} />;
-      case 'Radio':
-        return <Radio className={className} />;
-      case 'MessageSquare':
-        return <MessageSquare className={className} />;
-      case 'DollarSign':
-        return <DollarSign className={className} />;
-      case 'ShieldCheck':
-        return <ShieldCheck className={className} />;
+      case 'UserCog':
+        return <UserCog className={className} />;
       case 'Building2':
         return <Building2 className={className} />;
+      case 'Radio':
+        return <Radio className={className} />;
+      case 'Cable':
+        return <Cable className={className} />;
+      case 'Globe':
+        return <Globe className={className} />;
+      case 'Server':
+        return <Server className={className} />;
+      case 'Layers':
+        return <Layers className={className} />;
+      case 'Hash':
+        return <Hash className={className} />;
+      case 'MessageSquare':
+        return <MessageSquare className={className} />;
+      case 'Receipt':
+        return <Receipt className={className} />;
+      case 'Tag':
+        return <Tag className={className} />;
+      case 'Wallet':
+        return <Wallet className={className} />;
+      case 'DollarSign':
+        return <DollarSign className={className} />;
+      case 'CreditCard':
+        return <CreditCard className={className} />;
+      case 'FileText':
+        return <FileText className={className} />;
+      case 'Bell':
+        return <Bell className={className} />;
+      case 'Code':
+        return <Code className={className} />;
+      case 'BarChart3':
+        return <BarChart3 className={className} />;
+      case 'ShieldCheck':
+        return <ShieldCheck className={className} />;
+      case 'Settings':
+        return <Settings className={className} />;
       default:
         return <Layers className={className} />;
     }
   };
 
   // Permission-aware filtering:
-  // A user must never see navigation items for features they cannot access!
   const isItemVisible = (item: NavItem): boolean => {
-    // Super admin has full visibility
     if (role === 'SUPER_ADMIN') return true;
-
-    // Check specific role restrictions
     if (item.allowedRoles && !item.allowedRoles.includes(role)) {
       return false;
     }
-
-    // Check required permissions
     if (item.requiredPermission && !hasPermission(item.requiredPermission)) {
       return false;
     }
-
     return true;
   };
 
   const visibleItems = PLATFORM_NAV_ITEMS.filter(isItemVisible);
-  const activeItems = visibleItems.filter((item) => item.status === 'active');
-  const plannedItems = visibleItems.filter((item) => item.status === 'planned');
+
+  // Group visible items by their respective NavGroup
+  const itemsByGroup = PLATFORM_NAV_GROUPS.reduce<Record<NavGroup, NavItem[]>>((acc, group) => {
+    acc[group] = visibleItems.filter((item) => item.group === group);
+    return acc;
+  }, {} as Record<NavGroup, NavItem[]>);
 
   const content = (
-    <div className="flex flex-col h-full bg-slate-900 text-slate-300">
+    <div className="flex flex-col h-full bg-[var(--bg-surface)] text-[var(--text-secondary)] select-none">
       {/* Brand Header */}
-      <div className="p-5 border-b border-slate-800 flex items-center justify-between gap-3">
+      <div className="p-4 border-b border-[var(--glass-border)] flex items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold shadow-xs shrink-0">
-            <Server className="w-5 h-5" />
+          <div className="w-8 h-8 rounded-xl bg-[var(--accent-blue)] flex items-center justify-center text-white font-bold shadow-md shadow-[var(--accent-blue-dim)] shrink-0">
+            <Radio className="w-4 h-4" />
           </div>
-          <div className="min-w-0">
-            <h1 className="text-sm font-semibold text-white tracking-tight truncate">
-              SMS Platform
-            </h1>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              <span className="text-[11px] text-slate-400 font-mono">Phase 07 Live</span>
+          {!isCollapsed && (
+            <div className="min-w-0">
+              <h1 className="text-xs font-bold text-[var(--text-primary)] tracking-tight uppercase">
+                Telecom Ops
+              </h1>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-emerald)] animate-pulse-dot" />
+                <span className="text-[10px] text-[var(--text-tertiary)] font-mono">Carrier Online</span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Close button for mobile */}
+        {/* Mobile Close Button */}
         <button
           onClick={onClose}
-          className="md:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+          className="md:hidden p-1.5 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] rounded-lg hover:bg-[var(--glass-bg)] cursor-pointer"
           aria-label="Close sidebar"
         >
           <X className="w-5 h-5" />
         </button>
+
+        {/* Desktop Collapse Toggle */}
+        <button
+          onClick={toggleCollapse}
+          className="hidden md:flex p-1.5 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] rounded-lg hover:bg-[var(--glass-bg)] transition-colors cursor-pointer"
+          title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+          aria-label={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+        >
+          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
       </div>
 
-      {/* User Role Quick Indicator */}
-      <div className="px-5 py-3 border-b border-slate-800/80 bg-slate-950/40 flex items-center justify-between text-xs">
-        <div className="flex items-center gap-2 min-w-0">
-          <Shield className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-          <span className="font-mono text-slate-400 truncate text-[11px]">Role:</span>
-          <span className="font-semibold text-slate-200 truncate text-[11px]">{role}</span>
+      {/* Role Indicator Strip (only visible when expanded) */}
+      {!isCollapsed && (
+        <div className="px-4 py-2 border-b border-[var(--glass-border)] bg-[rgba(0,0,0,0.15)] flex items-center justify-between text-[11px]">
+          <div className="flex items-center gap-2 min-w-0">
+            <Shield className="w-3.5 h-3.5 text-[var(--accent-blue)] shrink-0" />
+            <span className="font-mono text-[var(--text-tertiary)]">Role:</span>
+            <span className="font-semibold text-[var(--text-primary)] truncate">{role}</span>
+          </div>
+          <span className="text-[10px] font-mono text-[var(--accent-emerald)] bg-[var(--accent-emerald-dim)] px-1.5 py-0.2 rounded border border-[rgba(16,185,129,0.2)]">
+            RBAC
+          </span>
         </div>
-        <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 px-1.5 py-0.5 rounded">
-          Active
-        </span>
-      </div>
+      )}
 
       {/* Navigation Sections */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
-        {/* Active Modules */}
-        <div>
-          <div className="px-3 mb-2 flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-              Live Modules ({activeItems.length})
-            </span>
-            <Badge variant="success" size="sm">
-              Operational
-            </Badge>
-          </div>
-          <nav className="space-y-1">
-            {activeItems.map((item) => {
-              const isSelected = currentTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  id={`nav-${item.id}`}
-                  onClick={() => {
-                    onSelectTab(item.id);
-                    onClose();
-                  }}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-colors text-left ${
-                    isSelected
-                      ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                  }`}
-                >
-                  <span className={isSelected ? 'text-blue-400' : 'text-slate-500'}>
-                    {renderIcon(item.iconName)}
+      <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-4">
+        {PLATFORM_NAV_GROUPS.map((group) => {
+          const groupItems = itemsByGroup[group];
+          if (!groupItems || groupItems.length === 0) return null;
+
+          return (
+            <div key={group} className="space-y-1">
+              {/* Clean Group Separator Header */}
+              {!isCollapsed ? (
+                <div className="px-2 py-1 flex items-center justify-between">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
+                    {group}
                   </span>
-                  <span className="truncate flex-1">{item.label}</span>
-                  {item.phase && (
-                    <span className="text-[10px] font-mono opacity-50">{item.phase}</span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Future Modules Preview (Filtered by permission/role) */}
-        {plannedItems.length > 0 && (
-          <div>
-            <div className="px-3 mb-2 flex items-center justify-between">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                Upcoming Roadmap
-              </span>
-              <span className="text-[10px] text-slate-500 font-mono">Planned</span>
-            </div>
-            <nav className="space-y-1">
-              {plannedItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-500 bg-slate-900/40 opacity-70 select-none"
-                  title={`${item.label} will be enabled in ${item.phase}`}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-slate-600">{renderIcon(item.iconName)}</span>
-                    <span className="truncate">{item.label}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-[10px] font-mono text-slate-600">{item.phase}</span>
-                    <Lock className="w-3 h-3 text-slate-600" />
-                  </div>
                 </div>
-              ))}
-            </nav>
-          </div>
-        )}
+              ) : (
+                <div className="my-2 border-t border-[var(--glass-border)]" />
+              )}
+
+              {/* Items in this group */}
+              <nav className="space-y-0.5">
+                {groupItems.map((item) => {
+                  const targetTab = item.targetTab || item.id;
+                  const isSelected = currentTab === item.id || currentTab === targetTab;
+                  const badgeCount = attentionCounts[item.id];
+
+                  return (
+                    <button
+                      key={item.id}
+                      id={`nav-${item.id}`}
+                      type="button"
+                      title={isCollapsed ? `${item.label} (${group})` : undefined}
+                      onClick={() => {
+                        onSelectTab(item.id);
+                        onClose();
+                      }}
+                      className={`w-full flex items-center gap-2.5 rounded-xl text-xs font-medium transition-all text-left cursor-pointer ${
+                        isCollapsed ? 'justify-center p-2.5' : 'px-3 py-2'
+                      } ${
+                        isSelected
+                          ? 'bg-[var(--accent-blue-dim)] text-[var(--accent-blue)] border border-[rgba(59,130,246,0.25)] shadow-xs font-semibold'
+                          : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg)] border border-transparent'
+                      }`}
+                    >
+                      <span className={isSelected ? 'text-[var(--accent-blue)]' : 'text-[var(--text-tertiary)]'}>
+                        {renderIcon(item.iconName)}
+                      </span>
+
+                      {!isCollapsed && (
+                        <>
+                          <span className="truncate flex-1">{item.label}</span>
+                          {/* Show badge only when there is something requiring attention */}
+                          {badgeCount !== undefined && badgeCount > 0 && (
+                            <Badge
+                              variant={item.id === 'notifications' ? 'warning' : 'info'}
+                              size="sm"
+                              className="font-mono text-[10px] px-1.5 py-0"
+                            >
+                              {badgeCount}
+                            </Badge>
+                          )}
+                        </>
+                      )}
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Tech Stack Specs in Footer */}
-      <div className="p-4 border-t border-slate-800 bg-slate-950/60">
-        <div className="text-[11px] font-medium text-slate-400 mb-2 flex items-center justify-between">
-          <span>Platform Stack</span>
-          <span className="text-[10px] font-mono text-slate-500">v1.4.0</span>
+      {/* Footer Specs (when expanded) */}
+      {!isCollapsed && (
+        <div className="p-3 border-t border-[var(--glass-border)] bg-[rgba(0,0,0,0.15)] text-[10px] text-[var(--text-tertiary)] font-mono flex items-center justify-between shrink-0">
+          <span>SMS Carrier Core</span>
+          <span>v1.4.0</span>
         </div>
-        <div className="grid grid-cols-2 gap-1.5 text-[10px] text-slate-400 font-mono">
-          <div className="bg-slate-800/80 px-2 py-1 rounded text-center truncate">Express REST</div>
-          <div className="bg-slate-800/80 px-2 py-1 rounded text-center truncate">Prisma 6.x</div>
-          <div className="bg-slate-800/80 px-2 py-1 rounded text-center truncate">PostgreSQL</div>
-          <div className="bg-slate-800/80 px-2 py-1 rounded text-center truncate">RBAC Auth</div>
-        </div>
-      </div>
+      )}
     </div>
   );
 
   return (
     <>
-      {/* Desktop Sidebar (Fixed width) */}
-      <aside className="hidden md:flex w-64 border-r border-slate-800 flex-col shrink-0 min-h-screen">
+      {/* Desktop Sidebar (Collapsible width) */}
+      <aside
+        className={`hidden md:flex flex-col shrink-0 min-h-screen border-r border-[var(--glass-border)] transition-all duration-200 ${
+          isCollapsed ? 'w-16' : 'w-60'
+        }`}
+      >
         {content}
       </aside>
 
-      {/* Mobile Drawer (with backdrop) */}
+      {/* Mobile Drawer (with Backdrop) */}
       {isOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
-          {/* Backdrop overlay */}
+        <div
+          className="md:hidden fixed inset-0 z-50 flex"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Main Navigation"
+        >
           <div
-            className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
             onClick={onClose}
           />
-          {/* Drawer content */}
           <aside className="relative w-72 max-w-[85vw] h-full shadow-2xl z-10 flex flex-col">
             {content}
           </aside>

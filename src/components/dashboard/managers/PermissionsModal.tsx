@@ -113,34 +113,34 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 rounded-lg text-xs text-rose-700 dark:text-rose-300">
+          <div className="p-3 bg-[var(--accent-rose-dim)] border border-[rgba(244,63,94,0.2)] rounded-lg text-xs text-rose-700 text-rose-300">
             {error}
           </div>
         )}
 
         {/* Presets & Quick Actions */}
-        <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-xl text-xs">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-blue-600" />
-            <span className="font-medium text-slate-700 dark:text-slate-300">Quick Presets:</span>
+            <Sparkles className="w-4 h-4 text-[var(--accent-blue)]" />
+            <span className="font-medium text-[var(--text-secondary)]">Quick Presets:</span>
             <button
               type="button"
               onClick={() => applyPreset('standard')}
-              className="px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              className="px-2 py-1 bg-[var(--glass-bg)] backdrop-blur-md border border-[var(--glass-border)] rounded text-[var(--text-secondary)] hover:bg-[var(--glass-bg-hover)] transition-colors"
             >
               Standard Manager
             </button>
             <button
               type="button"
               onClick={() => applyPreset('operations')}
-              className="px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              className="px-2 py-1 bg-[var(--glass-bg)] backdrop-blur-md border border-[var(--glass-border)] rounded text-[var(--text-secondary)] hover:bg-[var(--glass-bg-hover)] transition-colors"
             >
               Full Operations
             </button>
             <button
               type="button"
               onClick={() => applyPreset('readonly')}
-              className="px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              className="px-2 py-1 bg-[var(--glass-bg)] backdrop-blur-md border border-[var(--glass-border)] rounded text-[var(--text-secondary)] hover:bg-[var(--glass-bg-hover)] transition-colors"
             >
               Read-Only Audit
             </button>
@@ -150,15 +150,15 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({
             <button
               type="button"
               onClick={handleSelectAll}
-              className="text-blue-600 dark:text-blue-400 hover:underline"
+              className="text-[var(--accent-blue)] hover:underline"
             >
               Select All
             </button>
-            <span className="text-slate-400">•</span>
+            <span className="text-[var(--text-tertiary)]">•</span>
             <button
               type="button"
               onClick={handleClearAll}
-              className="text-slate-500 hover:underline"
+              className="text-[var(--text-secondary)] hover:underline"
             >
               Clear
             </button>
@@ -168,12 +168,12 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({
         {/* Categorized Permissions Grid */}
         <div className="max-h-96 overflow-y-auto space-y-4 pr-1">
           {Object.entries(groupedPermissions).map(([category, perms]) => (
-            <div key={category} className="border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2.5">
+            <div key={category} className="border border-[var(--glass-border)] rounded-xl p-3.5 space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider">
                   {category}
                 </span>
-                <span className="text-[11px] text-slate-400">
+                <span className="text-[11px] text-[var(--text-tertiary)]">
                   {perms.filter((p) => selectedPermissions.includes(p.code)).length} of {perms.length} enabled
                 </span>
               </div>
@@ -186,22 +186,22 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({
                       key={perm.code}
                       className={`flex items-start gap-2.5 p-2.5 rounded-lg border text-xs cursor-pointer transition-colors ${
                         isChecked
-                          ? 'bg-blue-50/70 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800/60'
-                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                          ? 'bg-[var(--accent-blue-dim)] border-[rgba(59,130,246,0.2)]/60'
+                          : 'bg-[var(--glass-bg)] backdrop-blur-md border-[var(--glass-border)] hover:bg-[var(--glass-bg-hover)]/50'
                       }`}
                     >
                       <input
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => togglePermission(perm.code)}
-                        className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        className="mt-0.5 rounded border-[var(--glass-border)] text-[var(--accent-blue)] focus:ring-blue-500"
                       />
                       <div className="min-w-0">
-                        <div className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                        <div className="font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
                           <span>{perm.name}</span>
-                          <span className="text-[10px] font-mono text-slate-400">({perm.code})</span>
+                          <span className="text-[10px] font-mono text-[var(--text-tertiary)]">({perm.code})</span>
                         </div>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                        <p className="text-[11px] text-[var(--text-secondary)] mt-0.5 leading-relaxed">
                           {perm.description}
                         </p>
                       </div>
@@ -213,15 +213,15 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({
           ))}
         </div>
 
-        <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-800">
-          <div className="text-xs text-slate-500">
-            Selected: <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedPermissions.length}</span> permissions
+        <div className="flex items-center justify-between pt-3 border-t border-[var(--glass-border)]">
+          <div className="text-xs text-[var(--text-secondary)]">
+            Selected: <span className="font-semibold text-[var(--text-primary)]">{selectedPermissions.length}</span> permissions
           </div>
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+              className="px-4 py-2 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--glass-bg-hover)] rounded-lg transition-colors"
             >
               Cancel
             </button>

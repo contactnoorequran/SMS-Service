@@ -10,7 +10,8 @@ import {
   Legend,
 } from 'recharts';
 import { SmsVolumePoint } from '../../../types/dashboard';
-import { MessageSquare, Calendar } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
+import { formatNumber, formatPercent } from '../../../utils/formatters';
 
 interface SmsVolumeChartProps {
   data: SmsVolumePoint[];
@@ -19,57 +20,61 @@ interface SmsVolumeChartProps {
 export const SmsVolumeChart: React.FC<SmsVolumeChartProps> = ({ data }) => {
   const [metricView, setMetricView] = useState<'all' | 'delivered' | 'failed'>('all');
 
-  const totalDelivered = data.reduce((acc, curr) => acc + curr.delivered, 0);
-  const totalFailed = data.reduce((acc, curr) => acc + curr.failed, 0);
-  const totalVolume = data.reduce((acc, curr) => acc + curr.total, 0);
-  const deliveryRate = totalVolume > 0 ? ((totalDelivered / totalVolume) * 100).toFixed(1) : '100';
+  const safeData = Array.isArray(data) ? data : [];
+  const totalDelivered = safeData.reduce((acc, curr) => acc + (curr?.delivered || 0), 0);
+  const totalFailed = safeData.reduce((acc, curr) => acc + (curr?.failed || 0), 0);
+  const totalVolume = safeData.reduce((acc, curr) => acc + (curr?.total || 0), 0);
+  const deliveryRate = totalVolume > 0 ? (totalDelivered / totalVolume) * 100 : 100;
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs">
+    <div className="bg-[var(--glass-bg)] backdrop-blur-md border border-[var(--glass-border)] rounded-xl p-5 shadow-xs">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[var(--glass-border)]">
         <div>
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
+            <div className="p-1.5 rounded-lg bg-[var(--accent-blue-dim)] text-[var(--accent-blue)]">
               <MessageSquare className="w-4 h-4" />
             </div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">
               SMS Traffic & Delivery Volume
             </h3>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            7-day rolling inbound message stream and delivery carrier confirmations
+          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+            Rolling message activity over time and carrier delivery confirmations
           </p>
         </div>
 
         {/* Metric pills */}
-        <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg text-xs">
+        <div className="flex items-center gap-1.5 bg-[var(--glass-bg-active)] p-1 rounded-lg text-xs self-start sm:self-auto">
           <button
+            type="button"
             onClick={() => setMetricView('all')}
             className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
               metricView === 'all'
-                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs'
-                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                ? 'bg-[var(--glass-bg)] backdrop-blur-md text-[var(--text-primary)] shadow-xs'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
             All Stream
           </button>
           <button
+            type="button"
             onClick={() => setMetricView('delivered')}
             className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
               metricView === 'delivered'
-                ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
-                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                ? 'bg-[var(--glass-bg)] backdrop-blur-md text-[var(--accent-emerald)] shadow-xs'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
             Delivered
           </button>
           <button
+            type="button"
             onClick={() => setMetricView('failed')}
             className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
               metricView === 'failed'
-                ? 'bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 shadow-xs'
-                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                ? 'bg-[var(--glass-bg)] backdrop-blur-md text-[var(--accent-rose)] shadow-xs'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
             Failed
@@ -79,22 +84,22 @@ export const SmsVolumeChart: React.FC<SmsVolumeChartProps> = ({ data }) => {
 
       {/* Summary KPI Badges */}
       <div className="grid grid-cols-3 gap-3 my-4">
-        <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
-          <span className="text-[11px] text-slate-400">Total Inbound</span>
-          <div className="text-base font-bold font-mono text-slate-900 dark:text-slate-100 mt-0.5">
-            {totalVolume.toLocaleString()}
+        <div className="p-3 rounded-lg bg-[var(--glass-bg)]/40 border border-[var(--glass-border)]">
+          <span className="text-[11px] text-[var(--text-tertiary)] block">Total Inbound</span>
+          <div className="text-base font-bold font-mono text-[var(--text-primary)] mt-0.5">
+            {formatNumber(totalVolume)}
           </div>
         </div>
-        <div className="p-3 rounded-lg bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30">
-          <span className="text-[11px] text-emerald-600 dark:text-emerald-400">Delivered</span>
-          <div className="text-base font-bold font-mono text-emerald-700 dark:text-emerald-300 mt-0.5">
-            {totalDelivered.toLocaleString()} ({deliveryRate}%)
+        <div className="p-3 rounded-lg bg-[var(--accent-emerald-dim)] border border-[rgba(16,185,129,0.2)]">
+          <span className="text-[11px] text-[var(--accent-emerald)] block">Delivered ({formatPercent(deliveryRate)})</span>
+          <div className="text-base font-bold font-mono text-[var(--accent-emerald)] mt-0.5">
+            {formatNumber(totalDelivered)}
           </div>
         </div>
-        <div className="p-3 rounded-lg bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30">
-          <span className="text-[11px] text-rose-600 dark:text-rose-400">Failed / Rejected</span>
-          <div className="text-base font-bold font-mono text-rose-700 dark:text-rose-300 mt-0.5">
-            {totalFailed.toLocaleString()}
+        <div className="p-3 rounded-lg bg-[var(--accent-rose-dim)] border border-[rgba(244,63,94,0.2)]">
+          <span className="text-[11px] text-[var(--accent-rose)] block">Failed / Rejected</span>
+          <div className="text-base font-bold font-mono text-[var(--accent-rose)] mt-0.5">
+            {formatNumber(totalFailed)}
           </div>
         </div>
       </div>
@@ -102,7 +107,7 @@ export const SmsVolumeChart: React.FC<SmsVolumeChartProps> = ({ data }) => {
       {/* Chart Canvas */}
       <div className="h-64 w-full pt-2">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <AreaChart data={safeData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="deliveredGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#10b981" stopOpacity={0.35} />
@@ -117,32 +122,37 @@ export const SmsVolumeChart: React.FC<SmsVolumeChartProps> = ({ data }) => {
                 <stop offset="95%" stopColor="#ef4444" stopOpacity={0.0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" opacity={0.15} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.06)" />
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 11, fill: '#64748b' }}
+              tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }}
               tickLine={false}
-              axisLine={{ stroke: '#cbd5e1', opacity: 0.3 }}
+              axisLine={{ stroke: 'var(--glass-border)', opacity: 0.5 }}
             />
             <YAxis
-              tick={{ fontSize: 11, fill: '#64748b' }}
+              tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }}
               tickLine={false}
               axisLine={false}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: '#0f172a',
-                borderColor: '#334155',
+                backgroundColor: 'rgba(13, 19, 33, 0.92)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                borderColor: 'var(--glass-border-hover)',
                 borderRadius: '0.75rem',
                 fontSize: '12px',
-                color: '#f8fafc',
-                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
+                color: 'var(--text-primary)',
+                boxShadow: '0 12px 32px rgba(0, 0, 0, 0.5)',
               }}
-              formatter={(val: any, name: any) => [
-                Number(val).toLocaleString(),
-                name === 'delivered' ? 'Delivered' : name === 'failed' ? 'Failed' : 'Total Inbound',
-              ]}
-              labelFormatter={(label: any) => `Date: ${label}`}
+              formatter={(val: number | string | undefined, name: string | undefined) => {
+                const num = typeof val === 'number' ? val : Number(val) || 0;
+                const formatted = formatNumber(num);
+                if (name === 'delivered') return [formatted, 'Delivered'];
+                if (name === 'failed') return [formatted, 'Failed'];
+                return [formatted, 'Total Inbound'];
+              }}
+              labelFormatter={(label) => `Date: ${label}`}
             />
             <Legend
               wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}

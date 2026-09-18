@@ -1,15 +1,29 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import React, { useState } from 'react';
-import { CreateAgentDTO } from '../../../types/agent';
 import { Modal } from '../../ui/Modal';
-import { UserCheck, Shield, AlertCircle, KeyRound, Copy, Check } from 'lucide-react';
-import { ManagerListItem } from '../../../types/manager';
+import { Button } from '../../ui/Button';
+import { Badge } from '../../ui/Badge';
+import { CreateAgentPayload, AgentStatus, ManagerSummary } from '../../../types/agents';
+import {
+  Users,
+  KeyRound,
+  Mail,
+  UserCheck,
+  Building,
+  Percent,
+  AlertCircle,
+  Shield,
+} from 'lucide-react';
 
 interface CreateAgentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: CreateAgentDTO) => Promise<{ agent: any; generatedPassword?: string }>;
-  managers: ManagerListItem[];
-  currentRole: string;
+  onSubmit: (payload: CreateAgentPayload) => Promise<void>;
+  managers: ManagerSummary[];
 }
 
 export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
@@ -17,347 +31,316 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
   onClose,
   onSubmit,
   managers,
-  currentRole,
 }) => {
-  const [formData, setFormData] = useState<CreateAgentDTO>({
-    username: '',
-    firstName: '',
-    lastName: '',
+  const [formData, setFormData] = useState({
+    name: '',
     email: '',
-    contact: '',
-    managerId: managers.length > 0 ? managers[0].id : '',
-    commissionRate: 0.05,
-    status: 'ACTIVE',
     password: '',
+    confirmPassword: '',
+    managerId: managers[0]?.id || '',
+    status: 'ACTIVE' as AgentStatus,
+    commissionRate: 5,
   });
 
-  const [autoGeneratePassword, setAutoGeneratePassword] = useState<boolean>(true);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successData, setSuccessData] = useState<{
-    agent: any;
-    generatedPassword?: string;
-  } | null>(null);
-  const [copied, setCopied] = useState<boolean>(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const resetForm = () => {
-    setFormData({
-      username: '',
-      firstName: '',
-      lastName: '',
-      email: '',
-      contact: '',
-      managerId: managers.length > 0 ? managers[0].id : '',
-      commissionRate: 0.05,
-      status: 'ACTIVE',
-      password: '',
-    });
-    setAutoGeneratePassword(true);
-    setError(null);
-    setSuccessData(null);
-    setCopied(false);
+  // Password strength calculation
+  const getPasswordStrength = (pass: string): { score: number; label: string; color: string } => {
+    if (!pass) return { score: 0, label: 'None', color: 'bg-transparent' };
+    let score = 0;
+    if (pass.length >= 8) score += 1;
+    if (/[A-Z]/.test(pass)) score += 1;
+    if (/[0-9]/.test(pass)) score += 1;
+    if (/[^A-Za-z0-9]/.test(pass)) score += 1;
+
+    switch (score) {
+      case 1:
+        return { score: 25, label: 'Weak', color: 'bg-[var(--accent-rose)]' };
+      case 2:
+        return { score: 50, label: 'Fair', color: 'bg-[var(--accent-amber)]' };
+      case 3:
+        return { score: 75, label: 'Good', color: 'bg-[var(--accent-blue)]' };
+      case 4:
+        return { score: 100, label: 'Strong', color: 'bg-[var(--accent-emerald)]' };
+      default:
+        return { score: 0, label: 'Very Weak', color: 'bg-[var(--accent-rose)]' };
+    }
   };
 
-  const handleClose = () => {
-    resetForm();
-    onClose();
+  const passwordStrength = getPasswordStrength(formData.password);
+
+  const validate = (): boolean => {
+    const errs: Record<string, string> = {};
+
+    if (!formData.name.trim()) {
+      errs.name = 'Full name is required';
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      errs.email = 'Email address is required';
+    } else if (!emailRegex.test(formData.email.trim())) {
+      errs.email = 'Please enter a valid email address';
+    }
+
+    if (!formData.password) {
+      errs.password = 'Password is required';
+    } else if (formData.password.length < 8) {
+      errs.password = 'Password must be at least 8 characters';
+    }
+
+    if (!formData.confirmPassword) {
+      errs.confirmPassword = 'Password confirmation is required';
+    } else if (formData.password !== formData.confirmPassword) {
+      errs.confirmPassword = 'Passwords do not match';
+    }
+
+    if (formData.commissionRate < 0 || formData.commissionRate > 50 || isNaN(formData.commissionRate)) {
+      errs.commissionRate = 'Commission rate must be between 0% and 50%';
+    }
+
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setIsLoading(true);
+    if (!validate()) return;
 
+    setIsSubmitting(true);
     try {
-      const payload: CreateAgentDTO = {
-        username: formData.username.trim(),
-        firstName: formData.firstName.trim(),
-        lastName: formData.lastName.trim(),
+      await onSubmit({
+        name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
-        contact: formData.contact.trim(),
-        commissionRate: Number(formData.commissionRate),
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+        managerId: formData.managerId || null,
         status: formData.status,
-      };
+        role: 'AGENT',
+        commissionRate: formData.commissionRate / 100,
+      });
 
-      if (currentRole === 'SUPER_ADMIN') {
-        payload.managerId = formData.managerId || null;
-      }
-
-      if (!autoGeneratePassword && formData.password?.trim()) {
-        payload.password = formData.password.trim();
-      }
-
-      const res = await onSubmit(payload);
-      setSuccessData(res);
+      // Clear fields
+      setFormData({
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        managerId: managers[0]?.id || '',
+        status: 'ACTIVE',
+        commissionRate: 5,
+      });
+      setErrors({});
+      onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to create agent profile.');
+      setErrors({ form: err?.message || 'Failed to create agent profile' });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
   };
 
   return (
     <Modal
       isOpen={isOpen}
-      onClose={handleClose}
-      title="Create New Agent Profile"
-      subtitle="Register an operational agent, configure commission rate, and allocate managerial hierarchy"
-      maxWidth="lg"
+      onClose={onClose}
+      title="Create Agent Profile"
+      description="Register a new commercial agent, assign a supervising manager, and set commission rate."
+      size="lg"
     >
-      {successData ? (
-        <div className="space-y-4">
-          <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300">
-            <div className="flex items-center gap-2 font-bold text-sm">
-              <Check className="w-5 h-5 text-emerald-600" />
-              Agent Successfully Created
-            </div>
-            <p className="text-xs mt-1 text-emerald-700 dark:text-emerald-400">
-              The agent account has been provisioned and is ready for login and client onboarding.
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {errors.form && (
+          <div className="p-3 bg-[var(--accent-rose-dim)] border border-[var(--accent-rose)]/30 rounded-xl flex items-center gap-2 text-xs text-[var(--accent-rose)]">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{errors.form}</span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Full Name */}
+          <div>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+              Full Name <span className="text-[var(--accent-rose)]">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="e.g. Liam O’Connor"
+              className={`w-full px-3 py-2 bg-[var(--bg-glass-input)] border ${
+                errors.name ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
+              } rounded-xl text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-blue)] transition-colors`}
+            />
+            {errors.name && <p className="text-[11px] text-[var(--accent-rose)] mt-1">{errors.name}</p>}
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+              Email Address <span className="text-[var(--accent-rose)]">*</span>
+            </label>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="liam.o@smshub.local"
+              className={`w-full px-3 py-2 bg-[var(--bg-glass-input)] border ${
+                errors.email ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
+              } rounded-xl text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-blue)] transition-colors`}
+            />
+            {errors.email && <p className="text-[11px] text-[var(--accent-rose)] mt-1">{errors.email}</p>}
+          </div>
+        </div>
+
+        {/* Passwords */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+              Password <span className="text-[var(--accent-rose)]">*</span>
+            </label>
+            <input
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              placeholder="••••••••••••"
+              autoComplete="new-password"
+              className={`w-full px-3 py-2 bg-[var(--bg-glass-input)] border ${
+                errors.password ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
+              } rounded-xl text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-blue)] transition-colors`}
+            />
+            {errors.password && <p className="text-[11px] text-[var(--accent-rose)] mt-1">{errors.password}</p>}
+
+            {/* Password Strength Meter */}
+            {formData.password && (
+              <div className="mt-2 space-y-1">
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className="text-[var(--text-muted)]">Strength:</span>
+                  <span className="font-semibold text-[var(--text-primary)]">{passwordStrength.label}</span>
+                </div>
+                <div className="w-full h-1 bg-[var(--bg-glass-card)] rounded-full overflow-hidden">
+                  <div
+                    className={`h-full ${passwordStrength.color} transition-all duration-300`}
+                    style={{ width: `${passwordStrength.score}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+              Confirm Password <span className="text-[var(--accent-rose)]">*</span>
+            </label>
+            <input
+              type="password"
+              value={formData.confirmPassword}
+              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+              placeholder="••••••••••••"
+              autoComplete="new-password"
+              className={`w-full px-3 py-2 bg-[var(--bg-glass-input)] border ${
+                errors.confirmPassword ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
+              } rounded-xl text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-blue)] transition-colors`}
+            />
+            {errors.confirmPassword && (
+              <p className="text-[11px] text-[var(--accent-rose)] mt-1">{errors.confirmPassword}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Manager & Commission Rate */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+              Supervising Manager
+            </label>
+            <select
+              value={formData.managerId}
+              onChange={(e) => setFormData({ ...formData, managerId: e.target.value })}
+              className="w-full px-3 py-2 bg-[var(--bg-glass-input)] border border-[var(--border-subtle)] rounded-xl text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] transition-colors"
+            >
+              <option value="" className="bg-[var(--bg-card)] text-[var(--text-muted)]">
+                -- Unassigned (Direct Pool) --
+              </option>
+              {managers.map((m) => (
+                <option
+                  key={m.id}
+                  value={m.id}
+                  disabled={m.availableSlots <= 0}
+                  className="bg-[var(--bg-card)] text-[var(--text-primary)]"
+                >
+                  {m.name} ({m.department}) — {m.availableSlots} slots left
+                </option>
+              ))}
+            </select>
+            <p className="text-[10px] text-[var(--text-muted)] mt-1">
+              Agents report to Managers in the platform hierarchy.
             </p>
           </div>
 
-          <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
-            <div>
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Agent Details</span>
-              <div className="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">
-                {successData.agent.name} ({successData.agent.username})
-              </div>
-              <div className="text-xs text-slate-500">{successData.agent.email}</div>
+          <div>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+              Commission Rate (%)
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                min="0"
+                max="50"
+                step="0.5"
+                value={formData.commissionRate}
+                onChange={(e) => setFormData({ ...formData, commissionRate: parseFloat(e.target.value) || 0 })}
+                className={`w-full px-3 py-2 bg-[var(--bg-glass-input)] border ${
+                  errors.commissionRate ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
+                } rounded-xl text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] transition-colors`}
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)] font-mono">
+                %
+              </span>
             </div>
-
-            {successData.generatedPassword && (
-              <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 dark:text-amber-200">
-                    <KeyRound className="w-4 h-4 text-amber-600" />
-                    Temporary Password (One-Time Display)
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => copyToClipboard(successData.generatedPassword!)}
-                    className="flex items-center gap-1 px-2 py-1 text-[11px] font-semibold bg-white dark:bg-slate-800 text-amber-800 dark:text-amber-300 rounded border border-amber-300 hover:bg-amber-50"
-                  >
-                    {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                    {copied ? 'Copied' : 'Copy'}
-                  </button>
-                </div>
-                <div className="mt-1 font-mono text-xs font-bold text-slate-800 dark:text-slate-200 select-all">
-                  {successData.generatedPassword}
-                </div>
-                <p className="text-[10px] text-amber-700 dark:text-amber-400 mt-1">
-                  Securely provide this temporary password to the agent. It is never stored in plaintext.
-                </p>
-              </div>
+            {errors.commissionRate && (
+              <p className="text-[11px] text-[var(--accent-rose)] mt-1">{errors.commissionRate}</p>
             )}
-          </div>
-
-          <div className="flex justify-end pt-2">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl"
-            >
-              Done
-            </button>
           </div>
         </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200 dark:border-rose-800 flex items-center gap-2 text-xs text-rose-700 dark:text-rose-400">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Username <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                placeholder="e.g. marcus.brody"
-                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Email Address <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="email"
-                required
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="e.g. agent@smshub.local"
-                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                First Name <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.firstName}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                placeholder="e.g. Marcus"
-                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Last Name <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.lastName}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                placeholder="e.g. Brody"
-                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Contact Phone
-              </label>
-              <input
-                type="text"
-                value={formData.contact}
-                onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
-                placeholder="e.g. +1 (202) 555-0188"
-                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Commission Rate (%)
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  step="0.005"
-                  min="0"
-                  max="1"
-                  value={formData.commissionRate}
-                  onChange={(e) => setFormData({ ...formData, commissionRate: parseFloat(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500"
-                />
-                <span className="absolute right-3 top-2 text-xs text-slate-400 font-mono">
-                  {(formData.commissionRate * 100).toFixed(1)}%
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {currentRole === 'SUPER_ADMIN' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Assign To Manager
-                </label>
-                <select
-                  value={formData.managerId || ''}
-                  onChange={(e) => setFormData({ ...formData, managerId: e.target.value || null })}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Unassigned (Direct Super Admin)</option>
-                  {managers.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} ({m.department || 'Operations'})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Account Status
-                </label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="ACTIVE">ACTIVE (Authorized to operate)</option>
-                  <option value="INACTIVE">INACTIVE (Dormant)</option>
-                  <option value="SUSPENDED">SUSPENDED (Access blocked)</option>
-                </select>
-              </div>
-            </div>
-          )}
-
-          {/* Password Provisioning */}
-          <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <KeyRound className="w-3.5 h-3.5 text-blue-500" />
-                Initial Credential Setup
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-600 dark:text-slate-400">
-                <input
-                  type="checkbox"
-                  checked={autoGeneratePassword}
-                  onChange={(e) => setAutoGeneratePassword(e.target.checked)}
-                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                />
-                Auto-generate secure password
-              </label>
-            </div>
-
-            {!autoGeneratePassword && (
-              <div>
-                <input
-                  type="password"
-                  value={formData.password || ''}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="Set custom initial password (min 8 characters)"
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={handleClose}
-              disabled={isLoading}
-              className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+        {/* Initial Status & Role Confirmation */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          <div>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+              Initial Account Status
+            </label>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value as AgentStatus })}
+              className="w-full px-3 py-2 bg-[var(--bg-glass-input)] border border-[var(--border-subtle)] rounded-xl text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] transition-colors"
             >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
-            >
-              {isLoading ? 'Creating Agent...' : 'Create Agent'}
-            </button>
+              <option value="ACTIVE" className="bg-[var(--bg-card)] text-[var(--text-primary)]">ACTIVE</option>
+              <option value="PENDING" className="bg-[var(--bg-card)] text-[var(--text-primary)]">PENDING</option>
+              <option value="SUSPENDED" className="bg-[var(--bg-card)] text-[var(--text-primary)]">SUSPENDED</option>
+            </select>
           </div>
-        </form>
-      )}
+
+          <div>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+              Platform Hierarchy Role
+            </label>
+            <div className="px-3 py-2 bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl flex items-center justify-between text-sm">
+              <span className="text-[var(--text-primary)] font-medium">AGENT</span>
+              <Badge variant="purple" size="sm">Fixed Hierarchy</Badge>
+            </div>
+          </div>
+        </div>
+
+        {/* Modal Actions */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-subtle)] mt-6">
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
+            Cancel
+          </Button>
+          <Button type="submit" variant="primary" isLoading={isSubmitting}>
+            Create Agent
+          </Button>
+        </div>
+      </form>
     </Modal>
   );
 };

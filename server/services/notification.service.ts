@@ -74,12 +74,12 @@ export class NotificationService {
             id: n.id,
             userId: n.userId,
             title: n.title,
-            message: n.message,
-            type: n.type || 'INFO',
-            category: n.category || 'SYSTEM',
-            isRead: n.isRead,
+            message: n.body || n.message || '',
+            type: n.type === 'ALERT' ? 'ERROR' : n.type || 'INFO',
+            category: 'SYSTEM',
+            isRead: n.readAt !== null,
             createdAt: n.createdAt.toISOString(),
-            actionUrl: n.link || undefined,
+            actionUrl: n.metadata?.actionUrl || undefined,
           }));
           const unreadCount = items.filter((i) => !i.isRead).length;
           return { items, unreadCount };
@@ -99,7 +99,7 @@ export class NotificationService {
       try {
         await prisma.notification.updateMany({
           where: { id, userId },
-          data: { isRead: true },
+          data: { readAt: new Date() },
         });
       } catch {
         // fallback
@@ -119,8 +119,8 @@ export class NotificationService {
     if (prisma && userId) {
       try {
         const res = await prisma.notification.updateMany({
-          where: { userId, isRead: false },
-          data: { isRead: true },
+          where: { userId, readAt: null },
+          data: { readAt: new Date() },
         });
         return res.count;
       } catch {
@@ -146,6 +146,26 @@ export class NotificationService {
       createdAt: new Date().toISOString(),
     };
     inMemoryNotifications.unshift(newNotif);
+
+    const prisma = getPrismaClient();
+    if (prisma && notification.userId) {
+      try {
+        const notifType = notification.type === 'ERROR' ? 'ALERT' : notification.type === 'WARNING' ? 'WARNING' : 'INFO';
+        await prisma.notification.create({
+          data: {
+            id: newNotif.id,
+            organizationId: '00000000-0000-0000-0000-000000000001',
+            userId: notification.userId,
+            title: notification.title,
+            body: notification.message,
+            type: notifType as any,
+          },
+        });
+      } catch {
+        // fallback
+      }
+    }
+
     return newNotif;
   }
 }

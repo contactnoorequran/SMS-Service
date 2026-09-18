@@ -159,8 +159,41 @@ export class UserRepository {
       const existing = await this.findByEmail(seed.email);
       if (!existing) {
         const passwordHash = await PasswordService.hash(seed.passwordRaw);
-        const userId = crypto.randomUUID();
+        let userId = crypto.randomUUID();
         const roleId = crypto.randomUUID();
+
+        const prisma = getPrismaClient();
+        if (prisma) {
+          try {
+            const dbUser = await prisma.user.findUnique({ where: { email: seed.email.toLowerCase() } });
+            if (dbUser) {
+              userId = dbUser.id;
+            } else {
+              const roleRecord = await prisma.role.findUnique({ where: { name: seed.role } });
+              if (roleRecord) {
+                const fullName = `${seed.firstName || ''} ${seed.lastName || ''}`.trim() || seed.role;
+                const created = await prisma.user.create({
+                  data: {
+                    id: userId,
+                    email: seed.email.toLowerCase(),
+                    passwordHash,
+                    name: fullName,
+                    status: seed.status,
+                    organizationId: '00000000-0000-0000-0000-000000000001',
+                    userRoles: {
+                      create: {
+                        roleId: roleRecord.id,
+                      },
+                    },
+                  },
+                });
+                userId = created.id;
+              }
+            }
+          } catch (dbErr) {
+            userLogger.warn(`Could not sync seed user ${seed.email} to PostgreSQL: ${dbErr}`);
+          }
+        }
 
         const stored: StoredUser = {
           id: userId,
@@ -219,6 +252,40 @@ export class UserRepository {
     };
   }
 
+  private static mapDbUserToStored(dbUser: any): StoredUser {
+    const primaryRole = dbUser.userRoles?.[0]?.role;
+    const roleName = (primaryRole?.name || 'CLIENT') as UserRole;
+    const roleId = primaryRole?.id || '';
+    const permissions = dbUser.userRoles?.flatMap((ur: any) =>
+      ur.role?.rolePermissions?.map((rp: any) => rp.permission?.name) || []
+    ) || [];
+
+    const nameParts = (dbUser.name || '').trim().split(/\s+/);
+    const firstName = nameParts[0] || null;
+    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : null;
+
+    return {
+      id: dbUser.id,
+      email: dbUser.email,
+      passwordHash: dbUser.passwordHash,
+      firstName,
+      lastName,
+      status: (dbUser.status || 'ACTIVE') as UserStatus,
+      role: {
+        id: roleId,
+        name: roleName,
+        displayName: roleName.replace('_', ' '),
+      },
+      customPermissions: permissions,
+      lastLoginAt: null,
+      createdAt: dbUser.createdAt instanceof Date ? dbUser.createdAt.toISOString() : String(dbUser.createdAt),
+      updatedAt: dbUser.updatedAt instanceof Date ? dbUser.updatedAt.toISOString() : String(dbUser.updatedAt),
+      managerId: dbUser.agent?.managerProfileId || null,
+      agentId: null,
+      clientId: dbUser.clientMemberships?.[0]?.clientId || null,
+    };
+  }
+
   /**
    * Finds a user record by email (including passwordHash for internal authentication verification).
    */
@@ -231,26 +298,28 @@ export class UserRepository {
       try {
         const dbUser = await prisma.user.findUnique({
           where: { email: normalizedEmail },
-          include: { role: true },
+          include: {
+            userRoles: {
+              include: {
+                role: {
+                  include: {
+                    rolePermissions: {
+                      include: {
+                        permission: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            managerProfile: true,
+            agent: true,
+            clientMemberships: true,
+          },
         });
 
         if (dbUser) {
-          return {
-            id: dbUser.id,
-            email: dbUser.email,
-            passwordHash: dbUser.passwordHash,
-            firstName: dbUser.firstName,
-            lastName: dbUser.lastName,
-            status: dbUser.status as UserStatus,
-            role: {
-              id: dbUser.role.id,
-              name: dbUser.role.name as UserRole,
-              displayName: dbUser.role.displayName,
-            },
-            lastLoginAt: dbUser.lastLoginAt ? dbUser.lastLoginAt.toISOString() : null,
-            createdAt: dbUser.createdAt.toISOString(),
-            updatedAt: dbUser.updatedAt.toISOString(),
-          };
+          return this.mapDbUserToStored(dbUser);
         }
       } catch (err) {
         // Fallback to memory
@@ -271,25 +340,27 @@ export class UserRepository {
       try {
         const dbUser = await prisma.user.findUnique({
           where: { id },
-          include: { role: true },
+          include: {
+            userRoles: {
+              include: {
+                role: {
+                  include: {
+                    rolePermissions: {
+                      include: {
+                        permission: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            managerProfile: true,
+            agent: true,
+            clientMemberships: true,
+          },
         });
         if (dbUser) {
-          const stored: StoredUser = {
-            id: dbUser.id,
-            email: dbUser.email,
-            passwordHash: dbUser.passwordHash,
-            firstName: dbUser.firstName,
-            lastName: dbUser.lastName,
-            status: dbUser.status as UserStatus,
-            role: {
-              id: dbUser.role.id,
-              name: dbUser.role.name as UserRole,
-              displayName: dbUser.role.displayName,
-            },
-            lastLoginAt: dbUser.lastLoginAt ? dbUser.lastLoginAt.toISOString() : null,
-            createdAt: dbUser.createdAt.toISOString(),
-            updatedAt: dbUser.updatedAt.toISOString(),
-          };
+          const stored = this.mapDbUserToStored(dbUser);
           return this.toSafeUser(stored);
         }
       } catch (err) {
@@ -318,7 +389,7 @@ export class UserRepository {
         if (exists) {
           await prisma.user.update({
             where: { id },
-            data: { lastLoginAt: new Date() },
+            data: { updatedAt: new Date() },
           });
         }
       } catch (e) {
@@ -387,20 +458,29 @@ export class UserRepository {
       try {
         const roleRecord = await prisma.role.findUnique({ where: { name: data.role } });
         if (roleRecord) {
+          const fullName = `${data.firstName || ''} ${data.lastName || ''}`.trim() || data.role;
           await prisma.user.create({
             data: {
               id: userId,
               email: normalizedEmail,
               passwordHash,
-              firstName: data.firstName || null,
-              lastName: data.lastName || null,
+              name: fullName,
               status: stored.status,
-              roleId: roleRecord.id,
+              organizationId: '00000000-0000-0000-0000-000000000001',
+              userRoles: {
+                create: {
+                  roleId: roleRecord.id,
+                },
+              },
             },
           });
         }
-      } catch (err) {
+      } catch (err: any) {
         userLogger.warn('Could not persist new user to PostgreSQL, saved in memory', err);
+        if (err.code === 'P2002') {
+          memoryUsers.delete(normalizedEmail);
+          throw new Error(`User with email '${data.email}' already exists in database.`);
+        }
       }
     }
 
@@ -408,29 +488,121 @@ export class UserRepository {
   }
 
   /**
+   * Updates user profile fields (firstName, lastName, email, status).
+   */
+  static async updateUser(
+    id: string,
+    data: { firstName?: string; lastName?: string; email?: string; status?: UserStatus }
+  ): Promise<SafeUser | null> {
+    const prisma = getPrismaClient();
+    if (prisma) {
+      try {
+        const updateData: any = { updatedAt: new Date() };
+        if (data.firstName !== undefined || data.lastName !== undefined) {
+          const existing = await prisma.user.findUnique({ where: { id }, select: { name: true } });
+          const parts = (existing?.name || '').split(/\s+/);
+          const fName = data.firstName !== undefined ? data.firstName : parts[0] || '';
+          const lName = data.lastName !== undefined ? data.lastName : parts.slice(1).join(' ');
+          updateData.name = `${fName} ${lName}`.trim() || undefined;
+        }
+        if (data.email) {
+          updateData.email = data.email.toLowerCase().trim();
+        }
+        if (data.status) {
+          updateData.status = data.status;
+        }
+
+        const dbUser = await prisma.user.update({
+          where: { id },
+          data: updateData,
+          include: {
+            userRoles: {
+              include: {
+                role: {
+                  include: {
+                    rolePermissions: {
+                      include: {
+                        permission: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            managerProfile: true,
+            agent: true,
+            clientMemberships: true,
+          },
+        });
+
+        if (dbUser) {
+          const stored = this.mapDbUserToStored(dbUser);
+          memoryUsers.set(stored.email.toLowerCase(), stored);
+          return this.toSafeUser(stored);
+        }
+      } catch (err) {
+        userLogger.warn(`Prisma update failed for user ${id}, trying memory store`, err);
+      }
+    }
+
+    for (const u of memoryUsers.values()) {
+      if (u.id === id) {
+        if (data.firstName !== undefined) u.firstName = data.firstName;
+        if (data.lastName !== undefined) u.lastName = data.lastName;
+        if (data.email) u.email = data.email.toLowerCase().trim();
+        if (data.status) u.status = data.status;
+        u.updatedAt = new Date().toISOString();
+        return this.toSafeUser(u);
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * Updates user status (ACTIVE, SUSPENDED, PENDING).
    */
   static async updateStatus(id: string, newStatus: UserStatus): Promise<SafeUser | null> {
+    const prisma = getPrismaClient();
+    if (prisma) {
+      try {
+        const dbUser = await prisma.user.update({
+          where: { id },
+          data: { status: newStatus, updatedAt: new Date() },
+          include: {
+            userRoles: {
+              include: {
+                role: {
+                  include: {
+                    rolePermissions: {
+                      include: {
+                        permission: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            managerProfile: true,
+            agent: true,
+            clientMemberships: true,
+          },
+        });
+
+        if (dbUser) {
+          const stored = this.mapDbUserToStored(dbUser);
+          memoryUsers.set(stored.email.toLowerCase(), stored);
+          return this.toSafeUser(stored);
+        }
+      } catch (e) {
+        // fallback to memory
+      }
+    }
+
     for (const u of memoryUsers.values()) {
       if (u.id === id) {
         u.status = newStatus;
         u.updatedAt = new Date().toISOString();
-
-        const prisma = getPrismaClient();
-        if (prisma) {
-          try {
-            const exists = await prisma.user.findUnique({ where: { id }, select: { id: true } }).catch(() => null);
-            if (exists) {
-              await prisma.user.update({
-                where: { id },
-                data: { status: newStatus },
-              });
-            }
-          } catch (e) {
-            // fallback
-          }
-        }
-
         return this.toSafeUser(u);
       }
     }
@@ -496,7 +668,42 @@ export class UserRepository {
   static async listUsers(actorRole: UserRole, actorId: string): Promise<SafeUser[]> {
     await this.initializeSeedUsers();
 
-    const all = Array.from(memoryUsers.values());
+    let all: StoredUser[] = [];
+    const prisma = getPrismaClient();
+    if (prisma) {
+      try {
+        const dbUsers = await prisma.user.findMany({
+          include: {
+            userRoles: {
+              include: {
+                role: {
+                  include: {
+                    rolePermissions: {
+                      include: {
+                        permission: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            managerProfile: true,
+            agent: true,
+            clientMemberships: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+        if (dbUsers.length > 0) {
+          all = dbUsers.map((u) => this.mapDbUserToStored(u));
+        }
+      } catch {
+        // fallback to memory
+      }
+    }
+
+    if (all.length === 0) {
+      all = Array.from(memoryUsers.values());
+    }
 
     let filtered: StoredUser[];
     if (actorRole === 'SUPER_ADMIN') {

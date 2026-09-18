@@ -1,1 +1,408 @@
 @import "tailwindcss";
+
+/* ============================================================
+   GLASS MORPHISM DESIGN SYSTEM — SMS Management Platform
+   ============================================================
+   Always-dark premium UI with glassmorphism surfaces.
+   No light-mode toggle. All tokens live in :root.
+   ============================================================ */
+
+/* ─── Tailwind v4 Theme Extension ─── */
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+
+  --color-glass-bg: rgba(255, 255, 255, 0.04);
+  --color-glass-bg-hover: rgba(255, 255, 255, 0.07);
+  --color-glass-bg-active: rgba(255, 255, 255, 0.10);
+  --color-glass-border: rgba(255, 255, 255, 0.08);
+  --color-glass-border-hover: rgba(255, 255, 255, 0.14);
+  --color-glass-border-active: rgba(255, 255, 255, 0.20);
+
+  --color-bg-deep: #07090f;
+  --color-bg-surface: #0c1017;
+  --color-bg-elevated: #111827;
+
+  --color-accent-blue: #3b82f6;
+  --color-accent-blue-dim: rgba(59, 130, 246, 0.15);
+  --color-accent-blue-glow: rgba(59, 130, 246, 0.25);
+  --color-accent-emerald: #10b981;
+  --color-accent-emerald-dim: rgba(16, 185, 129, 0.15);
+  --color-accent-amber: #f59e0b;
+  --color-accent-amber-dim: rgba(245, 158, 11, 0.15);
+  --color-accent-rose: #f43f5e;
+  --color-accent-rose-dim: rgba(244, 63, 94, 0.15);
+  --color-accent-violet: #8b5cf6;
+  --color-accent-violet-dim: rgba(139, 92, 246, 0.15);
+  --color-accent-cyan: #06b6d4;
+  --color-accent-cyan-dim: rgba(6, 182, 212, 0.15);
+
+  --color-text-primary: rgba(255, 255, 255, 0.92);
+  --color-text-secondary: rgba(255, 255, 255, 0.55);
+  --color-text-tertiary: rgba(255, 255, 255, 0.35);
+  --color-text-disabled: rgba(255, 255, 255, 0.20);
+}
+
+/* ─── CSS Custom Properties ─── */
+:root {
+  /* Backgrounds */
+  --bg-deep: #07090f;
+  --bg-surface: #0c1017;
+  --bg-elevated: #111827;
+
+  /* Glass */
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-bg-hover: rgba(255, 255, 255, 0.07);
+  --glass-bg-active: rgba(255, 255, 255, 0.10);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-hover: rgba(255, 255, 255, 0.14);
+  --glass-border-active: rgba(255, 255, 255, 0.20);
+  --glass-blur: 16px;
+  --glass-blur-heavy: 24px;
+
+  /* Accents */
+  --accent-blue: #3b82f6;
+  --accent-blue-dim: rgba(59, 130, 246, 0.15);
+  --accent-blue-glow: rgba(59, 130, 246, 0.25);
+  --accent-emerald: #10b981;
+  --accent-emerald-dim: rgba(16, 185, 129, 0.15);
+  --accent-amber: #f59e0b;
+  --accent-amber-dim: rgba(245, 158, 11, 0.15);
+  --accent-rose: #f43f5e;
+  --accent-rose-dim: rgba(244, 63, 94, 0.15);
+  --accent-violet: #8b5cf6;
+  --accent-violet-dim: rgba(139, 92, 246, 0.15);
+  --accent-cyan: #06b6d4;
+  --accent-cyan-dim: rgba(6, 182, 212, 0.15);
+
+  /* Text */
+  --text-primary: rgba(255, 255, 255, 0.92);
+  --text-secondary: rgba(255, 255, 255, 0.55);
+  --text-tertiary: rgba(255, 255, 255, 0.35);
+  --text-disabled: rgba(255, 255, 255, 0.20);
+
+  /* Animation */
+  --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+}
+
+/* ─── Global Reset & Base ─── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── Ambient Background ─── */
+#root {
+  position: relative;
+  min-height: 100vh;
+}
+
+#root::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 20%, rgba(59, 130, 246, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 80%, rgba(139, 92, 246, 0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(6, 182, 212, 0.03) 0%, transparent 60%);
+}
+
+/* ─── Glass Utility Classes ─── */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+}
+
+.glass-hover {
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.glass-hover:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+}
+
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.glass-card:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+}
+
+.glass-surface {
+  background: var(--bg-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+}
+
+.glass-input {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.glass-input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px var(--accent-blue-dim);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.glass-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* ─── Accent Glow Utilities ─── */
+.glow-blue {
+  box-shadow: 0 0 20px var(--accent-blue-dim), 0 0 40px rgba(59, 130, 246, 0.05);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 20px var(--accent-emerald-dim), 0 0 40px rgba(16, 185, 129, 0.05);
+}
+
+.glow-amber {
+  box-shadow: 0 0 20px var(--accent-amber-dim), 0 0 40px rgba(245, 158, 11, 0.05);
+}
+
+.glow-rose {
+  box-shadow: 0 0 20px var(--accent-rose-dim), 0 0 40px rgba(244, 63, 94, 0.05);
+}
+
+.glow-violet {
+  box-shadow: 0 0 20px var(--accent-violet-dim), 0 0 40px rgba(139, 92, 246, 0.05);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 20px var(--accent-cyan-dim), 0 0 40px rgba(6, 182, 212, 0.05);
+}
+
+/* ─── Shimmer Skeleton Animation ─── */
+@keyframes glass-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.glass-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: glass-shimmer 1.8s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ─── Pulse Dot Animation ─── */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* ─── Fade-in Entrance ─── */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in-up 0.3s var(--ease-out) forwards;
+}
+
+/* ─── Scale-in for modals ─── */
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s var(--ease-out) forwards;
+}
+
+/* ─── Custom Scrollbar ─── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.10);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.10) transparent;
+}
+
+/* ─── Selection Color ─── */
+::selection {
+  background: var(--accent-blue-dim);
+  color: white;
+}
+
+/* ─── Focus Visible ─── */
+:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+/* ─── Input / Select / Textarea Dark Overrides ─── */
+input,
+select,
+textarea {
+  color-scheme: dark;
+}
+
+/* Chrome autofill dark override */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: var(--text-primary);
+  -webkit-box-shadow: 0 0 0px 1000px #0c101a inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ─── Touch Table Scrolling ─── */
+.table-scroll-container {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+
+/* ─── Accessibility: Reduced Motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─── Recharts Overrides for Glass Theme ─── */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: rgba(255, 255, 255, 0.06) !important;
+}
+
+.recharts-text {
+  fill: var(--text-tertiary) !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 10px !important;
+}
+
+.recharts-tooltip-wrapper {
+  outline: none !important;
+}
+
+.recharts-default-tooltip {
+  background: rgba(13, 19, 33, 0.88) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid var(--glass-border-hover) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+  padding: 10px 14px !important;
+}
+
+.recharts-tooltip-label {
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  margin-bottom: 6px !important;
+  letter-spacing: -0.01em !important;
+}
+
+.recharts-tooltip-item-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+
+.recharts-tooltip-item {
+  color: var(--text-secondary) !important;
+  font-size: 12px !important;
+  padding: 0 !important;
+}
+
+.recharts-legend-item-text {
+  color: var(--text-secondary) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.01em !important;
+}
+

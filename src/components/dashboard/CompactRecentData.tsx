@@ -3,19 +3,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   MessageSquare,
   ArrowRight,
   Receipt,
-  CheckCircle2,
-  Clock,
+  Inbox,
+  RefreshCw,
   AlertCircle,
-  ArrowUpRight,
-  ArrowDownLeft,
 } from 'lucide-react';
 import { Badge } from '../ui/Badge';
-import { formatRelativeTime, formatCurrency } from '../../utils/formatters';
+import { formatRelativeTime } from '../../utils/formatters';
 import { apiClient } from '../../services/api';
 
 interface CompactMessage {
@@ -41,75 +39,62 @@ interface CompactRecentDataProps {
 }
 
 export const CompactRecentData: React.FC<CompactRecentDataProps> = ({ onNavigateToTab }) => {
-  const [messages, setMessages] = useState<CompactMessage[]>([
-    {
-      id: 'msg-1',
-      sender: '+14155552671',
-      receiver: '+447911123456',
-      status: 'DELIVERED',
-      createdAt: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
-      providerName: 'Zain Kuwait',
-    },
-    {
-      id: 'msg-2',
-      sender: '+447700900077',
-      receiver: '+96598765432',
-      status: 'DELIVERED',
-      createdAt: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
-      providerName: 'Vodafone',
-    },
-    {
-      id: 'msg-3',
-      sender: '+12025550199',
-      receiver: '+447911123456',
-      status: 'RECEIVED',
-      createdAt: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-      providerName: 'STC Link',
-    },
-    {
-      id: 'msg-4',
-      sender: '+33612345678',
-      receiver: '+447911123456',
-      status: 'DELIVERED',
-      createdAt: new Date(Date.now() - 1000 * 60 * 48).toISOString(),
-      providerName: 'Zain Kuwait',
-    },
-  ]);
+  const [messages, setMessages] = useState<CompactMessage[]>([]);
+  const [transactions, setTransactions] = useState<CompactTransaction[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [transactions, setTransactions] = useState<CompactTransaction[]>([
-    {
-      id: 'tx-1',
-      sequenceId: '1042',
-      party: 'Acme Global Corp',
-      direction: 'DEBIT',
-      amount: 0.045,
-      createdAt: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
-    },
-    {
-      id: 'tx-2',
-      sequenceId: '1041',
-      party: 'Gulf Retailers LLC',
-      direction: 'CREDIT',
-      amount: 150.0,
-      createdAt: new Date(Date.now() - 1000 * 60 * 32).toISOString(),
-    },
-    {
-      id: 'tx-3',
-      sequenceId: '1040',
-      party: 'Nexus Logistics',
-      direction: 'DEBIT',
-      amount: 0.012,
-      createdAt: new Date(Date.now() - 1000 * 60 * 55).toISOString(),
-    },
-    {
-      id: 'tx-4',
-      sequenceId: '1039',
-      party: 'Wholesale Carrier Settlement',
-      direction: 'DEBIT',
-      amount: 28.4,
-      createdAt: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
-    },
-  ]);
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const [messagesRes, cdrRes] = await Promise.allSettled([
+        apiClient.getInboundMessages({ limit: 4 }),
+        apiClient.getCdrs({ limit: 4 }),
+      ]);
+
+      if (messagesRes.status === 'fulfilled' && messagesRes.value) {
+        const rawMsgs = messagesRes.value.items || (Array.isArray(messagesRes.value) ? messagesRes.value : []);
+        setMessages(
+          rawMsgs.map((m: any) => ({
+            id: m.id,
+            sender: m.fromNumber || m.sender || m.senderAddress || '--',
+            receiver: m.toNumber || m.receiver || m.destinationAddress || '--',
+            status: m.status || 'RECEIVED',
+            createdAt: m.receivedAt || m.createdAt || new Date().toISOString(),
+            providerName: m.provider?.name || m.providerName,
+          }))
+        );
+      } else {
+        setMessages([]);
+      }
+
+      if (cdrRes.status === 'fulfilled' && cdrRes.value) {
+        const rawCdrs = cdrRes.value.items || (Array.isArray(cdrRes.value) ? cdrRes.value : []);
+        setTransactions(
+          rawCdrs.map((c: any, idx: number) => ({
+            id: c.id || `cdr-${idx}`,
+            sequenceId: String(c.sequenceId || c.id?.slice(-4) || idx + 1),
+            party: c.client?.companyName || c.client?.name || c.clientName || 'Platform Ingress',
+            direction: 'DEBIT',
+            amount: Number(c.clientChargeDecimal || c.clientPayout || 0),
+            createdAt: c.createdAt || new Date().toISOString(),
+          }))
+        );
+      } else {
+        setTransactions([]);
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Failed to load recent activity streams');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -130,44 +115,74 @@ export const CompactRecentData: React.FC<CompactRecentDataProps> = ({ onNavigate
                 </p>
               </div>
             </div>
-            <Badge variant="info" size="sm">
-              Live Stream
-            </Badge>
+            {messages.length > 0 && (
+              <Badge variant="info" size="sm">
+                Live Stream
+              </Badge>
+            )}
           </div>
 
-          {/* Compact List */}
-          <div className="divide-y divide-[var(--glass-border)] text-xs">
-            {messages.map((msg) => (
-              <div key={msg.id} className="py-2.5 flex items-center justify-between gap-2">
-                <div className="min-w-0 flex flex-col">
-                  <div className="flex items-center gap-2 font-mono text-[11px]">
-                    <span className="text-[var(--text-primary)] font-medium truncate">
-                      {msg.sender}
-                    </span>
-                    <span className="text-[var(--text-tertiary)]">→</span>
-                    <span className="text-[var(--text-secondary)] truncate">
-                      {msg.receiver}
-                    </span>
+          {/* Messages Content */}
+          {isLoading ? (
+            <div className="space-y-2.5 py-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-9 rounded-lg glass-skeleton" />
+              ))}
+            </div>
+          ) : error ? (
+            <div className="py-6 text-center text-xs text-[var(--accent-rose)] flex flex-col items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
+              <span>Unable to load messages</span>
+              <button
+                type="button"
+                onClick={loadData}
+                className="text-[11px] text-[var(--accent-blue)] hover:underline cursor-pointer flex items-center gap-1"
+              >
+                <RefreshCw className="w-3 h-3" /> Retry
+              </button>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="py-8 text-center flex flex-col items-center justify-center text-[var(--text-tertiary)]">
+              <Inbox className="w-6 h-6 mb-1.5 opacity-50" />
+              <p className="text-xs font-medium text-[var(--text-secondary)]">No messages received</p>
+              <p className="text-[11px]">Inbound message stream will appear here when traffic arrives.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-[var(--glass-border)] text-xs">
+              {messages.map((msg) => (
+                <div key={msg.id} className="py-2.5 flex items-center justify-between gap-2">
+                  <div className="min-w-0 flex flex-col">
+                    <div className="flex items-center gap-2 font-mono text-[11px]">
+                      <span className="text-[var(--text-primary)] font-medium truncate">
+                        {msg.sender}
+                      </span>
+                      <span className="text-[var(--text-tertiary)]">→</span>
+                      <span className="text-[var(--text-secondary)] truncate">
+                        {msg.receiver}
+                      </span>
+                    </div>
+                    {msg.providerName && (
+                      <span className="text-[10px] text-[var(--text-tertiary)] truncate">
+                        {msg.providerName}
+                      </span>
+                    )}
                   </div>
-                  <span className="text-[10px] text-[var(--text-tertiary)] truncate">
-                    {msg.providerName || 'Carrier Link'}
-                  </span>
-                </div>
 
-                <div className="flex items-center gap-2.5 shrink-0">
-                  <span className="text-[10px] font-mono text-[var(--text-tertiary)]">
-                    {formatRelativeTime(msg.createdAt)}
-                  </span>
-                  <Badge
-                    variant={msg.status === 'DELIVERED' ? 'success' : 'neutral'}
-                    size="sm"
-                  >
-                    {msg.status}
-                  </Badge>
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    <span className="text-[10px] font-mono text-[var(--text-tertiary)]">
+                      {formatRelativeTime(msg.createdAt)}
+                    </span>
+                    <Badge
+                      variant={msg.status === 'DELIVERED' ? 'success' : 'neutral'}
+                      size="sm"
+                    >
+                      {msg.status}
+                    </Badge>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Card Footer Link */}
@@ -198,49 +213,77 @@ export const CompactRecentData: React.FC<CompactRecentDataProps> = ({ onNavigate
                 </p>
               </div>
             </div>
-            <Badge variant="success" size="sm">
-              Settled
-            </Badge>
+            {transactions.length > 0 && (
+              <Badge variant="success" size="sm">
+                Settled
+              </Badge>
+            )}
           </div>
 
-          {/* Compact List */}
-          <div className="divide-y divide-[var(--glass-border)] text-xs">
-            {transactions.map((tx) => (
-              <div key={tx.id} className="py-2.5 flex items-center justify-between gap-2">
-                <div className="min-w-0 flex flex-col">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-[10px] text-[var(--text-tertiary)] font-semibold">
-                      #{tx.sequenceId}
-                    </span>
-                    <span className="text-xs font-medium text-[var(--text-primary)] truncate">
-                      {tx.party}
+          {/* Transactions Content */}
+          {isLoading ? (
+            <div className="space-y-2.5 py-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-9 rounded-lg glass-skeleton" />
+              ))}
+            </div>
+          ) : error ? (
+            <div className="py-6 text-center text-xs text-[var(--accent-rose)] flex flex-col items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
+              <span>Unable to load transactions</span>
+              <button
+                type="button"
+                onClick={loadData}
+                className="text-[11px] text-[var(--accent-blue)] hover:underline cursor-pointer flex items-center gap-1"
+              >
+                <RefreshCw className="w-3 h-3" /> Retry
+              </button>
+            </div>
+          ) : transactions.length === 0 ? (
+            <div className="py-8 text-center flex flex-col items-center justify-center text-[var(--text-tertiary)]">
+              <Inbox className="w-6 h-6 mb-1.5 opacity-50" />
+              <p className="text-xs font-medium text-[var(--text-secondary)]">No transactions recorded</p>
+              <p className="text-[11px]">Ledger entries will appear as messages are routed and rated.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-[var(--glass-border)] text-xs">
+              {transactions.map((tx) => (
+                <div key={tx.id} className="py-2.5 flex items-center justify-between gap-2">
+                  <div className="min-w-0 flex flex-col">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[10px] text-[var(--text-tertiary)] font-semibold">
+                        #{tx.sequenceId}
+                      </span>
+                      <span className="text-xs font-medium text-[var(--text-primary)] truncate">
+                        {tx.party}
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono text-[var(--text-tertiary)]">
+                      {formatRelativeTime(tx.createdAt)}
                     </span>
                   </div>
-                  <span className="text-[10px] font-mono text-[var(--text-tertiary)]">
-                    {formatRelativeTime(tx.createdAt)}
-                  </span>
-                </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <span
-                    className={`font-mono text-xs font-semibold ${
-                      tx.direction === 'CREDIT'
-                        ? 'text-[var(--accent-emerald)]'
-                        : 'text-[var(--text-primary)]'
-                    }`}
-                  >
-                    {tx.direction === 'CREDIT' ? '+' : '-'}${tx.amount.toFixed(3)}
-                  </span>
-                  <Badge
-                    variant={tx.direction === 'CREDIT' ? 'success' : 'neutral'}
-                    size="sm"
-                  >
-                    {tx.direction}
-                  </Badge>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span
+                      className={`font-mono text-xs font-semibold ${
+                        tx.direction === 'CREDIT'
+                          ? 'text-[var(--accent-emerald)]'
+                          : 'text-[var(--text-primary)]'
+                      }`}
+                    >
+                      {tx.direction === 'CREDIT' ? '+' : '-'}${tx.amount.toFixed(4)}
+                    </span>
+                    <Badge
+                      variant={tx.direction === 'CREDIT' ? 'success' : 'neutral'}
+                      size="sm"
+                    >
+                      {tx.direction}
+                    </Badge>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Card Footer Link */}

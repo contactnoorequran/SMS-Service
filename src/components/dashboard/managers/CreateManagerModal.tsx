@@ -178,7 +178,7 @@ export const CreateManagerModal: React.FC<CreateManagerModalProps> = ({
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g. Sarah Khan"
+                placeholder="e.g. Jane Doe"
                 className={`w-full px-3 py-2 bg-[var(--bg-glass-input)] border ${
                   errors.name ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
                 } rounded-xl text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-blue)] transition-colors`}
@@ -197,7 +197,7 @@ export const CreateManagerModal: React.FC<CreateManagerModalProps> = ({
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="s.khan@smshub.local"
+                placeholder="manager@domain.com"
                 className={`w-full px-3 py-2 bg-[var(--bg-glass-input)] border ${
                   errors.email ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
                 } rounded-xl text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-blue)] transition-colors`}

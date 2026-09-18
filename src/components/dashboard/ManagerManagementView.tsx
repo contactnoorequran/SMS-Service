@@ -649,7 +649,7 @@ export const ManagerManagementView: React.FC = () => {
         assignedAgents={
           managingAgentsTarget
             ? managers.find((m) => m.id === managingAgentsTarget.id)?.assignedAgentsCount
-              ? // Pull from active seed or cached agents
+              ? // Filter agents assigned to this manager
                 agentPool
                   .filter((a) => a.assignedManagerId === managingAgentsTarget.id)
                   .map((a) => ({

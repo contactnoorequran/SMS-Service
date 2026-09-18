@@ -13,49 +13,8 @@ export interface AppNotification {
   actionUrl?: string;
 }
 
-// In-memory persistent notification collection
-let inMemoryNotifications: AppNotification[] = [
-  {
-    id: 'notif-1',
-    title: 'PostgreSQL Database Architecture Live',
-    message: '28 normalized models synchronized with Prisma 6.4.1 and verified.',
-    type: 'SUCCESS',
-    category: 'SYSTEM',
-    isRead: false,
-    createdAt: new Date().toISOString(),
-    actionUrl: 'database-schema',
-  },
-  {
-    id: 'notif-2',
-    title: 'High Gateway Health & Latency',
-    message: 'TelcoDirect HTTP Gateway operating with 38ms response time.',
-    type: 'INFO',
-    category: 'SYSTEM',
-    isRead: false,
-    createdAt: new Date(Date.now() - 1800000).toISOString(),
-    actionUrl: 'diagnostics',
-  },
-  {
-    id: 'notif-3',
-    title: 'Number Range Allocation Notice',
-    message: 'Pool +1202555 allocated with 1 assigned active number.',
-    type: 'INFO',
-    category: 'NUMBERS',
-    isRead: false,
-    createdAt: new Date(Date.now() - 7200000).toISOString(),
-    actionUrl: 'dashboard',
-  },
-  {
-    id: 'notif-4',
-    title: 'Security Audit: Root Session Active',
-    message: 'Super Administrator logged in with 2FA-ready token session.',
-    type: 'WARNING',
-    category: 'SECURITY',
-    isRead: true,
-    createdAt: new Date(Date.now() - 14400000).toISOString(),
-    actionUrl: 'audit',
-  },
-];
+// In-memory persistent notification collection (starts empty, populated only by real system events)
+let inMemoryNotifications: AppNotification[] = [];
 
 export class NotificationService {
   static async listUserNotifications(userId?: string): Promise<{ items: AppNotification[]; unreadCount: number }> {

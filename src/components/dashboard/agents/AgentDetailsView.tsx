@@ -244,7 +244,7 @@ export const AgentDetailsView: React.FC<AgentDetailsViewProps> = ({
             </div>
 
             <div className="p-3 bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl space-y-2">
-              <div className="text-xs text-[var(--text-secondary)]">Sample Assigned E.164 Numbers:</div>
+              <div className="text-xs text-[var(--text-secondary)]">Assigned E.164 Numbers:</div>
               {agent.numbers && agent.numbers.length > 0 ? (
                 <div className="space-y-1.5">
                   {agent.numbers.slice(0, 3).map((num) => (

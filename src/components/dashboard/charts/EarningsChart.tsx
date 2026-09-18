@@ -10,7 +10,7 @@ import {
   Legend,
 } from 'recharts';
 import { EarningsPoint } from '../../../types/dashboard';
-import { DollarSign, TrendingUp } from 'lucide-react';
+import { DollarSign, TrendingUp, Inbox } from 'lucide-react';
 import { formatCurrency, formatPercent } from '../../../utils/formatters';
 
 interface EarningsChartProps {
@@ -25,6 +25,7 @@ export const EarningsChart: React.FC<EarningsChartProps> = ({ data }) => {
   const totalCost = safeData.reduce((acc, curr) => acc + (curr?.providerCost || 0), 0);
   const totalNet = safeData.reduce((acc, curr) => acc + (curr?.netProfit || 0), 0);
   const profitMargin = totalGross > 0 ? (totalNet / totalGross) * 100 : 0;
+  const hasFinancialData = totalGross > 0 || totalCost > 0 || totalNet > 0;
 
   return (
     <div className="bg-[var(--glass-bg)] backdrop-blur-md border border-[var(--glass-border)] rounded-xl p-5 shadow-xs">
@@ -45,88 +46,102 @@ export const EarningsChart: React.FC<EarningsChartProps> = ({ data }) => {
         </div>
 
         {/* View toggles */}
-        <div className="flex items-center gap-1 bg-[var(--glass-bg-active)] p-1 rounded-lg text-xs self-start sm:self-auto">
-          <button
-            type="button"
-            onClick={() => setActiveFilter('all')}
-            className={`px-2 py-1 rounded-md font-medium transition-colors ${
-              activeFilter === 'all'
-                ? 'bg-[var(--glass-bg)] backdrop-blur-md text-[var(--text-primary)] shadow-xs'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-            }`}
-          >
-            All
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveFilter('revenue')}
-            className={`px-2 py-1 rounded-md font-medium transition-colors ${
-              activeFilter === 'revenue'
-                ? 'bg-[var(--glass-bg)] backdrop-blur-md text-[var(--accent-blue)] shadow-xs'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-            }`}
-          >
-            Revenue
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveFilter('cost')}
-            className={`px-2 py-1 rounded-md font-medium transition-colors ${
-              activeFilter === 'cost'
-                ? 'bg-[var(--glass-bg)] backdrop-blur-md text-[var(--accent-amber)] shadow-xs'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-            }`}
-          >
-            Cost
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveFilter('profit')}
-            className={`px-2 py-1 rounded-md font-medium transition-colors ${
-              activeFilter === 'profit'
-                ? 'bg-[var(--glass-bg)] backdrop-blur-md text-[var(--accent-emerald)] shadow-xs'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-            }`}
-          >
-            Profit
-          </button>
-        </div>
+        {hasFinancialData && (
+          <div className="flex items-center gap-1 bg-[var(--glass-bg-active)] p-1 rounded-lg text-xs self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => setActiveFilter('all')}
+              className={`px-2 py-1 rounded-md font-medium transition-colors ${
+                activeFilter === 'all'
+                  ? 'bg-[var(--glass-bg)] backdrop-blur-md text-[var(--text-primary)] shadow-xs'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              All
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveFilter('revenue')}
+              className={`px-2 py-1 rounded-md font-medium transition-colors ${
+                activeFilter === 'revenue'
+                  ? 'bg-[var(--glass-bg)] backdrop-blur-md text-[var(--accent-blue)] shadow-xs'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              Revenue
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveFilter('cost')}
+              className={`px-2 py-1 rounded-md font-medium transition-colors ${
+                activeFilter === 'cost'
+                  ? 'bg-[var(--glass-bg)] backdrop-blur-md text-[var(--accent-amber)] shadow-xs'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              Cost
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveFilter('profit')}
+              className={`px-2 py-1 rounded-md font-medium transition-colors ${
+                activeFilter === 'profit'
+                  ? 'bg-[var(--glass-bg)] backdrop-blur-md text-[var(--accent-emerald)] shadow-xs'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              Profit
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Financial KPIs Row */}
-      <div className="grid grid-cols-3 gap-3 my-4">
-        {/* Provider Cost */}
-        <div className="p-3 rounded-lg bg-[var(--glass-bg)]/40 border border-[var(--glass-border)]">
-          <span className="text-[11px] text-[var(--text-tertiary)] block">Provider Cost</span>
-          <div className="text-base font-bold font-mono text-[var(--text-secondary)] mt-0.5">
-            {formatCurrency(totalCost)}
+      {!hasFinancialData ? (
+        <div className="py-16 text-center flex flex-col items-center justify-center text-[var(--text-tertiary)]">
+          <div className="w-10 h-10 rounded-xl bg-[var(--glass-bg-active)] flex items-center justify-center text-[var(--text-tertiary)] mb-2">
+            <Inbox className="w-5 h-5" />
           </div>
+          <p className="text-xs font-medium text-[var(--text-primary)]">No data available for this period</p>
+          <p className="text-[11px] text-[var(--text-tertiary)] mt-0.5 max-w-sm">
+            Wholesale provider costs, client billings, and gross margin will display automatically once CDRs and financial transactions are recorded.
+          </p>
         </div>
+      ) : (
+        <>
+          {/* Financial KPIs Row */}
+          <div className="grid grid-cols-3 gap-3 my-4">
+            {/* Provider Cost */}
+            <div className="p-3 rounded-lg bg-[var(--glass-bg)]/40 border border-[var(--glass-border)]">
+              <span className="text-[11px] text-[var(--text-tertiary)] block">Provider Cost</span>
+              <div className="text-base font-bold font-mono text-[var(--text-secondary)] mt-0.5">
+                {formatCurrency(totalCost)}
+              </div>
+            </div>
 
-        {/* Client Revenue */}
-        <div className="p-3 rounded-lg bg-[var(--accent-blue-dim)] border border-[rgba(59,130,246,0.2)]">
-          <span className="text-[11px] text-[var(--accent-blue)] block">Client Revenue</span>
-          <div className="text-base font-bold font-mono text-[var(--text-primary)] mt-0.5">
-            {formatCurrency(totalGross)}
-          </div>
-        </div>
+            {/* Client Revenue */}
+            <div className="p-3 rounded-lg bg-[var(--accent-blue-dim)] border border-[rgba(59,130,246,0.2)]">
+              <span className="text-[11px] text-[var(--accent-blue)] block">Client Revenue</span>
+              <div className="text-base font-bold font-mono text-[var(--text-primary)] mt-0.5">
+                {formatCurrency(totalGross)}
+              </div>
+            </div>
 
-        {/* Platform Profit */}
-        <div className="p-3 rounded-lg bg-[var(--accent-emerald-dim)] border border-[rgba(16,185,129,0.2)]">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] text-[var(--accent-emerald)] block">Platform Profit</span>
-            <span className="text-[10px] font-mono font-medium text-[var(--accent-emerald)]">
-              {formatPercent(profitMargin)}
-            </span>
+            {/* Platform Profit */}
+            <div className="p-3 rounded-lg bg-[var(--accent-emerald-dim)] border border-[rgba(16,185,129,0.2)]">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-[var(--accent-emerald)] block">Platform Profit</span>
+                <span className="text-[10px] font-mono font-medium text-[var(--accent-emerald)]">
+                  {formatPercent(profitMargin)}
+                </span>
+              </div>
+              <div className="text-base font-bold font-mono text-[var(--accent-emerald)] mt-0.5">
+                {formatCurrency(totalNet)}
+              </div>
+            </div>
           </div>
-          <div className="text-base font-bold font-mono text-[var(--accent-emerald)] mt-0.5">
-            {formatCurrency(totalNet)}
-          </div>
-        </div>
-      </div>
 
-      {/* Chart Canvas */}
-      <div className="h-64 w-full pt-2">
+          {/* Chart Canvas */}
+          <div className="h-64 w-full pt-2">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={safeData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
             <defs>
@@ -217,7 +232,9 @@ export const EarningsChart: React.FC<EarningsChartProps> = ({ data }) => {
             )}
           </AreaChart>
         </ResponsiveContainer>
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

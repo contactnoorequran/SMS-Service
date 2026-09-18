@@ -201,7 +201,7 @@ export const AssignAgentModal: React.FC<AssignAgentModalProps> = ({
               Resulting Hierarchy
             </span>
             <div className="text-[var(--text-secondary)]">
-              Client: <strong>{client.companyName}</strong> → Agent: <strong>{targetAgent.name}</strong> → Supervising Manager: <strong>{targetAgent.managerName || 'Sarah Khan'}</strong>
+              Client: <strong>{client.companyName}</strong> → Agent: <strong>{targetAgent.name}</strong> → Supervising Manager: <strong>{targetAgent.managerName || 'Unassigned'}</strong>
             </div>
           </div>
         )}

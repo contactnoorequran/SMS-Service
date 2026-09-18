@@ -16,23 +16,6 @@ interface AuthContextType {
   switchUserRole: (role: UserRole) => Promise<void>;
 }
 
-// Default fallback admin user for instant UI readiness
-const DEFAULT_FALLBACK_ADMIN: SafeUser = {
-  id: 'usr-admin-root',
-  email: 'admin@smshub.local',
-  firstName: 'Alexander',
-  lastName: 'Vance',
-  status: 'ACTIVE',
-  role: {
-    id: 'role-super-admin',
-    name: 'SUPER_ADMIN',
-    displayName: 'Super Administrator',
-  },
-  permissions: ['*'],
-  lastLoginAt: new Date().toISOString(),
-  createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
-};
-
 // Seed accounts configuration for testing and role switching
 export const SEED_ACCOUNTS: Record<UserRole, { email: string; pass: string; title: string; desc: string }> = {
   SUPER_ADMIN: {
@@ -64,7 +47,7 @@ export const SEED_ACCOUNTS: Record<UserRole, { email: string; pass: string; titl
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<SafeUser | null>(DEFAULT_FALLBACK_ADMIN);
+  const [user, setUser] = useState<SafeUser | null>(null);
   const [token, setToken] = useState<string | null>(apiClient.getToken());
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -93,6 +76,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
           return res.token;
         } catch {
+          if (isMounted) {
+            setUser(null);
+            setToken(null);
+          }
           return null;
         }
       }
@@ -110,7 +97,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }).catch(() => {
           if (isMounted) {
-            setUser(DEFAULT_FALLBACK_ADMIN);
+            setUser(null);
+            setToken(null);
           }
         });
       }
@@ -141,7 +129,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           } catch {
             if (isMounted) {
-              setUser(DEFAULT_FALLBACK_ADMIN);
+              setUser(null);
+              setToken(null);
             }
           }
         }
@@ -156,7 +145,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         } catch {
           if (isMounted) {
-            setUser(DEFAULT_FALLBACK_ADMIN);
+            setUser(null);
+            setToken(null);
           }
         }
       }
@@ -179,7 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user]);
 
   const permissions = useMemo<string[]>(() => {
-    return user?.permissions || ['*'];
+    return user?.permissions || [];
   }, [user]);
 
   const hasPermission = useCallback(
@@ -238,51 +228,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(res.user);
         setToken(res.token);
       }
-    } catch {
-      // Fallback synthetic role mock if network is down
-      const roleMap: Record<UserRole, { displayName: string; permissions: string[] }> = {
-        SUPER_ADMIN: { displayName: 'Super Administrator', permissions: ['*'] },
-        MANAGER: {
-          displayName: 'Operations Manager',
-          permissions: [
-            'users.view',
-            'users.create',
-            'users.update',
-            'providers.view',
-            'ranges.view',
-            'numbers.view',
-            'numbers.assign',
-            'sms.view',
-            'reports.view',
-            'billing.view',
-          ],
-        },
-        AGENT: {
-          displayName: 'Business Agent',
-          permissions: ['users.view', 'numbers.view', 'sms.view', 'reports.view', 'billing.view'],
-        },
-        CLIENT: {
-          displayName: 'Enterprise Client',
-          permissions: ['numbers.view', 'sms.view', 'billing.view', 'api.manage'],
-        },
-      };
-
-      const synthetic: SafeUser = {
-        id: `demo-${newRole.toLowerCase()}`,
-        email: SEED_ACCOUNTS[newRole].email,
-        firstName: SEED_ACCOUNTS[newRole].title.split(' ')[0],
-        lastName: SEED_ACCOUNTS[newRole].title.split(' ')[1] || 'User',
-        status: 'ACTIVE',
-        role: {
-          id: `role-${newRole.toLowerCase()}`,
-          name: newRole,
-          displayName: roleMap[newRole].displayName,
-        },
-        permissions: roleMap[newRole].permissions,
-        lastLoginAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-      };
-      setUser(synthetic);
+    } catch (err) {
+      console.error(`Failed to switch role to ${newRole}:`, err);
+      throw err;
     } finally {
       setIsLoading(false);
     }

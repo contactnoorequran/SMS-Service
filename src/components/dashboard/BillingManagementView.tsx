@@ -133,28 +133,14 @@ export const BillingManagementView: React.FC = () => {
     description: 'Manual treasury credit adjustment',
   });
 
-  // Sample Enterprise Rates Data
-  const [rates] = useState<RateItem[]>([
-    { id: 'rate-1', country: 'Kuwait', iso2: 'KW', direction: 'INBOUND', wholesaleCost: 0.008, clientRate: 0.015, margin: 46.7, currency: 'USD' },
-    { id: 'rate-2', country: 'United Kingdom', iso2: 'GB', direction: 'INBOUND', wholesaleCost: 0.005, clientRate: 0.012, margin: 58.3, currency: 'USD' },
-    { id: 'rate-3', country: 'Saudi Arabia', iso2: 'SA', direction: 'INBOUND', wholesaleCost: 0.012, clientRate: 0.022, margin: 45.5, currency: 'USD' },
-    { id: 'rate-4', country: 'United States', iso2: 'US', direction: 'INBOUND', wholesaleCost: 0.003, clientRate: 0.009, margin: 66.7, currency: 'USD' },
-    { id: 'rate-5', country: 'United Arab Emirates', iso2: 'AE', direction: 'INBOUND', wholesaleCost: 0.014, clientRate: 0.025, margin: 44.0, currency: 'USD' },
-  ]);
+  // Enterprise Rates Data
+  const [rates] = useState<RateItem[]>([]);
 
-  // Sample Payment Requests Data
-  const [paymentRequests, setPaymentRequests] = useState<PaymentRequestItem[]>([
-    { id: 'pr-101', clientName: 'Acme Global Corp', amount: 500.0, method: 'Wire Transfer', reference: 'WT-202609-847', status: 'PENDING', createdAt: new Date(Date.now() - 3600000 * 2).toISOString() },
-    { id: 'pr-102', clientName: 'Gulf Retailers LLC', amount: 250.0, method: 'Credit Card', reference: 'CC-9941-A', status: 'PENDING', createdAt: new Date(Date.now() - 3600000 * 5).toISOString() },
-    { id: 'pr-103', clientName: 'Nexus Logistics', amount: 1200.0, method: 'ACH Transfer', reference: 'ACH-44129', status: 'PENDING', createdAt: new Date(Date.now() - 3600000 * 9).toISOString() },
-    { id: 'pr-104', clientName: 'Fintech Hub', amount: 150.0, method: 'Wire Transfer', reference: 'WT-202609-112', status: 'APPROVED', createdAt: new Date(Date.now() - 3600000 * 24).toISOString() },
-  ]);
+  // Payment Requests Data
+  const [paymentRequests, setPaymentRequests] = useState<PaymentRequestItem[]>([]);
 
-  // Sample Credit Notes Data
-  const [creditNotes] = useState<CreditNoteItem[]>([
-    { id: 'cn-1', noteNumber: 'CN-2026-004', clientName: 'Acme Global Corp', amount: 24.5, reason: 'Downtime SLA Carrier Credit', status: 'ISSUED', createdAt: new Date(Date.now() - 3600000 * 48).toISOString() },
-    { id: 'cn-2', noteNumber: 'CN-2026-003', clientName: 'Nexus Logistics', amount: 12.0, reason: 'Failed Routing Retransmit Refund', status: 'APPLIED', createdAt: new Date(Date.now() - 3600000 * 96).toISOString() },
-  ]);
+  // Credit Notes Data
+  const [creditNotes] = useState<CreditNoteItem[]>([]);
 
   // Fetch Wallets
   const fetchWallets = useCallback(async (isRefresh: boolean = false) => {
@@ -636,42 +622,50 @@ export const BillingManagementView: React.FC = () => {
             <span className="text-xs text-[var(--text-tertiary)]">{rates.length} Destination Countries</span>
           </div>
 
-          <div className="rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.25)]">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-[rgba(0,0,0,0.3)] text-[var(--text-tertiary)] uppercase font-semibold text-[11px] border-b border-[var(--glass-border)]">
-                <tr>
-                  <th className="p-3">Country / Region</th>
-                  <th className="p-3">Type</th>
-                  <th className="p-3">Carrier Wholesale Cost</th>
-                  <th className="p-3">Client Rate</th>
-                  <th className="p-3">Spread / Margin</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--glass-border)]">
-                {rates.map((rate) => (
-                  <tr key={rate.id} className="hover:bg-[var(--glass-bg)] transition-colors">
-                    <td className="p-3 font-semibold text-[var(--text-primary)]">
-                      {rate.country} ({rate.iso2})
-                    </td>
-                    <td className="p-3">
-                      <Badge variant="info" size="sm">
-                        {rate.direction}
-                      </Badge>
-                    </td>
-                    <td className="p-3 font-mono text-[var(--text-secondary)]">
-                      ${rate.wholesaleCost.toFixed(3)}
-                    </td>
-                    <td className="p-3 font-mono font-semibold text-[var(--accent-blue)]">
-                      ${rate.clientRate.toFixed(3)}
-                    </td>
-                    <td className="p-3 font-mono font-bold text-[var(--accent-emerald)]">
-                      +{rate.margin.toFixed(1)}%
-                    </td>
+          {rates.length === 0 ? (
+            <EmptyState
+              icon={<Tag className="w-8 h-8 text-[var(--text-tertiary)]" />}
+              title="No Rates Configured"
+              description="Wholesale carrier destination costs and customer pricing rate cards have not been configured yet."
+            />
+          ) : (
+            <div className="rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.25)]">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[rgba(0,0,0,0.3)] text-[var(--text-tertiary)] uppercase font-semibold text-[11px] border-b border-[var(--glass-border)]">
+                  <tr>
+                    <th className="p-3">Country / Region</th>
+                    <th className="p-3">Type</th>
+                    <th className="p-3">Carrier Wholesale Cost</th>
+                    <th className="p-3">Client Rate</th>
+                    <th className="p-3">Spread / Margin</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-[var(--glass-border)]">
+                  {rates.map((rate) => (
+                    <tr key={rate.id} className="hover:bg-[var(--glass-bg)] transition-colors">
+                      <td className="p-3 font-semibold text-[var(--text-primary)]">
+                        {rate.country} ({rate.iso2})
+                      </td>
+                      <td className="p-3">
+                        <Badge variant="info" size="sm">
+                          {rate.direction}
+                        </Badge>
+                      </td>
+                      <td className="p-3 font-mono text-[var(--text-secondary)]">
+                        ${rate.wholesaleCost.toFixed(3)}
+                      </td>
+                      <td className="p-3 font-mono font-semibold text-[var(--accent-blue)]">
+                        ${rate.clientRate.toFixed(3)}
+                      </td>
+                      <td className="p-3 font-mono font-bold text-[var(--accent-emerald)]">
+                        +{rate.margin.toFixed(1)}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
@@ -688,49 +682,57 @@ export const BillingManagementView: React.FC = () => {
             </span>
           </div>
 
-          <div className="rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.25)]">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-[rgba(0,0,0,0.3)] text-[var(--text-tertiary)] uppercase font-semibold text-[11px] border-b border-[var(--glass-border)]">
-                <tr>
-                  <th className="p-3">Client Name</th>
-                  <th className="p-3">Requested Amount</th>
-                  <th className="p-3">Transfer Method</th>
-                  <th className="p-3">Reference</th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--glass-border)]">
-                {paymentRequests.map((pr) => (
-                  <tr key={pr.id} className="hover:bg-[var(--glass-bg)] transition-colors">
-                    <td className="p-3 font-semibold text-[var(--text-primary)]">{pr.clientName}</td>
-                    <td className="p-3 font-mono font-bold text-[var(--accent-emerald)]">
-                      ${pr.amount.toFixed(2)}
-                    </td>
-                    <td className="p-3 text-[var(--text-secondary)]">{pr.method}</td>
-                    <td className="p-3 font-mono text-[11px] text-[var(--text-tertiary)]">{pr.reference}</td>
-                    <td className="p-3">
-                      <Badge variant={pr.status === 'APPROVED' ? 'success' : 'warning'} size="sm">
-                        {pr.status}
-                      </Badge>
-                    </td>
-                    <td className="p-3 text-right">
-                      {pr.status === 'PENDING' && (
-                        <Button
-                          size="sm"
-                          variant="primary"
-                          onClick={() => handleApprovePayment(pr.id)}
-                          className="text-xs py-1 px-2.5"
-                        >
-                          Approve Deposit
-                        </Button>
-                      )}
-                    </td>
+          {paymentRequests.length === 0 ? (
+            <EmptyState
+              icon={<CreditCard className="w-8 h-8 text-[var(--text-tertiary)]" />}
+              title="No Payment Requests"
+              description="No client deposit invoices or wire transfer settlement requests have been submitted."
+            />
+          ) : (
+            <div className="rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.25)]">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[rgba(0,0,0,0.3)] text-[var(--text-tertiary)] uppercase font-semibold text-[11px] border-b border-[var(--glass-border)]">
+                  <tr>
+                    <th className="p-3">Client Name</th>
+                    <th className="p-3">Requested Amount</th>
+                    <th className="p-3">Transfer Method</th>
+                    <th className="p-3">Reference</th>
+                    <th className="p-3">Status</th>
+                    <th className="p-3 text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-[var(--glass-border)]">
+                  {paymentRequests.map((pr) => (
+                    <tr key={pr.id} className="hover:bg-[var(--glass-bg)] transition-colors">
+                      <td className="p-3 font-semibold text-[var(--text-primary)]">{pr.clientName}</td>
+                      <td className="p-3 font-mono font-bold text-[var(--accent-emerald)]">
+                        ${pr.amount.toFixed(2)}
+                      </td>
+                      <td className="p-3 text-[var(--text-secondary)]">{pr.method}</td>
+                      <td className="p-3 font-mono text-[11px] text-[var(--text-tertiary)]">{pr.reference}</td>
+                      <td className="p-3">
+                        <Badge variant={pr.status === 'APPROVED' ? 'success' : 'warning'} size="sm">
+                          {pr.status}
+                        </Badge>
+                      </td>
+                      <td className="p-3 text-right">
+                        {pr.status === 'PENDING' && (
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            onClick={() => handleApprovePayment(pr.id)}
+                            className="text-xs py-1 px-2.5"
+                          >
+                            Approve Deposit
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
@@ -745,36 +747,44 @@ export const BillingManagementView: React.FC = () => {
             <span className="text-xs text-[var(--text-tertiary)]">{creditNotes.length} Issued Records</span>
           </div>
 
-          <div className="rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.25)]">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-[rgba(0,0,0,0.3)] text-[var(--text-tertiary)] uppercase font-semibold text-[11px] border-b border-[var(--glass-border)]">
-                <tr>
-                  <th className="p-3">Credit Note #</th>
-                  <th className="p-3">Client</th>
-                  <th className="p-3">Credit Amount</th>
-                  <th className="p-3">Justification / Reason</th>
-                  <th className="p-3">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--glass-border)]">
-                {creditNotes.map((cn) => (
-                  <tr key={cn.id} className="hover:bg-[var(--glass-bg)] transition-colors">
-                    <td className="p-3 font-mono font-semibold text-[var(--text-primary)]">{cn.noteNumber}</td>
-                    <td className="p-3 text-[var(--text-primary)]">{cn.clientName}</td>
-                    <td className="p-3 font-mono font-bold text-[var(--accent-emerald)]">
-                      +${cn.amount.toFixed(2)}
-                    </td>
-                    <td className="p-3 text-[var(--text-secondary)]">{cn.reason}</td>
-                    <td className="p-3">
-                      <Badge variant="neutral" size="sm">
-                        {cn.status}
-                      </Badge>
-                    </td>
+          {creditNotes.length === 0 ? (
+            <EmptyState
+              icon={<FileText className="w-8 h-8 text-[var(--text-tertiary)]" />}
+              title="No Credit Notes"
+              description="No customer SLA credits or billing adjustments have been issued."
+            />
+          ) : (
+            <div className="rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.25)]">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[rgba(0,0,0,0.3)] text-[var(--text-tertiary)] uppercase font-semibold text-[11px] border-b border-[var(--glass-border)]">
+                  <tr>
+                    <th className="p-3">Credit Note #</th>
+                    <th className="p-3">Client</th>
+                    <th className="p-3">Credit Amount</th>
+                    <th className="p-3">Justification / Reason</th>
+                    <th className="p-3">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-[var(--glass-border)]">
+                  {creditNotes.map((cn) => (
+                    <tr key={cn.id} className="hover:bg-[var(--glass-bg)] transition-colors">
+                      <td className="p-3 font-mono font-semibold text-[var(--text-primary)]">{cn.noteNumber}</td>
+                      <td className="p-3 text-[var(--text-primary)]">{cn.clientName}</td>
+                      <td className="p-3 font-mono font-bold text-[var(--accent-emerald)]">
+                        +${cn.amount.toFixed(2)}
+                      </td>
+                      <td className="p-3 text-[var(--text-secondary)]">{cn.reason}</td>
+                      <td className="p-3">
+                        <Badge variant="neutral" size="sm">
+                          {cn.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 

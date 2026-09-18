@@ -121,7 +121,7 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
   const outboundSms = client?.outboundSmsCount ?? 0;
   const successRate = totalSms > 0
     ? (outboundSms / totalSms) * 100
-    : 99.4;
+    : 0;
 
   const numberColumns: ColumnDef<ClientNumberSummary>[] = [
     {
@@ -647,7 +647,7 @@ export const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({
               ) : (
                 <div className="py-12 text-center text-xs text-[var(--text-muted)]">
                   <Phone className="w-8 h-8 mx-auto mb-2 opacity-40 text-[var(--accent-purple)]" />
-                  No specific numbers are registered for this demo client record.
+                  No phone numbers are assigned to this client account.
                 </div>
               )}
             </Card>

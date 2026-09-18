@@ -7,238 +7,7 @@ import {
   PermissionGroup,
   UserStatus,
 } from '../types/users';
-import { UserRole, PermissionCode } from '../types/auth';
-
-/**
- * Fictional realistic demo users adhering to privacy and safety standards.
- * Guaranteed to have zero real credentials or real user exposure.
- */
-const MOCK_USERS_SEED: UserItem[] = [
-  {
-    id: 'usr-admin-01',
-    email: 'admin@smshub.local',
-    name: 'Alexander Vance',
-    firstName: 'Alexander',
-    lastName: 'Vance',
-    status: 'ACTIVE',
-    role: {
-      id: 'role-super-admin',
-      name: 'SUPER_ADMIN',
-      displayName: 'Super Administrator',
-    },
-    permissions: ['*'],
-    lastLoginAt: new Date(Date.now() - 15 * 60000).toISOString(), // 15m ago
-    createdAt: '2026-01-10T08:00:00.000Z',
-    department: 'Executive Operations',
-    phone: '+1 (202) 555-0100',
-  },
-  {
-    id: 'usr-mgr-01',
-    email: 'sarah.khan@sms-telecom.io',
-    name: 'Sarah Khan',
-    firstName: 'Sarah',
-    lastName: 'Khan',
-    status: 'ACTIVE',
-    role: {
-      id: 'role-manager',
-      name: 'MANAGER',
-      displayName: 'Operations Manager',
-    },
-    permissions: [
-      'users.view',
-      'users.create',
-      'users.update',
-      'providers.view',
-      'providers.create',
-      'providers.update',
-      'ranges.view',
-      'ranges.create',
-      'ranges.update',
-      'numbers.view',
-      'numbers.assign',
-      'numbers.unassign',
-      'sms.view',
-      'sms.export',
-      'reports.view',
-      'billing.view',
-      'billing.manage',
-    ],
-    lastLoginAt: new Date(Date.now() - 45 * 60000).toISOString(), // 45m ago
-    createdAt: '2026-02-01T09:30:00.000Z',
-    department: 'Carrier Relations',
-    phone: '+44 20 7946 0912',
-  },
-  {
-    id: 'usr-mgr-02',
-    email: 'elena.rostova@sms-telecom.io',
-    name: 'Elena Rostova',
-    firstName: 'Elena',
-    lastName: 'Rostova',
-    status: 'ACTIVE',
-    role: {
-      id: 'role-manager',
-      name: 'MANAGER',
-      displayName: 'Operations Manager',
-    },
-    permissions: [
-      'users.view',
-      'users.create',
-      'users.update',
-      'providers.view',
-      'ranges.view',
-      'numbers.view',
-      'numbers.assign',
-      'sms.view',
-      'reports.view',
-      'billing.view',
-    ],
-    lastLoginAt: new Date(Date.now() - 3 * 3600000).toISOString(), // 3h ago
-    createdAt: '2026-02-15T11:00:00.000Z',
-    department: 'Network Operations (NOC)',
-    phone: '+49 30 901820',
-  },
-  {
-    id: 'usr-agt-01',
-    email: 'ahmed.malik@route-messaging.net',
-    name: 'Ahmed Malik',
-    firstName: 'Ahmed',
-    lastName: 'Malik',
-    status: 'ACTIVE',
-    role: {
-      id: 'role-agent',
-      name: 'AGENT',
-      displayName: 'Business Agent',
-    },
-    permissions: [
-      'users.view',
-      'numbers.view',
-      'sms.view',
-      'reports.view',
-      'billing.view',
-    ],
-    lastLoginAt: new Date(Date.now() - 6 * 3600000).toISOString(), // 6h ago
-    createdAt: '2026-03-01T14:15:00.000Z',
-    department: 'Enterprise Sales',
-    phone: '+971 4 321 4567',
-  },
-  {
-    id: 'usr-agt-02',
-    email: 'marcus.chen@sms-telecom.io',
-    name: 'Marcus Chen',
-    firstName: 'Marcus',
-    lastName: 'Chen',
-    status: 'ACTIVE',
-    role: {
-      id: 'role-agent',
-      name: 'AGENT',
-      displayName: 'Business Agent',
-    },
-    permissions: [
-      'users.view',
-      'numbers.view',
-      'sms.view',
-      'reports.view',
-      'billing.view',
-    ],
-    lastLoginAt: new Date(Date.now() - 24 * 3600000).toISOString(), // 1d ago
-    createdAt: '2026-03-10T10:00:00.000Z',
-    department: 'APAC Expansion',
-    phone: '+65 6789 0123',
-  },
-  {
-    id: 'usr-clt-01',
-    email: 'daniel.smith@apex-enterprise.com',
-    name: 'Daniel Smith',
-    firstName: 'Daniel',
-    lastName: 'Smith',
-    status: 'ACTIVE',
-    role: {
-      id: 'role-client',
-      name: 'CLIENT',
-      displayName: 'Enterprise Client',
-    },
-    permissions: [
-      'numbers.view',
-      'sms.view',
-      'billing.view',
-      'api.manage',
-    ],
-    lastLoginAt: new Date(Date.now() - 2 * 3600000).toISOString(),
-    createdAt: '2026-03-12T16:20:00.000Z',
-    department: 'Apex Digital Media Inc.',
-    phone: '+1 (415) 555-2671',
-  },
-  {
-    id: 'usr-clt-02',
-    email: 'olivia.wilson@nexus-fintech.org',
-    name: 'Olivia Wilson',
-    firstName: 'Olivia',
-    lastName: 'Wilson',
-    status: 'ACTIVE',
-    role: {
-      id: 'role-client',
-      name: 'CLIENT',
-      displayName: 'Enterprise Client',
-    },
-    permissions: [
-      'numbers.view',
-      'sms.view',
-      'billing.view',
-      'api.manage',
-    ],
-    lastLoginAt: new Date(Date.now() - 12 * 3600000).toISOString(),
-    createdAt: '2026-03-14T09:45:00.000Z',
-    department: 'Nexus Fintech Corp',
-    phone: '+44 20 7123 4567',
-  },
-  {
-    id: 'usr-clt-03',
-    email: 'layla.m@gulf-retail.ae',
-    name: 'Layla Al-Mansoor',
-    firstName: 'Layla',
-    lastName: 'Al-Mansoor',
-    status: 'PENDING',
-    role: {
-      id: 'role-client',
-      name: 'CLIENT',
-      displayName: 'Enterprise Client',
-    },
-    permissions: [
-      'numbers.view',
-      'sms.view',
-      'billing.view',
-    ],
-    lastLoginAt: null,
-    createdAt: '2026-03-15T18:30:00.000Z',
-    department: 'Gulf Retail Group',
-    phone: '+971 50 123 9876',
-  },
-  {
-    id: 'usr-clt-04',
-    email: 'thomas.d@paris-logistics.fr',
-    name: 'Thomas Dubois',
-    firstName: 'Thomas',
-    lastName: 'Dubois',
-    status: 'SUSPENDED',
-    role: {
-      id: 'role-client',
-      name: 'CLIENT',
-      displayName: 'Enterprise Client',
-    },
-    permissions: [
-      'numbers.view',
-      'sms.view',
-      'billing.view',
-    ],
-    lastLoginAt: new Date(Date.now() - 72 * 3600000).toISOString(), // 3d ago
-    createdAt: '2026-02-20T12:00:00.000Z',
-    department: 'Paris Global Logistics',
-    phone: '+33 1 42 68 55 00',
-  },
-];
-
-// In-memory runtime state for mutations when backend database is pre-migration
-let inMemoryUsers: UserItem[] = [...MOCK_USERS_SEED];
+import { UserRole } from '../types/auth';
 
 export const PERMISSION_GROUPS: PermissionGroup[] = [
   {
@@ -321,7 +90,7 @@ export const ROLE_DEFINITIONS: RoleDefinition[] = [
     displayName: 'Super Administrator',
     description: 'Unrestricted root governance across all subsystems, financial ledgers, audit trails, and configurations.',
     hierarchyWeight: 4,
-    userCount: 1,
+    userCount: 0,
     assignedPermissions: [
       'users.view', 'users.create', 'users.update', 'users.disable',
       'providers.view', 'providers.create', 'providers.update', 'providers.delete',
@@ -339,7 +108,7 @@ export const ROLE_DEFINITIONS: RoleDefinition[] = [
     displayName: 'Operations Manager',
     description: 'Operational control over carrier trunks, agent hierarchies, client allocations, and rate cards.',
     hierarchyWeight: 3,
-    userCount: 2,
+    userCount: 0,
     assignedPermissions: [
       'users.view', 'users.create', 'users.update',
       'providers.view', 'providers.create', 'providers.update',
@@ -356,7 +125,7 @@ export const ROLE_DEFINITIONS: RoleDefinition[] = [
     displayName: 'Business Agent',
     description: 'Commercial partner managing assigned client accounts, leased inventory, and commission payouts.',
     hierarchyWeight: 2,
-    userCount: 2,
+    userCount: 0,
     assignedPermissions: [
       'users.view',
       'numbers.view',
@@ -371,7 +140,7 @@ export const ROLE_DEFINITIONS: RoleDefinition[] = [
     displayName: 'Enterprise Client',
     description: 'End-tenant receiving inbound SMS on leased E.164 phone numbers with automated webhook delivery.',
     hierarchyWeight: 1,
-    userCount: 4,
+    userCount: 0,
     assignedPermissions: [
       'numbers.view',
       'sms.view',
@@ -381,53 +150,49 @@ export const ROLE_DEFINITIONS: RoleDefinition[] = [
   },
 ];
 
+let lastFetchedUsers: UserItem[] = [];
+
 export class UsersService {
   /**
-   * Fetches user accounts with search, role filter, status filter, and sorting.
+   * Fetches real user accounts from backend with search, role filter, status filter, and sorting.
    */
   static async fetchUsers(
     filters: Partial<UserFilterState> = {}
   ): Promise<{ users: UserItem[]; total: number }> {
-    try {
-      const response = await apiClient.getUsers();
-      // Handle potential wrapped response { users: SafeUser[], count: number }
-      let backendUsers: any[] = [];
-      if (Array.isArray(response)) {
-        backendUsers = response;
-      } else if (response && typeof response === 'object' && 'users' in response) {
-        backendUsers = (response as any).users || [];
-      }
+    const response = await apiClient.getUsers();
 
-      if (backendUsers.length > 0) {
-        // Merge or sync with inMemoryUsers to preserve full names and realistic metadata
-        inMemoryUsers = backendUsers.map((bu) => {
-          const existing = inMemoryUsers.find((mu) => mu.id === bu.id || mu.email === bu.email);
-          const fullName = bu.name || (bu.firstName ? `${bu.firstName} ${bu.lastName || ''}`.trim() : bu.email.split('@')[0]);
-          return {
-            id: bu.id,
-            email: bu.email,
-            name: fullName,
-            firstName: bu.firstName || existing?.firstName || fullName.split(' ')[0],
-            lastName: bu.lastName || existing?.lastName || fullName.split(' ').slice(1).join(' '),
-            status: (bu.status as UserStatus) || existing?.status || 'ACTIVE',
-            role: bu.role || existing?.role || {
-              id: 'role-client',
-              name: 'CLIENT',
-              displayName: 'Enterprise Client',
-            },
-            permissions: bu.permissions || existing?.permissions || ['numbers.view', 'sms.view'],
-            lastLoginAt: bu.lastLoginAt || existing?.lastLoginAt || null,
-            createdAt: bu.createdAt || existing?.createdAt || new Date().toISOString(),
-            department: existing?.department || 'Operations',
-            phone: existing?.phone || '+1 (555) 000-0000',
-          };
-        });
-      }
-    } catch {
-      // Backend gracefully falls back to inMemoryUsers
+    let backendUsers: any[] = [];
+    if (Array.isArray(response)) {
+      backendUsers = response;
+    } else if (response && typeof response === 'object' && 'users' in response) {
+      backendUsers = (response as any).users || [];
     }
 
-    let result = [...inMemoryUsers];
+    const items: UserItem[] = backendUsers.map((bu) => {
+      const fullName = bu.name || (bu.firstName ? `${bu.firstName} ${bu.lastName || ''}`.trim() : bu.email.split('@')[0]);
+      return {
+        id: bu.id,
+        email: bu.email,
+        name: fullName,
+        firstName: bu.firstName || fullName.split(' ')[0],
+        lastName: bu.lastName || fullName.split(' ').slice(1).join(' '),
+        status: (bu.status as UserStatus) || 'ACTIVE',
+        role: bu.role || {
+          id: `role-${(bu.roleName || 'CLIENT').toLowerCase()}`,
+          name: bu.roleName || 'CLIENT',
+          displayName: bu.roleDisplayName || bu.roleName || 'Client',
+        },
+        permissions: bu.permissions || bu.role?.permissions || [],
+        lastLoginAt: bu.lastLoginAt || null,
+        createdAt: bu.createdAt || new Date().toISOString(),
+        department: bu.department || '',
+        phone: bu.phone || '',
+      };
+    });
+
+    lastFetchedUsers = items;
+
+    let result = [...items];
 
     // Search filter
     if (filters.search && filters.search.trim()) {
@@ -478,105 +243,110 @@ export class UsersService {
    * Fetches single user by ID.
    */
   static async fetchUserById(id: string): Promise<UserItem | null> {
-    const user = inMemoryUsers.find((u) => u.id === id);
-    return user || null;
+    if (lastFetchedUsers.length > 0) {
+      const existing = lastFetchedUsers.find((u) => u.id === id);
+      if (existing) return existing;
+    }
+
+    const { users } = await this.fetchUsers();
+    return users.find((u) => u.id === id) || null;
   }
 
   /**
-   * Creates a new user with validation and role assignment.
+   * Creates a new user via API with role assignment.
    */
   static async createUser(payload: CreateUserPayload): Promise<UserItem> {
+    const res = await fetch('/api/users', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiClient.getToken() || ''}`,
+      },
+      body: JSON.stringify({
+        email: payload.email,
+        password: payload.password,
+        role: payload.role,
+        name: payload.name,
+        status: payload.status || 'ACTIVE',
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok || data.success === false) {
+      throw new Error(data?.error?.message || `Failed to create user (HTTP ${res.status})`);
+    }
+
+    const created = data.data?.user || data.data;
     const roleDef = ROLE_DEFINITIONS.find((r) => r.name === payload.role) || ROLE_DEFINITIONS[3];
 
-    const newUser: UserItem = {
-      id: `usr-${Date.now().toString(36)}`,
-      email: payload.email.toLowerCase().trim(),
-      name: payload.name.trim(),
-      firstName: payload.name.split(' ')[0] || payload.name,
-      lastName: payload.name.split(' ').slice(1).join(' ') || '',
-      status: payload.status || 'ACTIVE',
+    return {
+      id: created.id,
+      email: created.email,
+      name: created.name || payload.name,
+      firstName: created.firstName || payload.name.split(' ')[0],
+      lastName: created.lastName || payload.name.split(' ').slice(1).join(' '),
+      status: created.status || payload.status || 'ACTIVE',
       role: {
         id: roleDef.id,
         name: roleDef.name,
         displayName: roleDef.displayName,
       },
-      permissions: roleDef.assignedPermissions,
+      permissions: created.permissions || roleDef.assignedPermissions,
       lastLoginAt: null,
-      createdAt: new Date().toISOString(),
-      department: payload.department || 'General',
+      createdAt: created.createdAt || new Date().toISOString(),
+      department: payload.department || '',
       phone: payload.phone || '',
     };
-
-    inMemoryUsers = [newUser, ...inMemoryUsers];
-
-    // Attempt backend POST if available
-    try {
-      await fetch('/api/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiClient.getToken() || ''}`,
-        },
-        body: JSON.stringify({
-          email: payload.email,
-          password: payload.password,
-          role: payload.role,
-          name: payload.name,
-          status: payload.status || 'ACTIVE',
-        }),
-      });
-    } catch {
-      // Retain in memory
-    }
-
-    return newUser;
   }
 
   /**
-   * Updates an existing user's lifecycle status (ACTIVE, SUSPENDED, PENDING, DISABLED).
+   * Updates an existing user's status via API.
    */
   static async updateUserStatus(
     id: string,
     status: UserStatus,
     _reason?: string
   ): Promise<UserItem> {
-    const index = inMemoryUsers.findIndex((u) => u.id === id);
-    if (index === -1) {
-      throw new Error('User not found');
+    const res = await fetch(`/api/users/${id}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiClient.getToken() || ''}`,
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    const data = await res.json();
+    if (!res.ok || data.success === false) {
+      throw new Error(data?.error?.message || `Failed to update user status (HTTP ${res.status})`);
     }
 
-    const updatedUser = {
-      ...inMemoryUsers[index],
+    const updated = data.data?.user || data.data;
+    const existing = lastFetchedUsers.find((u) => u.id === id);
+
+    return {
+      id,
+      email: updated?.email || existing?.email || '',
+      name: updated?.name || existing?.name || '',
+      firstName: updated?.firstName || existing?.firstName || '',
+      lastName: updated?.lastName || existing?.lastName || '',
       status,
+      role: existing?.role || { id: 'role-client', name: 'CLIENT', displayName: 'Enterprise Client' },
+      permissions: existing?.permissions || [],
+      lastLoginAt: existing?.lastLoginAt || null,
+      createdAt: existing?.createdAt || new Date().toISOString(),
+      department: existing?.department || '',
+      phone: existing?.phone || '',
     };
-
-    inMemoryUsers[index] = updatedUser;
-
-    // Attempt backend PATCH if available
-    try {
-      await fetch(`/api/users/${id}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiClient.getToken() || ''}`,
-        },
-        body: JSON.stringify({ status }),
-      });
-    } catch {
-      // Retain in memory
-    }
-
-    return updatedUser;
   }
 
   /**
-   * Returns list of canonical roles with assigned permissions.
+   * Returns list of canonical roles with actual user counts.
    */
   static fetchRolesWithPermissions(): RoleDefinition[] {
-    // Recalculate live userCount from in-memory records
     return ROLE_DEFINITIONS.map((r) => ({
       ...r,
-      userCount: inMemoryUsers.filter((u) => u.role.name === r.name).length,
+      userCount: lastFetchedUsers.filter((u) => u.role.name === r.name).length,
     }));
   }
 

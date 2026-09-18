@@ -175,7 +175,7 @@ export const CreateClientModal: React.FC<CreateClientModalProps> = ({
               <Building2 className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
               <input
                 type="text"
-                placeholder="e.g. Alpha Express Logistics Ltd"
+                placeholder="e.g. Acme Corporation"
                 value={formData.companyName}
                 onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                 className={`w-full pl-9 pr-3 py-2 text-xs bg-[var(--bg-glass-card)] border rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)] transition-all ${
@@ -198,7 +198,7 @@ export const CreateClientModal: React.FC<CreateClientModalProps> = ({
               <User className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
               <input
                 type="text"
-                placeholder="e.g. Marcus Vance"
+                placeholder="e.g. Primary Contact"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className={`w-full pl-9 pr-3 py-2 text-xs bg-[var(--bg-glass-card)] border rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)] transition-all ${
@@ -224,7 +224,7 @@ export const CreateClientModal: React.FC<CreateClientModalProps> = ({
               <Mail className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
               <input
                 type="email"
-                placeholder="e.g. billing@alphaexpress.com"
+                placeholder="e.g. billing@company.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className={`w-full pl-9 pr-3 py-2 text-xs bg-[var(--bg-glass-card)] border rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)] transition-all ${
@@ -247,7 +247,7 @@ export const CreateClientModal: React.FC<CreateClientModalProps> = ({
               <Phone className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
               <input
                 type="text"
-                placeholder="e.g. +44 20 7946 0912"
+                placeholder="e.g. +1 555 0100"
                 value={formData.contactPhone}
                 onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
                 className={`w-full pl-9 pr-3 py-2 text-xs bg-[var(--bg-glass-card)] border rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)] transition-all ${

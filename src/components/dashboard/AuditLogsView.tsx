@@ -5,6 +5,7 @@ import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { FilterBar } from '../ui/FilterBar';
 import { PageHeader } from '../ui/PageHeader';
+import { ErrorState } from '../ui/ErrorState';
 import { ShieldCheck, RefreshCw, KeyRound, Terminal, Clock } from 'lucide-react';
 
 interface AuditRecord {
@@ -21,16 +22,18 @@ interface AuditRecord {
 export const AuditLogsView: React.FC = () => {
   const [logs, setLogs] = useState<AuditRecord[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState<string>('');
   const [actionFilter, setActionFilter] = useState<string>('ALL');
 
   const fetchLogs = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const data = await apiClient.getAuditLogs();
       setLogs(data);
-    } catch {
-      // Fallback
+    } catch (err: any) {
+      setError(err?.message || 'Failed to retrieve security audit logs from backend');
     } finally {
       setIsLoading(false);
     }
@@ -94,7 +97,7 @@ export const AuditLogsView: React.FC = () => {
       header: 'Source IP',
       render: (log) => (
         <span className="font-mono text-xs text-[var(--text-secondary)]">
-          {log.ipAddress || '127.0.0.1'}
+          {log.ipAddress || '—'}
         </span>
       ),
     },
@@ -103,7 +106,7 @@ export const AuditLogsView: React.FC = () => {
       header: 'Context / Reason',
       render: (log) => (
         <span className="text-xs text-[var(--text-secondary)] truncate max-w-xs block">
-          {log.reason || 'Routine authorization'}
+          {log.reason || '—'}
         </span>
       ),
     },
@@ -126,36 +129,47 @@ export const AuditLogsView: React.FC = () => {
         }}
       />
 
-      {/* Filter and Search Bar */}
-      <FilterBar
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Filter audit records by actor email, action, or IP..."
-        filters={[
-          {
-            key: 'action',
-            label: 'Event Type',
-            value: actionFilter,
-            onChange: setActionFilter,
-            options: [
-              { label: 'All Actions', value: 'ALL' },
-              { label: 'Login Success', value: 'LOGIN_SUCCESS' },
-              { label: 'Login Failed', value: 'LOGIN_FAILED' },
-              { label: 'Logout', value: 'LOGOUT' },
-            ],
-          },
-        ]}
-        totalCount={logs.length}
-        totalFiltered={filteredLogs.length}
-      />
+      {error ? (
+        <ErrorState
+          title="Failed to Load Audit Trail"
+          message={error}
+          onRetry={fetchLogs}
+        />
+      ) : (
+        <>
+          {/* Filter and Search Bar */}
+          <FilterBar
+            searchValue={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Filter audit records by actor email, action, or IP..."
+            filters={[
+              {
+                key: 'action',
+                label: 'Event Type',
+                value: actionFilter,
+                onChange: setActionFilter,
+                options: [
+                  { label: 'All Actions', value: 'ALL' },
+                  { label: 'Login Success', value: 'LOGIN_SUCCESS' },
+                  { label: 'Login Failed', value: 'LOGIN_FAILED' },
+                  { label: 'Logout', value: 'LOGOUT' },
+                ],
+              },
+            ]}
+            totalCount={logs.length}
+            totalFiltered={filteredLogs.length}
+          />
 
-      {/* Table */}
-      <Table<AuditRecord>
-        columns={columns}
-        data={filteredLogs}
-        keyExtractor={(l) => l.id}
-        isLoading={isLoading}
-      />
+          {/* Table */}
+          <Table<AuditRecord>
+            columns={columns}
+            data={filteredLogs}
+            keyExtractor={(l) => l.id}
+            isLoading={isLoading}
+            emptyMessage="No audit log records found"
+          />
+        </>
+      )}
     </div>
   );
 };

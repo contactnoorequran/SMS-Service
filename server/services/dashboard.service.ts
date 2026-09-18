@@ -99,10 +99,10 @@ export class DashboardService {
         return await this.fetchFromDatabase(prisma);
       }
     } catch (err: any) {
-      logger.warn(`Failed querying Prisma database for dashboard stats (${err.message}). Falling back to repository state.`);
+      logger.warn(`Failed querying Prisma database for dashboard stats (${err.message}). Returning zero metrics.`);
     }
 
-    return this.getFallbackDashboardStats();
+    return this.getZeroDashboardStats();
   }
 
   private static async fetchFromDatabase(prisma: any): Promise<DashboardResponseData> {
@@ -131,33 +131,35 @@ export class DashboardService {
       providersList,
       countriesList,
       numberStatusCounts,
+      messagesLast7Days,
+      cdrsLast7Days,
     ] = await Promise.all([
-      prisma.provider.count().catch(() => 2),
-      prisma.provider.count({ where: { status: 'ACTIVE' } }).catch(() => 2),
-      prisma.range.count().catch(() => 2),
-      prisma.number.count().catch(() => 3),
-      prisma.number.count({ where: { status: 'ASSIGNED' } }).catch(() => 1),
-      prisma.user.count({ where: { role: { name: 'MANAGER' } } }).catch(() => 1),
-      prisma.user.count({ where: { role: { name: 'AGENT' } } }).catch(() => 1),
-      prisma.user.count({ where: { role: { name: 'CLIENT' } } }).catch(() => 1),
-      prisma.incomingMessage.count({ where: { receivedAt: { gte: startOfToday } } }).catch(() => 1),
-      prisma.incomingMessage.count({ where: { receivedAt: { gte: startOfWeek } } }).catch(() => 1),
-      prisma.wallet.aggregate({ _sum: { balance: true } }).catch(() => ({ _sum: { balance: 292.5 } })),
+      prisma.provider.count().catch(() => 0),
+      prisma.provider.count({ where: { status: 'ACTIVE' } }).catch(() => 0),
+      prisma.range.count().catch(() => 0),
+      prisma.number.count().catch(() => 0),
+      prisma.number.count({ where: { status: 'ASSIGNED' } }).catch(() => 0),
+      prisma.user.count({ where: { role: { name: 'MANAGER' } } }).catch(() => 0),
+      prisma.user.count({ where: { role: { name: 'AGENT' } } }).catch(() => 0),
+      prisma.user.count({ where: { role: { name: 'CLIENT' } } }).catch(() => 0),
+      prisma.incomingMessage.count({ where: { receivedAt: { gte: startOfToday } } }).catch(() => 0),
+      prisma.incomingMessage.count({ where: { receivedAt: { gte: startOfWeek } } }).catch(() => 0),
+      prisma.wallet.aggregate({ _sum: { balance: true } }).catch(() => ({ _sum: { balance: 0 } })),
       prisma.cDR.aggregate({
         _sum: { netProfit: true, clientPayout: true, providerCost: true, agentCommission: true },
-      }).catch(() => ({ _sum: { netProfit: 0.00475, clientPayout: 0.0095, providerCost: 0.0045, agentCommission: 0.00025 } })),
+      }).catch(() => ({ _sum: { netProfit: 0, clientPayout: 0, providerCost: 0, agentCommission: 0 } })),
       prisma.auditLog.findMany({
-        take: 5,
+        take: 10,
         orderBy: { createdAt: 'desc' },
         include: { user: { select: { email: true, firstName: true, lastName: true } } },
       }).catch(() => []),
       prisma.incomingMessage.findMany({
-        take: 5,
+        take: 10,
         orderBy: { receivedAt: 'desc' },
         include: { provider: { select: { name: true } }, number: { select: { e164Number: true } } },
       }).catch(() => []),
       prisma.numberAssignment.findMany({
-        take: 5,
+        take: 10,
         orderBy: { assignedAt: 'desc' },
         include: {
           number: { select: { e164Number: true } },
@@ -180,13 +182,21 @@ export class DashboardService {
         by: ['status'],
         _count: { id: true },
       }).catch(() => []),
+      prisma.incomingMessage.findMany({
+        where: { receivedAt: { gte: sevenDaysAgo } },
+        select: { receivedAt: true, status: true },
+      }).catch(() => []),
+      prisma.cDR.findMany({
+        where: { createdAt: { gte: sevenDaysAgo } },
+        select: { createdAt: true, clientPayout: true, providerCost: true, netProfit: true, agentCommission: true },
+      }).catch(() => []),
     ]);
 
     const unassignedNumbers = Math.max(0, totalNumbers - assignedNumbers);
-    const platformBalance = Number(walletsAggregate._sum?.balance || 292.5);
-    const totalEarnings = Number(cdrsAggregate._sum?.netProfit || 0.00475);
+    const platformBalance = Number(walletsAggregate._sum?.balance || 0);
+    const totalEarnings = Number(cdrsAggregate._sum?.netProfit || 0);
 
-    // Build Time-Series for SMS Volume (Last 7 Days)
+    // Build Time-Series for SMS Volume & Earnings (Last 7 Days) from actual records
     const smsVolume: SmsVolumePoint[] = [];
     const earnings: EarningsPoint[] = [];
 
@@ -195,12 +205,15 @@ export class DashboardService {
       const dayStr = d.toISOString().split('T')[0];
       const weekday = d.toLocaleDateString('en-US', { weekday: 'short' });
 
-      // Daily baseline from seed + daily variance
-      const dayFactor = (7 - i) * 12 + ((d.getDate() * 7) % 25);
-      const isToday = i === 0;
-      const inbound = isToday ? Math.max(smsTodayCount, 24) : 18 + dayFactor;
-      const delivered = Math.floor(inbound * 0.96);
-      const failed = inbound - delivered;
+      // Count actual messages for this specific day
+      const dayMsgs = messagesLast7Days.filter((m: any) => {
+        const mDate = new Date(m.receivedAt).toISOString().split('T')[0];
+        return mDate === dayStr;
+      });
+
+      const inbound = dayMsgs.length;
+      const delivered = dayMsgs.filter((m: any) => m.status === 'DELIVERED' || m.status === 'ROUTED').length;
+      const failed = dayMsgs.filter((m: any) => m.status === 'FAILED' || m.status === 'REJECTED').length;
 
       smsVolume.push({
         date: dayStr,
@@ -211,10 +224,16 @@ export class DashboardService {
         total: inbound,
       });
 
-      const dayGross = Number((inbound * 0.0095).toFixed(4));
-      const dayCost = Number((inbound * 0.0045).toFixed(4));
-      const dayComm = Number((inbound * 0.00025).toFixed(4));
-      const dayNet = Number((dayGross - dayCost - dayComm).toFixed(4));
+      // Sum actual CDRs for this day
+      const dayCdrs = cdrsLast7Days.filter((c: any) => {
+        const cDate = new Date(c.createdAt).toISOString().split('T')[0];
+        return cDate === dayStr;
+      });
+
+      const dayGross = Number(dayCdrs.reduce((acc: number, c: any) => acc + Number(c.clientPayout || 0), 0).toFixed(4));
+      const dayCost = Number(dayCdrs.reduce((acc: number, c: any) => acc + Number(c.providerCost || 0), 0).toFixed(4));
+      const dayNet = Number(dayCdrs.reduce((acc: number, c: any) => acc + Number(c.netProfit || 0), 0).toFixed(4));
+      const dayComm = Number(dayCdrs.reduce((acc: number, c: any) => acc + Number(c.agentCommission || 0), 0).toFixed(4));
 
       earnings.push({
         date: dayStr,
@@ -242,36 +261,36 @@ export class DashboardService {
       }
     }
 
-    const totalStatusCount = Object.values(statusMap).reduce((a, b) => a + b, 0) || totalNumbers || 1;
+    const totalStatusCount = Object.values(statusMap).reduce((a, b) => a + b, 0) || totalNumbers;
 
-    const byStatus = [
+    const byStatus = totalStatusCount > 0 ? [
       {
         status: 'Assigned',
         count: statusMap.ASSIGNED || 0,
         color: '#2563eb', // blue-600
-        percentage: Math.round(((statusMap.ASSIGNED || 0) / totalStatusCount) * 100),
+        percentage: totalStatusCount > 0 ? Math.round(((statusMap.ASSIGNED || 0) / totalStatusCount) * 100) : 0,
       },
       {
         status: 'Available',
         count: statusMap.AVAILABLE || 0,
         color: '#10b981', // emerald-500
-        percentage: Math.round(((statusMap.AVAILABLE || 0) / totalStatusCount) * 100),
+        percentage: totalStatusCount > 0 ? Math.round(((statusMap.AVAILABLE || 0) / totalStatusCount) * 100) : 0,
       },
       {
         status: 'Reserved',
         count: statusMap.RESERVED || 0,
         color: '#f59e0b', // amber-500
-        percentage: Math.round(((statusMap.RESERVED || 0) / totalStatusCount) * 100),
+        percentage: totalStatusCount > 0 ? Math.round(((statusMap.RESERVED || 0) / totalStatusCount) * 100) : 0,
       },
       {
         status: 'Quarantined',
         count: statusMap.QUARANTINED || 0,
         color: '#ef4444', // red-500
-        percentage: Math.round(((statusMap.QUARANTINED || 0) / totalStatusCount) * 100),
+        percentage: totalStatusCount > 0 ? Math.round(((statusMap.QUARANTINED || 0) / totalStatusCount) * 100) : 0,
       },
-    ];
+    ] : [];
 
-    // Country Breakdown
+    // Country Breakdown from real database
     const byCountry = countriesList.map((c: any) => {
       const assigned = c.numbers?.filter((n: any) => n.status === 'ASSIGNED').length || 0;
       const total = c._count?.numbers || c.numbers?.length || 0;
@@ -282,61 +301,26 @@ export class DashboardService {
         assigned,
         available: Math.max(0, total - assigned),
       };
-    });
+    }).filter((c: any) => c.total > 0);
 
-    if (byCountry.length === 0) {
-      byCountry.push(
-        { country: 'United States', iso2: 'US', total: 2, assigned: 1, available: 1 },
-        { country: 'United Kingdom', iso2: 'GB', total: 1, assigned: 0, available: 1 },
-        { country: 'Germany', iso2: 'DE', total: 0, assigned: 0, available: 0 }
-      );
-    }
-
-    // Provider Traffic
-    const providerTraffic: ProviderTrafficItem[] = providersList.map((p: any, idx: number) => {
+    // Provider Traffic from real database
+    const providerTraffic: ProviderTrafficItem[] = providersList.map((p: any) => {
       const isConnected = p.connections?.some((c: any) => c.isConnected);
-      const totalMsgs = p._count?.incomingMessages || (idx === 0 ? 128 : 84);
+      const totalMsgs = p._count?.incomingMessages || 0;
       return {
         id: p.id,
         name: p.name,
-        slug: p.slug,
-        protocol: p.protocol,
-        status: p.status,
+        slug: p.slug || p.id,
+        protocol: p.protocol || 'HTTP_REST',
+        status: p.status || 'ACTIVE',
         totalMessages: totalMsgs,
-        successRate: isConnected ? 99.4 : 97.8,
-        avgLatencyMs: p.protocol === 'HTTP_REST' ? 42 : 18,
-        throughputTps: p.protocol === 'HTTP_REST' ? 100 : 50,
+        successRate: isConnected ? 100 : 0,
+        avgLatencyMs: 0,
+        throughputTps: 0,
       };
     });
 
-    if (providerTraffic.length === 0) {
-      providerTraffic.push(
-        {
-          id: 'p1',
-          name: 'TelcoDirect Global Carrier',
-          slug: 'telco-direct-global',
-          protocol: 'HTTP_REST',
-          status: 'ACTIVE',
-          totalMessages: 142,
-          successRate: 99.6,
-          avgLatencyMs: 38,
-          throughputTps: 100,
-        },
-        {
-          id: 'p2',
-          name: 'Nexus SMPP Hub',
-          slug: 'nexus-smpp-hub',
-          protocol: 'SMPP',
-          status: 'ACTIVE',
-          totalMessages: 98,
-          successRate: 99.1,
-          avgLatencyMs: 16,
-          throughputTps: 50,
-        }
-      );
-    }
-
-    // Combined Recent Activity Feed
+    // Combined Recent Activity Feed from real database events
     const recentActivity: ActivityFeedItem[] = [];
 
     for (const log of recentAuditLogs) {
@@ -357,7 +341,7 @@ export class DashboardService {
         id: `msg-${msg.id}`,
         type: 'MESSAGE',
         title: `Inbound SMS on ${msg.number?.e164Number || msg.destinationAddress}`,
-        description: `From: ${msg.senderAddress} • Carrier: ${msg.provider?.name || 'TelcoDirect'}`,
+        description: `From: ${msg.senderAddress} • Carrier: ${msg.provider?.name || 'Carrier Gateway'}`,
         timestamp: msg.receivedAt.toISOString(),
         status: 'SUCCESS',
         actor: 'Gateway',
@@ -378,52 +362,6 @@ export class DashboardService {
       });
     }
 
-    // If feed is empty, provide seed activity
-    if (recentActivity.length === 0) {
-      recentActivity.push(
-        {
-          id: 'seed-act-1',
-          type: 'MESSAGE',
-          title: 'Inbound SMS on +12025550110',
-          description: 'From: +12025550198 • Carrier: TelcoDirect Global',
-          timestamp: new Date().toISOString(),
-          status: 'SUCCESS',
-          actor: 'TelcoDirect HTTP',
-          badge: 'ROUTED',
-        },
-        {
-          id: 'seed-act-2',
-          type: 'ASSIGNMENT',
-          title: 'Number Allocated: +12025550110',
-          description: 'Client: client.enterprise@sms-platform.internal (Apex Digital Media)',
-          timestamp: new Date(Date.now() - 3600000).toISOString(),
-          status: 'INFO',
-          actor: 'Alexander Vance',
-          badge: 'ACTIVE',
-        },
-        {
-          id: 'seed-act-3',
-          type: 'FINANCE',
-          title: 'Prepaid Wallet Credit: $250.00 USD',
-          description: 'Client wallet recharged for production traffic settlement',
-          timestamp: new Date(Date.now() - 7200000).toISOString(),
-          status: 'SUCCESS',
-          actor: 'Finance Ledger',
-          badge: 'RECHARGE',
-        },
-        {
-          id: 'seed-act-4',
-          type: 'AUDIT',
-          title: 'Database Schema Sync & Architecture Verified',
-          description: '28 Normalized PostgreSQL tables and relations verified',
-          timestamp: new Date(Date.now() - 14400000).toISOString(),
-          status: 'INFO',
-          actor: 'System Automation',
-          badge: 'PHASE_04',
-        }
-      );
-    }
-
     // Sort by timestamp desc
     recentActivity.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
@@ -438,8 +376,8 @@ export class DashboardService {
         totalManagers,
         totalAgents,
         totalClients,
-        smsToday: Math.max(smsTodayCount, 24),
-        smsThisWeek: Math.max(smsWeekCount, 142),
+        smsToday: smsTodayCount,
+        smsThisWeek: smsWeekCount,
         platformBalance: Number(platformBalance.toFixed(2)),
         totalEarnings: Number(totalEarnings.toFixed(4)),
         currency: 'USD',
@@ -458,12 +396,12 @@ export class DashboardService {
       summary: {
         healthyGateways: activeProviders,
         activeChannels: assignedNumbers,
-        platformUtilizationRate: totalNumbers > 0 ? Math.round((assignedNumbers / totalNumbers) * 100) : 33,
+        platformUtilizationRate: totalNumbers > 0 ? Math.round((assignedNumbers / totalNumbers) * 100) : 0,
       },
     };
   }
 
-  private static getFallbackDashboardStats(): DashboardResponseData {
+  private static getZeroDashboardStats(): DashboardResponseData {
     const now = new Date();
     const smsVolume: SmsVolumePoint[] = [];
     const earnings: EarningsPoint[] = [];
@@ -472,138 +410,58 @@ export class DashboardService {
       const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
       const dayStr = d.toISOString().split('T')[0];
       const weekday = d.toLocaleDateString('en-US', { weekday: 'short' });
-      const inbound = 25 + i * 8;
-      const delivered = Math.floor(inbound * 0.97);
 
       smsVolume.push({
         date: dayStr,
         label: weekday,
-        inbound,
-        delivered,
-        failed: inbound - delivered,
-        total: inbound,
+        inbound: 0,
+        delivered: 0,
+        failed: 0,
+        total: 0,
       });
-
-      const dayGross = Number((inbound * 0.0095).toFixed(4));
-      const dayCost = Number((inbound * 0.0045).toFixed(4));
-      const dayComm = Number((inbound * 0.00025).toFixed(4));
-      const dayNet = Number((dayGross - dayCost - dayComm).toFixed(4));
 
       earnings.push({
         date: dayStr,
         label: weekday,
-        grossRevenue: dayGross,
-        providerCost: dayCost,
-        netProfit: dayNet,
-        agentCommission: dayComm,
+        grossRevenue: 0,
+        providerCost: 0,
+        netProfit: 0,
+        agentCommission: 0,
       });
     }
 
     return {
       metrics: {
-        totalProviders: 2,
-        activeProviders: 2,
-        totalRanges: 2,
-        totalNumbers: 3,
-        assignedNumbers: 1,
-        unassignedNumbers: 2,
-        totalManagers: 1,
-        totalAgents: 1,
-        totalClients: 1,
-        smsToday: 24,
-        smsThisWeek: 168,
-        platformBalance: 292.50,
-        totalEarnings: 14.85,
+        totalProviders: 0,
+        activeProviders: 0,
+        totalRanges: 0,
+        totalNumbers: 0,
+        assignedNumbers: 0,
+        unassignedNumbers: 0,
+        totalManagers: 0,
+        totalAgents: 0,
+        totalClients: 0,
+        smsToday: 0,
+        smsThisWeek: 0,
+        platformBalance: 0,
+        totalEarnings: 0,
         currency: 'USD',
       },
       charts: {
         smsVolume,
         earnings,
         numberInventory: {
-          byStatus: [
-            { status: 'Assigned', count: 1, color: '#2563eb', percentage: 33 },
-            { status: 'Available', count: 2, color: '#10b981', percentage: 67 },
-            { status: 'Reserved', count: 0, color: '#f59e0b', percentage: 0 },
-            { status: 'Quarantined', count: 0, color: '#ef4444', percentage: 0 },
-          ],
-          byCountry: [
-            { country: 'United States', iso2: 'US', total: 2, assigned: 1, available: 1 },
-            { country: 'United Kingdom', iso2: 'GB', total: 1, assigned: 0, available: 1 },
-            { country: 'Germany', iso2: 'DE', total: 0, assigned: 0, available: 0 },
-          ],
-          total: 3,
+          byStatus: [],
+          byCountry: [],
+          total: 0,
         },
-        providerTraffic: [
-          {
-            id: 'p1',
-            name: 'TelcoDirect Global Carrier',
-            slug: 'telco-direct-global',
-            protocol: 'HTTP_REST',
-            status: 'ACTIVE',
-            totalMessages: 142,
-            successRate: 99.6,
-            avgLatencyMs: 38,
-            throughputTps: 100,
-          },
-          {
-            id: 'p2',
-            name: 'Nexus SMPP Hub',
-            slug: 'nexus-smpp-hub',
-            protocol: 'SMPP',
-            status: 'ACTIVE',
-            totalMessages: 98,
-            successRate: 99.1,
-            avgLatencyMs: 16,
-            throughputTps: 50,
-          },
-        ],
+        providerTraffic: [],
       },
-      recentActivity: [
-        {
-          id: 'act-1',
-          type: 'MESSAGE',
-          title: 'Inbound SMS on +12025550110',
-          description: 'From: +12025550198 • Carrier: TelcoDirect Global',
-          timestamp: new Date().toISOString(),
-          status: 'SUCCESS',
-          actor: 'TelcoDirect HTTP',
-          badge: 'ROUTED',
-        },
-        {
-          id: 'act-2',
-          type: 'ASSIGNMENT',
-          title: 'Number Allocated: +12025550110',
-          description: 'Client: client.enterprise@sms-platform.internal (Apex Digital Media)',
-          timestamp: new Date(Date.now() - 3600000).toISOString(),
-          status: 'INFO',
-          actor: 'Alexander Vance',
-          badge: 'ACTIVE',
-        },
-        {
-          id: 'act-3',
-          type: 'FINANCE',
-          title: 'Prepaid Wallet Credit: $250.00 USD',
-          description: 'Client wallet recharged for production traffic settlement',
-          timestamp: new Date(Date.now() - 7200000).toISOString(),
-          status: 'SUCCESS',
-          actor: 'Finance Ledger',
-          badge: 'RECHARGE',
-        },
-        {
-          id: 'act-4',
-          type: 'AUDIT',
-          title: 'Admin Session Authenticated',
-          description: 'Super Administrator signed in from secure console',
-          timestamp: new Date(Date.now() - 14400000).toISOString(),
-          status: 'INFO',
-          actor: 'admin@smshub.local',
-          badge: 'RBAC',
-        },
-      ],
+      recentActivity: [],
       summary: {
-        healthyGateways: 2,
-        activeChannels: 1,
-        platformUtilizationRate: 33,
+        healthyGateways: 0,
+        activeChannels: 0,
+        platformUtilizationRate: 0,
       },
     };
   }

@@ -28,12 +28,25 @@ export const QuickSimulationModal: React.FC<QuickSimulationModalProps> = ({
     setResult(null);
 
     try {
-      // Send simulation request to test pipeline
-      const res = await fetch('/api/demo/client-api-manage', {
+      // Send simulation request to real messaging inbound endpoint
+      const res = await fetch('/api/messages/inbound', {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${apiClient.getToken() || ''}`,
         },
+        body: JSON.stringify({
+          sender,
+          destination,
+          text: messageText,
+          providerSlug,
+        }),
       });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${res.status}: Failed to dispatch inbound SMS`);
+      }
 
       setResult({
         success: true,

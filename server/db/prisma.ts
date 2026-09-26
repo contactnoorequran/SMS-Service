@@ -1,6 +1,16 @@
 import { PrismaClient } from '@prisma/client';
+import dns from 'dns';
 import { env } from '../config/env';
 import { Logger } from '../utils/logger';
+
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+  if (typeof (dns as any).setDefaultResultOrder === 'function') {
+    (dns as any).setDefaultResultOrder('ipv4first');
+  }
+} catch {
+  // Ignore in environments where setting DNS servers is restricted
+}
 
 const dbLogger = new Logger('Database');
 
@@ -12,21 +22,49 @@ export interface DbHealthStatus {
 }
 
 let prismaInstance: PrismaClient | null = null;
+let dbFailureCount = 0;
+let lastDbFailureTimestamp = 0;
+const DB_FAILURE_COOLDOWN_MS = 5000; // 5 seconds fast recovery cooldown
+
+export function isDbCircuitOpen(): boolean {
+  if (dbFailureCount >= 1 && Date.now() - lastDbFailureTimestamp < DB_FAILURE_COOLDOWN_MS) {
+    return true; // circuit open: do not attempt to hit DB, use in-memory store instantly
+  }
+  return false;
+}
+
+export function recordDbFailure() {
+  dbFailureCount++;
+  lastDbFailureTimestamp = Date.now();
+  if (prismaInstance) {
+    prismaInstance.$disconnect().catch(() => {});
+    prismaInstance = null;
+  }
+}
+
+export function recordDbSuccess() {
+  dbFailureCount = 0;
+}
 
 export function getPrismaClient(): PrismaClient | null {
-  if (!env.DATABASE_URL) {
+  if (!env.DATABASE_URL || isDbCircuitOpen()) {
     return null;
   }
 
   if (!prismaInstance) {
     try {
       let dbUrl = env.DATABASE_URL;
-      if (dbUrl && dbUrl.includes('pooler.supabase.com')) {
-        if (!dbUrl.includes('pgbouncer=true')) {
-          dbUrl += (dbUrl.includes('?') ? '&' : '?') + 'pgbouncer=true';
+      if (dbUrl) {
+        if (!dbUrl.includes('connect_timeout=')) {
+          dbUrl += (dbUrl.includes('?') ? '&' : '?') + 'connect_timeout=10';
         }
-        if (!dbUrl.includes('connection_limit=')) {
-          dbUrl += (dbUrl.includes('?') ? '&' : '?') + 'connection_limit=1';
+        if (dbUrl.includes('pooler.supabase.com')) {
+          if (!dbUrl.includes('pgbouncer=true')) {
+            dbUrl += '&pgbouncer=true';
+          }
+          if (!dbUrl.includes('connection_limit=')) {
+            dbUrl += '&connection_limit=5';
+          }
         }
       }
       const client = new PrismaClient({
@@ -48,19 +86,24 @@ export function getPrismaClient(): PrismaClient | null {
             if (typeof val === 'function') {
               return async function (...args: any[]) {
                 try {
-                  return await val.apply(target, args);
+                  const queryPromise = Promise.resolve(val.apply(target, args));
+                  const queryTimeoutMs = Number(process.env.DB_QUERY_TIMEOUT_MS) || 10000;
+                  const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error(`Database query timed out (${queryTimeoutMs}ms)`)), queryTimeoutMs)
+                  );
+                  const res = await Promise.race([queryPromise, timeoutPromise]);
+                  recordDbSuccess();
+                  return res;
                 } catch (err: any) {
                   if (
                     err?.message?.includes("Can't reach database server") ||
                     err?.message?.includes('connection reset') ||
+                    err?.message?.includes('timed out') ||
                     err?.code === 'P1001' ||
                     err?.code === 'P1002'
                   ) {
-                    dbLogger.warn('Prisma socket disconnected. Resetting client instance for auto-healing.');
-                    prismaInstance = null;
-                    try {
-                      await client.$disconnect();
-                    } catch {}
+                    dbLogger.warn('Database unreachable. Tripping circuit breaker to maintain instant API responsiveness.');
+                    recordDbFailure();
                   }
                   throw err;
                 }
@@ -78,12 +121,16 @@ export function getPrismaClient(): PrismaClient | null {
       dbLogger.info('PrismaClient initialized successfully');
     } catch (error) {
       dbLogger.error('Failed to initialize PrismaClient', error);
+      recordDbFailure();
       prismaInstance = null;
     }
   }
 
   return prismaInstance;
 }
+
+let cachedDbStatus: { status: DbHealthStatus; timestamp: number } | null = null;
+const DB_HEALTH_CACHE_TTL = 15000; // 15 seconds
 
 export async function checkDbHealth(): Promise<DbHealthStatus> {
   if (!env.DATABASE_URL) {
@@ -94,26 +141,40 @@ export async function checkDbHealth(): Promise<DbHealthStatus> {
     };
   }
 
+  // Return cached health if fresh
+  if (cachedDbStatus && Date.now() - cachedDbStatus.timestamp < DB_HEALTH_CACHE_TTL) {
+    return cachedDbStatus.status;
+  }
+
   const client = getPrismaClient();
   if (!client) {
-    return {
+    const result: DbHealthStatus = {
       status: 'DISCONNECTED',
       provider: 'postgresql',
       message: 'Prisma client could not be instantiated',
     };
+    cachedDbStatus = { status: result, timestamp: Date.now() };
+    return result;
   }
 
   const start = Date.now();
   try {
-    // Execute a lightweight query to verify connectivity
-    await client.$queryRaw`SELECT 1 as health_check`;
+    // Execute a lightweight query with a strict 1200ms timeout to prevent hanging the API
+    const pingPromise = client.$queryRaw`SELECT 1 as health_check`;
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Database ping timeout (1200ms)')), 1200)
+    );
+
+    await Promise.race([pingPromise, timeoutPromise]);
     const latencyMs = Date.now() - start;
-    return {
+    const result: DbHealthStatus = {
       status: 'CONNECTED',
       latencyMs,
       provider: 'postgresql',
       message: 'PostgreSQL database connected and responsive',
     };
+    cachedDbStatus = { status: result, timestamp: Date.now() };
+    return result;
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Database ping failed';
     dbLogger.warn('Database health check failed:', { error: message });
@@ -122,11 +183,13 @@ export async function checkDbHealth(): Promise<DbHealthStatus> {
       prismaInstance.$disconnect().catch(() => {});
       prismaInstance = null;
     }
-    return {
+    const result: DbHealthStatus = {
       status: 'DISCONNECTED',
       provider: 'postgresql',
       message: `Database unreachable: ${message}`,
     };
+    cachedDbStatus = { status: result, timestamp: Date.now() };
+    return result;
   }
 }
 

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   RefreshCw,
   CheckCircle2,
@@ -11,15 +11,43 @@ import {
   XCircle,
   Menu,
   Search,
-  Command,
+  Clock,
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+
+/** Formats current UTC time: Thu, 2026-09-24 08:04:30 UTC */
+function formatUtc(d: Date): string {
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${days[d.getUTCDay()]}, ${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())} UTC`;
+}
+
+/** Live UTC Clock component — re-renders every second */
+const LiveUtcClock: React.FC = () => {
+  const [utc, setUtc] = useState(() => formatUtc(new Date()));
+  useEffect(() => {
+    const id = setInterval(() => setUtc(formatUtc(new Date())), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[11px] font-mono text-[var(--text-secondary)] shadow-xs shrink-0">
+      <Clock className="w-3.5 h-3.5 text-[var(--accent-blue)] shrink-0" />
+      <span>{utc}</span>
+    </div>
+  );
+};
+
 import { Badge } from '../ui/Badge';
-import { Button } from '../ui/Button';
 import { Breadcrumbs, BreadcrumbItem } from '../ui/Breadcrumbs';
 import { NotificationsMenu } from './NotificationsMenu';
 import { UserProfileMenu } from './UserProfileMenu';
 import { SystemHealthReport } from '../../types/api';
-import { PLATFORM_NAV_ITEMS } from '../../types/navigation';
+import {
+  ADMIN_NAV_ITEMS,
+  MANAGER_NAV_ITEMS,
+  AGENT_NAV_ITEMS,
+  CLIENT_NAV_ITEMS,
+} from '../../types/navigation';
 
 interface HeaderProps {
   currentTab: string;
@@ -44,15 +72,32 @@ export const Header: React.FC<HeaderProps> = ({
   onRefresh,
   id,
 }) => {
-  const currentNav = PLATFORM_NAV_ITEMS.find((item) => item.id === currentTab || item.targetTab === currentTab);
-  const tabTitle = currentNav?.label || (currentTab === 'not-found' ? 'Not Found' : 'Super Admin Dashboard');
+  const { role } = useAuth();
 
-  const breadcrumbItems: BreadcrumbItem[] = [
-    {
-      id: 'tab',
-      label: tabTitle,
-    },
+  // Find active navigation item across all system roles
+  const allNavItems = [
+    ...ADMIN_NAV_ITEMS,
+    ...MANAGER_NAV_ITEMS,
+    ...AGENT_NAV_ITEMS,
+    ...CLIENT_NAV_ITEMS,
   ];
+  const currentNav = allNavItems.find(
+    (item) => item.id === currentTab || item.targetTab === currentTab
+  );
+
+  const tabTitle = currentNav?.label || (currentTab === 'not-found' ? 'Not Found' : 'Dashboard');
+  const groupName = currentNav?.group;
+
+  const breadcrumbItems: BreadcrumbItem[] = [];
+  if (currentTab === 'dashboard' || !groupName) {
+    breadcrumbItems.push({ id: 'dashboard', label: 'Dashboard' });
+  } else {
+    breadcrumbItems.push(
+      { id: 'group', label: groupName },
+      { id: 'tab', label: tabTitle }
+    );
+  }
+
 
   const renderHealthIndicator = () => {
     if (!health) {
@@ -79,6 +124,7 @@ export const Header: React.FC<HeaderProps> = ({
         <Badge variant="warning" size="sm">
           <AlertTriangle className="w-3.5 h-3.5" />
           <span>Degraded</span>
+          {latency !== null && <span className="opacity-75">({latency}ms)</span>}
         </Badge>
       );
     }
@@ -115,62 +161,59 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Center / Global Search Trigger */}
-      <div className="flex-1 max-w-md mx-2 hidden md:block">
+      {/* Center Search (Compact, fixed width — not stretched across screen) */}
+      <div className="hidden lg:block">
         <button
           type="button"
           onClick={onOpenGlobalSearch}
-          className="w-full flex items-center justify-between px-3.5 py-1.5 rounded-xl bg-[rgba(0,0,0,0.2)] hover:bg-[rgba(0,0,0,0.3)] border border-[var(--glass-border)] text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-all cursor-pointer shadow-xs"
+          className="w-60 flex items-center justify-between px-3 py-1.5 rounded-xl bg-[rgba(0,0,0,0.25)] hover:bg-[rgba(0,0,0,0.4)] border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-all cursor-pointer shadow-xs"
         >
-          <div className="flex items-center gap-2">
-            <Search className="w-3.5 h-3.5 text-[var(--accent-blue)]" />
-            <span>Search users, providers, numbers, CDRs...</span>
+          <div className="flex items-center gap-2 truncate">
+            <Search className="w-3.5 h-3.5 text-[var(--accent-blue)] shrink-0" />
+            <span className="truncate">Quick search...</span>
           </div>
-          <div className="flex items-center gap-1 text-[10px] font-mono bg-[var(--glass-bg)] px-1.5 py-0.5 rounded border border-[var(--glass-border)]">
-            <Command className="w-2.5 h-2.5" />
-            <span>K</span>
-          </div>
+          <kbd className="text-[10px] font-mono bg-[var(--glass-bg)] px-1.5 py-0.5 rounded border border-[var(--glass-border)] shrink-0">
+            ⌘K
+          </kbd>
         </button>
       </div>
 
-      {/* Right Area: Status + Mobile Search Button + Notifications + User Profile */}
+      {/* Right Area: UTC Clock + Health + Role Pill + Notifications + Profile */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Live UTC Clock */}
+        <LiveUtcClock />
+
         {/* Mobile Search Icon Button */}
         <button
           type="button"
           onClick={onOpenGlobalSearch}
-          className="md:hidden p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-lg hover:bg-[var(--glass-bg)] transition-colors cursor-pointer"
+          className="lg:hidden p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-lg hover:bg-[var(--glass-bg)] transition-colors cursor-pointer"
           aria-label="Global search"
         >
           <Search className="w-4 h-4" />
         </button>
 
         {/* Live Health Badge */}
-        <div className="hidden sm:flex items-center">
+        <div className="flex items-center">
           {renderHealthIndicator()}
         </div>
 
-        {/* Refresh API Health */}
-        <Button
+        {/* Discreet Ping/Refresh Icon Button */}
+        <button
           id="btn-refresh-health"
-          variant="outline"
-          size="sm"
           onClick={onRefresh}
-          isLoading={isLoading}
+          disabled={isLoading}
+          title="Refresh connection status"
+          className="p-1.5 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg)] transition-colors cursor-pointer disabled:opacity-50"
           aria-label="Refresh API health status"
-          leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />}
-          className="hidden lg:inline-flex"
         >
-          Ping
-        </Button>
-
-        {/* Vertical Divider */}
-        <div className="h-6 w-px bg-[var(--glass-border)]" />
+          <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+        </button>
 
         {/* Notifications Area Popover */}
         <NotificationsMenu onNavigateToTab={onSelectTab} />
 
-        {/* User Profile Dropdown Menu */}
+        {/* User Profile Dropdown Menu (Contains Avatar, Name, and Role) */}
         <UserProfileMenu />
       </div>
     </header>

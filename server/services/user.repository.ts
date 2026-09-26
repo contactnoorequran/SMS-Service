@@ -156,18 +156,26 @@ export class UserRepository {
     }
 
     for (const seed of seedConfigs) {
-      const existing = await this.findByEmail(seed.email);
-      if (!existing) {
-        const passwordHash = await PasswordService.hash(seed.passwordRaw);
+      const emailLower = seed.email.toLowerCase();
+      let stored = memoryUsers.get(emailLower);
+      if (!stored) {
         let userId = crypto.randomUUID();
-        const roleId = crypto.randomUUID();
+        let roleId = crypto.randomUUID();
+        let passwordHash = await PasswordService.hash(seed.passwordRaw);
 
         const prisma = getPrismaClient();
         if (prisma) {
           try {
-            const dbUser = await prisma.user.findUnique({ where: { email: seed.email.toLowerCase() } });
+            const dbUser = await prisma.user.findUnique({
+              where: { email: emailLower },
+              include: { userRoles: { include: { role: true } } },
+            });
             if (dbUser) {
               userId = dbUser.id;
+              passwordHash = dbUser.passwordHash || passwordHash;
+              if (dbUser.userRoles[0]?.role) {
+                roleId = dbUser.userRoles[0].role.id;
+              }
             } else {
               const roleRecord = await prisma.role.findUnique({ where: { name: seed.role } });
               if (roleRecord) {
@@ -175,7 +183,7 @@ export class UserRepository {
                 const created = await prisma.user.create({
                   data: {
                     id: userId,
-                    email: seed.email.toLowerCase(),
+                    email: emailLower,
                     passwordHash,
                     name: fullName,
                     status: seed.status,
@@ -188,6 +196,7 @@ export class UserRepository {
                   },
                 });
                 userId = created.id;
+                roleId = roleRecord.id;
               }
             }
           } catch (dbErr) {
@@ -195,9 +204,9 @@ export class UserRepository {
           }
         }
 
-        const stored: StoredUser = {
+        stored = {
           id: userId,
-          email: seed.email.toLowerCase(),
+          email: emailLower,
           passwordHash,
           firstName: seed.firstName,
           lastName: seed.lastName,
@@ -212,7 +221,7 @@ export class UserRepository {
           updatedAt: new Date().toISOString(),
         };
 
-        memoryUsers.set(seed.email.toLowerCase(), stored);
+        memoryUsers.set(emailLower, stored);
       }
     }
 
@@ -319,7 +328,9 @@ export class UserRepository {
         });
 
         if (dbUser) {
-          return this.mapDbUserToStored(dbUser);
+          const stored = this.mapDbUserToStored(dbUser);
+          memoryUsers.set(normalizedEmail, stored);
+          return stored;
         }
       } catch (err) {
         // Fallback to memory
@@ -478,8 +489,8 @@ export class UserRepository {
       } catch (err: any) {
         userLogger.warn('Could not persist new user to PostgreSQL, saved in memory', err);
         if (err.code === 'P2002') {
-          memoryUsers.delete(normalizedEmail);
-          throw new Error(`User with email '${data.email}' already exists in database.`);
+          // User already exists in PostgreSQL; retain in-memory synchronized identity
+          return UserRepository.toSafeUser(stored);
         }
       }
     }

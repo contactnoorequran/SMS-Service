@@ -215,6 +215,7 @@ export const UsersManagementView: React.FC = () => {
     {
       key: 'name',
       header: 'User Identity',
+      className: 'w-[280px]',
       sortable: true,
       render: (u) => (
         <div className="flex items-center gap-2.5 min-w-[200px]">
@@ -235,6 +236,7 @@ export const UsersManagementView: React.FC = () => {
     {
       key: 'role',
       header: 'Role Profile',
+      className: 'w-[150px]',
       sortable: true,
       render: (u) => (
         <Badge variant={getRoleBadgeVariant(u.role.name)} size="sm">
@@ -246,6 +248,7 @@ export const UsersManagementView: React.FC = () => {
     {
       key: 'status',
       header: 'Status',
+      className: 'w-[120px]',
       sortable: true,
       render: (u) => (
         <Badge variant={getStatusBadgeVariant(u.status)} size="sm">
@@ -265,6 +268,7 @@ export const UsersManagementView: React.FC = () => {
     {
       key: 'createdAt',
       header: 'Created',
+      className: 'w-[130px]',
       sortable: true,
       render: (u) => (
         <span className="text-[var(--text-secondary)] font-mono text-xs">
@@ -275,6 +279,7 @@ export const UsersManagementView: React.FC = () => {
     {
       key: 'lastLoginAt',
       header: 'Last Active',
+      className: 'w-[140px]',
       sortable: true,
       render: (u) => (
         <span className="text-[var(--text-secondary)] font-mono text-xs">
@@ -285,7 +290,7 @@ export const UsersManagementView: React.FC = () => {
     {
       key: 'actions',
       header: '',
-      className: 'text-right',
+      className: 'w-[50px] text-right',
       render: (u) => (
         <div className="flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
           <MoreActionsMenu

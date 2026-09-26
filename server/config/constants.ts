@@ -1,5 +1,5 @@
 export const APP_CONFIG = {
-  name: 'SMS Management Platform',
+  name: 'SMS Service',
   version: '1.7.0-phase-07',
   phase: '07 - CLIENT MANAGEMENT',
   apiPrefix: '/api',

@@ -40,23 +40,23 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 }) => {
   return (
     <div className={`space-y-4 ${className}`}>
-      {/* Breadcrumbs Navigation */}
-      {breadcrumbs && breadcrumbs.length > 0 && (
+      {/* Breadcrumbs Navigation - Render only if interactive or deep drilldown */}
+      {breadcrumbs && (breadcrumbs.some((b) => !!b.onClick) || breadcrumbs.length > 2) && (
         <Breadcrumbs items={breadcrumbs} />
       )}
 
       {/* Main Header Container */}
-      <div className="p-6 glass-card border-[var(--glass-border)] relative overflow-hidden">
+      <div className="p-5 sm:p-6 glass-card border-[var(--glass-border)] relative overflow-hidden">
         {/* Subtle Ambient Background */}
         <div className="absolute inset-0 bg-gradient-to-r from-[rgba(59,130,246,0.03)] via-transparent to-[rgba(139,92,246,0.02)] pointer-events-none" />
 
         <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1.5 min-w-0">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">
+          <div className="space-y-1.5 min-w-0 flex-1">
+            <div className="flex items-center gap-2.5 flex-wrap min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] tracking-tight truncate">
                 {title}
               </h1>
-              {badge && <div>{badge}</div>}
+              {badge && <div className="shrink-0">{badge}</div>}
             </div>
             <p className="text-xs text-[var(--text-secondary)] max-w-2xl leading-relaxed">
               {description}

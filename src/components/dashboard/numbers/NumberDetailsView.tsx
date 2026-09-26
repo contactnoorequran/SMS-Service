@@ -71,29 +71,29 @@ export const NumberDetailsView: React.FC<NumberDetailsViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Navigation Breadcrumbs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[var(--glass-border)]">
+        <div className="min-w-0 flex-1 space-y-2">
           <Breadcrumbs
             items={[
-              { label: 'Operations', onClick: onBack },
-              { label: 'Numbers', onClick: onBack },
-              { label: number.e164 },
+              { id: 'telecom', label: 'Telecom', onClick: onBack },
+              { id: 'numbers', label: 'Numbers', onClick: onBack },
+              { id: 'number-e164', label: number.e164 },
             ]}
           />
-          <div className="flex items-center gap-3 mt-1.5">
+          <div className="flex items-center gap-3 flex-wrap min-w-0">
             <button
               onClick={onBack}
-              className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)] transition-colors focus-visible:ring-1 focus-visible:ring-[var(--accent-blue)]"
+              className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)] transition-colors focus-visible:ring-1 focus-visible:ring-[var(--accent-blue)] shrink-0 cursor-pointer"
               aria-label="Return to numbers directory"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <div className="flex items-center gap-2.5">
-              <span className="text-xl">{number?.country?.flag || '🌐'}</span>
-              <h1 className="text-xl font-bold font-mono text-[var(--text-primary)] tracking-tight">
+            <div className="flex items-center gap-2.5 flex-wrap min-w-0">
+              <span className="text-xl shrink-0">{number?.country?.flag || '🌐'}</span>
+              <h1 className="text-xl font-bold font-mono text-[var(--text-primary)] tracking-tight truncate max-w-sm sm:max-w-md">
                 {number.e164}
               </h1>
-              <Badge variant={getStatusBadgeVariant(number.status)}>
+              <Badge variant={getStatusBadgeVariant(number.status)} className="shrink-0">
                 {number.status}
               </Badge>
             </div>
@@ -101,7 +101,7 @@ export const NumberDetailsView: React.FC<NumberDetailsViewProps> = ({
         </div>
 
         {/* Action Controls */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           {isAvailable && (
             <Button
               variant="primary"

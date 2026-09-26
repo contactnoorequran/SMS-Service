@@ -57,7 +57,13 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
 
   const payload = verification.payload;
 
-  const user = await UserRepository.findById(payload.userId);
+  let user = await UserRepository.findById(payload.userId);
+  if (!user && payload.email) {
+    const memUser = await UserRepository.findByEmail(payload.email);
+    if (memUser) {
+      user = UserRepository.toSafeUser(memUser);
+    }
+  }
   if (!user) {
     sendError(res, 401, 'USER_NOT_FOUND', 'Authenticated user account no longer exists.');
     return;

@@ -3,27 +3,169 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
-import { SystemHealthCard } from './SystemHealthCard';
-import { ArchitectureOverviewCard } from './ArchitectureOverviewCard';
-import { ApiTesterCard } from './ApiTesterCard';
-import { DatabaseConfigCard } from './DatabaseConfigCard';
-import { DatabaseSchemaViewer } from './DatabaseSchemaViewer';
-import { AdminDashboardView } from './AdminDashboardView';
-import { UsersManagementView } from './UsersManagementView';
-import { AuditLogsView } from './AuditLogsView';
-import { NumberManagementView } from './NumberManagementView';
-import { ManagerManagementView } from './ManagerManagementView';
-import { AgentManagementView } from './AgentManagementView';
-import { ClientManagementView } from './ClientManagementView';
-import { ProviderManagementView } from './ProviderManagementView';
-import { MessagingManagementView } from './MessagingManagementView';
-import { CdrManagementView } from './CdrManagementView';
-import { BillingManagementView } from './BillingManagementView';
-import { SettingsView } from './SettingsView';
-import { NotFoundState } from '../system/NotFoundState';
+import React, { Suspense, memo } from 'react';
 import { SystemHealthReport } from '../../types/api';
+import { useAuth } from '../../context/AuthContext';
 
+// ── Loading skeleton shown while a lazy chunk is fetching ──────────────
+const PageSkeleton: React.FC = () => (
+  <div className="space-y-5 animate-pulse">
+    <div className="glass-card h-28 rounded-2xl bg-[var(--glass-bg)]" />
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="glass-card h-24 rounded-xl bg-[var(--glass-bg)]" />
+      ))}
+    </div>
+    <div className="glass-card h-64 rounded-2xl bg-[var(--glass-bg)]" />
+  </div>
+);
+
+// ── Role Dedicated Dashboards ──────────────────────────────────────────
+const AdminDashboardView = React.lazy(() =>
+  import('./AdminDashboardView').then((m) => ({ default: m.AdminDashboardView }))
+);
+const ManagerDashboardView = React.lazy(() =>
+  import('./ManagerDashboardView').then((m) => ({ default: m.ManagerDashboardView }))
+);
+const AgentDashboardView = React.lazy(() =>
+  import('./AgentDashboardView').then((m) => ({ default: m.AgentDashboardView }))
+);
+const ClientDashboardView = React.lazy(() =>
+  import('./ClientDashboardView').then((m) => ({ default: m.ClientDashboardView }))
+);
+
+// ── Manager Dedicated Modules ──────────────────────────────────────────
+const ManagerApprovalsView = React.lazy(() =>
+  import('./ManagerApprovalsView').then((m) => ({ default: m.ManagerApprovalsView }))
+);
+const ManagerTeamView = React.lazy(() =>
+  import('./ManagerTeamView').then((m) => ({ default: m.ManagerTeamView }))
+);
+
+// ── Client Dedicated Modules ───────────────────────────────────────────
+const ClientNumbersView = React.lazy(() =>
+  import('./ClientNumbersView').then((m) => ({ default: m.ClientNumbersView }))
+);
+const ClientInboundStreamView = React.lazy(() =>
+  import('./ClientInboundStreamView').then((m) => ({ default: m.ClientInboundStreamView }))
+);
+const ClientWebhookView = React.lazy(() =>
+  import('./ClientWebhookView').then((m) => ({ default: m.ClientWebhookView }))
+);
+const ClientWalletView = React.lazy(() =>
+  import('./ClientWalletView').then((m) => ({ default: m.ClientWalletView }))
+);
+
+// ── Agent IMS SMS Portal — lazy-loaded ─────────────────────────────────
+const SmsRangesView = React.lazy(() =>
+  import('./SmsRangesView').then((m) => ({ default: m.SmsRangesView }))
+);
+const CliSearchView = React.lazy(() =>
+  import('./CliSearchView').then((m) => ({ default: m.CliSearchView }))
+);
+const MyNumbersView = React.lazy(() =>
+  import('./MyNumbersView').then((m) => ({ default: m.MyNumbersView }))
+);
+const BulkAddView = React.lazy(() =>
+  import('./BulkAddView').then((m) => ({ default: m.BulkAddView }))
+);
+const SmsTestPanelView = React.lazy(() =>
+  import('./SmsTestPanelView').then((m) => ({ default: m.SmsTestPanelView }))
+);
+const MyClientsView = React.lazy(() =>
+  import('./MyClientsView').then((m) => ({ default: m.MyClientsView }))
+);
+const AgentNotificationsView = React.lazy(() =>
+  import('./AgentNotificationsView').then((m) => ({ default: m.AgentNotificationsView }))
+);
+const CdrStatisticsView = React.lazy(() =>
+  import('./CdrStatisticsView').then((m) => ({ default: m.CdrStatisticsView }))
+);
+const CreditNotesView = React.lazy(() =>
+  import('./AgentFinanceViews').then((m) => ({ default: m.CreditNotesView }))
+);
+const PaymentRequestsView = React.lazy(() =>
+  import('./AgentFinanceViews').then((m) => ({ default: m.PaymentRequestsView }))
+);
+const RestApiView = React.lazy(() =>
+  import('./AgentFinanceViews').then((m) => ({ default: m.RestApiView }))
+);
+const ProfileSettingsView = React.lazy(() =>
+  import('./AgentFinanceViews').then((m) => ({ default: m.ProfileSettingsView }))
+);
+
+// ── Super Admin / Legacy Admin Views — lazy-loaded ─────────────────────
+const UsersManagementView = React.lazy(() =>
+  import('./UsersManagementView').then((m) => ({ default: m.UsersManagementView }))
+);
+const AuditLogsView = React.lazy(() =>
+  import('./AuditLogsView').then((m) => ({ default: m.AuditLogsView }))
+);
+const NumberManagementView = React.lazy(() =>
+  import('./NumberManagementView').then((m) => ({ default: m.NumberManagementView }))
+);
+const ManagerManagementView = React.lazy(() =>
+  import('./ManagerManagementView').then((m) => ({ default: m.ManagerManagementView }))
+);
+const AgentManagementView = React.lazy(() =>
+  import('./AgentManagementView').then((m) => ({ default: m.AgentManagementView }))
+);
+const ClientManagementView = React.lazy(() =>
+  import('./ClientManagementView').then((m) => ({ default: m.ClientManagementView }))
+);
+const ProviderManagementView = React.lazy(() =>
+  import('./ProviderManagementView').then((m) => ({ default: m.ProviderManagementView }))
+);
+const MessagingManagementView = React.lazy(() =>
+  import('./MessagingManagementView').then((m) => ({ default: m.MessagingManagementView }))
+);
+const CdrManagementView = React.lazy(() =>
+  import('./CdrManagementView').then((m) => ({ default: m.CdrManagementView }))
+);
+const BillingManagementView = React.lazy(() =>
+  import('./BillingManagementView').then((m) => ({ default: m.BillingManagementView }))
+);
+const SettingsView = React.lazy(() =>
+  import('./SettingsView').then((m) => ({ default: m.SettingsView }))
+);
+const DatabaseSchemaViewer = React.lazy(() =>
+  import('./DatabaseSchemaViewer').then((m) => ({ default: m.DatabaseSchemaViewer }))
+);
+const SystemHealthCard = React.lazy(() =>
+  import('./SystemHealthCard').then((m) => ({ default: m.SystemHealthCard }))
+);
+const ApiTesterCard = React.lazy(() =>
+  import('./ApiTesterCard').then((m) => ({ default: m.ApiTesterCard }))
+);
+const DatabaseConfigCard = React.lazy(() =>
+  import('./DatabaseConfigCard').then((m) => ({ default: m.DatabaseConfigCard }))
+);
+const ArchitectureOverviewCard = React.lazy(() =>
+  import('./ArchitectureOverviewCard').then((m) => ({ default: m.ArchitectureOverviewCard }))
+);
+import { NotFoundState } from '../system/NotFoundState';
+
+// ── Known tabs set — used for 404 fallback ─────────────────────────────
+const KNOWN_TABS = new Set([
+  'dashboard',
+  // Agent tabs
+  'sms-ranges', 'cli-search', 'my-numbers', 'bulk-add', 'sms-test-panel',
+  'my-clients', 'notifications',
+  'cdr-statistics', 'credit-notes', 'payment-requests',
+  'rest-api', 'profile-settings',
+  // Manager tabs
+  'manager-approvals', 'managers-team',
+  // Client tabs
+  'client-numbers', 'client-inbound', 'client-webhooks', 'client-wallet',
+  // Super Admin tabs
+  'numbers', 'countries', 'operators', 'ranges', 'assignments',
+  'managers', 'agents', 'clients', 'providers', 'connections',
+  'traffic', 'messages', 'cdr', 'reports',
+  'financials', 'billing', 'wallets', 'transactions', 'rates',
+  'users', 'audit', 'settings', 'database-schema', 'diagnostics', 'api', 'architecture',
+]);
+
+// ── Props ──────────────────────────────────────────────────────────────
 interface DashboardOverviewProps {
   currentTab: string;
   onSelectTab: (tabId: string) => void;
@@ -33,66 +175,85 @@ interface DashboardOverviewProps {
   isLoading: boolean;
 }
 
-export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
+// ── Component ──────────────────────────────────────────────────────────
+export const DashboardOverview: React.FC<DashboardOverviewProps> = memo(({
   currentTab,
   onSelectTab,
-  onOpenGlobalSearch,
+  onOpenGlobalSearch: _onOpenGlobalSearch,
   health,
   latency,
   isLoading,
 }) => {
-  return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* 1. Dashboard */}
-      {currentTab === 'dashboard' && (
-        <AdminDashboardView
-          onNavigateToTab={onSelectTab}
-          onOpenGlobalSearch={onOpenGlobalSearch}
-        />
-      )}
+  const { role } = useAuth();
 
-      {/* 2. Management Modules */}
-      {currentTab === 'users' && <UsersManagementView />}
-      {currentTab === 'managers' && <ManagerManagementView />}
-      {currentTab === 'agents' && <AgentManagementView />}
-      {currentTab === 'clients' && <ClientManagementView />}
+  const renderPage = () => {
+    // ── Multi-Role Primary Dashboard ──
+    if (currentTab === 'dashboard') {
+      if (role === 'SUPER_ADMIN') {
+        return <AdminDashboardView onNavigateToTab={onSelectTab} onOpenGlobalSearch={_onOpenGlobalSearch} />;
+      }
+      if (role === 'MANAGER') {
+        return <ManagerDashboardView onNavigateToTab={onSelectTab} />;
+      }
+      if (role === 'CLIENT') {
+        return <ClientDashboardView onNavigateToTab={onSelectTab} />;
+      }
+      return <AgentDashboardView onNavigateToTab={onSelectTab} />;
+    }
 
-      {/* 3. Telecom Modules */}
-      {(currentTab === 'providers' || currentTab === 'connections') && (
-        <ProviderManagementView />
-      )}
-      {(currentTab === 'numbers' ||
-        currentTab === 'countries' ||
-        currentTab === 'operators' ||
-        currentTab === 'ranges' ||
-        currentTab === 'assignments') && <NumberManagementView />}
+    // ── Manager Dedicated Modules ──
+    if (currentTab === 'manager-approvals') return <ManagerApprovalsView />;
+    if (currentTab === 'managers-team') return <ManagerTeamView />;
 
-      {/* 4. Messaging Modules */}
-      {(currentTab === 'traffic' || currentTab === 'messages') && (
-        <MessagingManagementView />
-      )}
-      {(currentTab === 'cdr' || currentTab === 'reports') && <CdrManagementView />}
+    // ── Client Dedicated Modules ──
+    if (currentTab === 'client-numbers') return <ClientNumbersView />;
+    if (currentTab === 'client-inbound') return <ClientInboundStreamView />;
+    if (currentTab === 'client-webhooks') return <ClientWebhookView />;
+    if (currentTab === 'client-wallet') return <ClientWalletView />;
 
-      {/* 5. Finance Modules */}
-      {(currentTab === 'financials' ||
-        currentTab === 'billing' ||
-        currentTab === 'wallets' ||
-        currentTab === 'transactions' ||
-        currentTab === 'rates' ||
-        currentTab === 'payment-requests' ||
-        currentTab === 'credit-notes') && <BillingManagementView />}
+    // ── Agent IMS SMS Portal Modules ──
+    if (currentTab === 'sms-ranges')      return <SmsRangesView />;
+    if (currentTab === 'cli-search')      return <CliSearchView />;
+    if (currentTab === 'my-numbers')      return <MyNumbersView />;
+    if (currentTab === 'bulk-add')        return <BulkAddView />;
+    if (currentTab === 'sms-test-panel')  return <SmsTestPanelView />;
+    if (currentTab === 'my-clients')      return <MyClientsView />;
+    if (currentTab === 'notifications')   return <AgentNotificationsView />;
+    if (currentTab === 'cdr-statistics')  return <CdrStatisticsView />;
+    if (currentTab === 'credit-notes')    return <CreditNotesView />;
+    if (currentTab === 'payment-requests') return <PaymentRequestsView />;
+    if (currentTab === 'rest-api')        return <RestApiView />;
+    if (currentTab === 'profile-settings') return <ProfileSettingsView />;
 
-      {/* 6. Platform Modules */}
-      {(currentTab === 'audit' || currentTab === 'notifications') && <AuditLogsView />}
-      {currentTab === 'settings' && <SettingsView />}
+    // ── Super Admin Modules ──
+    if (currentTab === 'users')           return <UsersManagementView />;
+    if (currentTab === 'managers')        return <ManagerManagementView />;
+    if (currentTab === 'agents')          return <AgentManagementView />;
+    if (currentTab === 'clients')         return <ClientManagementView />;
 
-      {currentTab === 'database-schema' && (
-        <div className="space-y-6">
-          <DatabaseSchemaViewer />
-        </div>
-      )}
+    if (currentTab === 'providers' || currentTab === 'connections')
+      return <ProviderManagementView />;
 
-      {(currentTab === 'diagnostics' || currentTab === 'api') && (
+    if (['numbers', 'countries', 'operators', 'ranges', 'assignments'].includes(currentTab))
+      return <NumberManagementView />;
+
+    if (currentTab === 'traffic' || currentTab === 'messages')
+      return <MessagingManagementView />;
+
+    if (currentTab === 'cdr' || currentTab === 'reports')
+      return <CdrManagementView />;
+
+    if (['financials', 'billing', 'wallets', 'transactions', 'rates'].includes(currentTab))
+      return <BillingManagementView />;
+
+    if (currentTab === 'audit')           return <AuditLogsView />;
+    if (currentTab === 'settings')        return <SettingsView />;
+
+    if (currentTab === 'database-schema')
+      return <div className="space-y-6"><DatabaseSchemaViewer /></div>;
+
+    if (currentTab === 'diagnostics' || currentTab === 'api')
+      return (
         <div className="space-y-6">
           <SystemHealthCard health={health} latency={latency} isLoading={isLoading} />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -100,48 +261,19 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <DatabaseConfigCard />
           </div>
         </div>
-      )}
+      );
 
-      {currentTab === 'architecture' && (
+    if (currentTab === 'architecture')
+      return (
         <div className="space-y-6">
           <ArchitectureOverviewCard />
           <DatabaseSchemaViewer />
         </div>
-      )}
+      );
 
-      {/* Fallback for unknown or unsupported routes */}
-      {![
-        'dashboard',
-        'numbers',
-        'countries',
-        'operators',
-        'ranges',
-        'assignments',
-        'managers',
-        'agents',
-        'clients',
-        'providers',
-        'connections',
-        'traffic',
-        'messages',
-        'cdr',
-        'reports',
-        'financials',
-        'billing',
-        'wallets',
-        'transactions',
-        'rates',
-        'payment-requests',
-        'credit-notes',
-        'users',
-        'audit',
-        'notifications',
-        'settings',
-        'database-schema',
-        'diagnostics',
-        'api',
-        'architecture',
-      ].includes(currentTab) && (
+    // 404 fallback
+    if (!KNOWN_TABS.has(currentTab))
+      return (
         <NotFoundState
           title="Page Not Found"
           description={
@@ -151,7 +283,18 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           }
           onGoHome={() => onSelectTab('dashboard')}
         />
-      )}
+      );
+
+    return null;
+  };
+
+  return (
+    <div className="space-y-6 max-w-7xl mx-auto">
+      <Suspense fallback={<PageSkeleton />}>
+        {renderPage()}
+      </Suspense>
     </div>
   );
-};
+});
+
+DashboardOverview.displayName = 'DashboardOverview';

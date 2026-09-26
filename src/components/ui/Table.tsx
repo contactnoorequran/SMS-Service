@@ -67,7 +67,7 @@ export function Table<T>({
                       }
                     }}
                     onClick={() => col.sortable && onSort && onSort(col.key)}
-                    className={`px-4 py-3.5 select-none ${col.className || ''} ${
+                    className={`px-3.5 py-2.5 whitespace-nowrap select-none ${col.className || ''} ${
                       col.sortable
                         ? 'cursor-pointer hover:text-[var(--text-primary)] transition-colors focus-visible:outline-none focus-visible:bg-[var(--glass-bg-hover)]'
                         : ''
@@ -99,7 +99,7 @@ export function Table<T>({
               Array.from({ length: 4 }).map((_, rIdx) => (
                 <tr key={`loading-row-${rIdx}`}>
                   {columns.map((col) => (
-                    <td key={`loading-col-${col.key}`} className="px-4 py-3.5">
+                    <td key={`loading-col-${col.key}`} className="px-3.5 py-2.5">
                       <div className="h-4 glass-skeleton w-3/4"></div>
                     </td>
                   ))}
@@ -107,7 +107,7 @@ export function Table<T>({
               ))
             ) : data.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-6 py-12 text-center text-[var(--text-secondary)]">
+                <td colSpan={columns.length} className="px-6 py-10 text-center text-[var(--text-secondary)]">
                   <p className="text-sm font-medium text-[var(--text-primary)]">{emptyMessage}</p>
                   <p className="text-xs text-[var(--text-tertiary)] mt-1">{emptySubtext}</p>
                 </td>
@@ -122,7 +122,7 @@ export function Table<T>({
                   }`}
                 >
                   {columns.map((col) => (
-                    <td key={`${col.key}-${keyExtractor(item, index)}`} className={`px-4 py-3.5 text-[var(--text-secondary)] ${col.className || ''}`}>
+                    <td key={`${col.key}-${keyExtractor(item, index)}`} className={`px-3.5 py-2.5 whitespace-nowrap align-middle text-[var(--text-secondary)] ${col.className || ''}`}>
                       {col.render ? col.render(item, index) : (item as any)[col.key]}
                     </td>
                   ))}

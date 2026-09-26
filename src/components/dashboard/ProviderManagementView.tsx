@@ -10,17 +10,14 @@ import {
   ProviderDetail,
   ProviderStatus,
   ProviderType,
-  ProvidersSortField,
   CreateProviderPayload,
   UpdateProviderPayload,
   CreateConnectionPayload,
   UpdateConnectionPayload,
   ProviderConnectionSummary,
 } from '../../types/providers';
-import { StatCard } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
-import { FilterBar } from '../ui/FilterBar';
 import { Table, ColumnDef } from '../ui/Table';
 import { Pagination } from '../ui/Pagination';
 import { StatCardSkeleton } from '../ui/Skeleton';
@@ -28,8 +25,8 @@ import { EmptyState } from '../ui/EmptyState';
 import { ErrorState } from '../ui/ErrorState';
 import { Breadcrumbs } from '../ui/Breadcrumbs';
 import { NotFoundState } from '../system/NotFoundState';
-import { PageHeader } from '../ui/PageHeader';
 import { MoreActionsMenu } from '../ui/MoreActionsMenu';
+import { Modal } from '../ui/Modal';
 
 import { CreateProviderModal } from './providers/CreateProviderModal';
 import { EditProviderModal } from './providers/EditProviderModal';
@@ -41,7 +38,6 @@ import { ProviderDetailsView } from './providers/ProviderDetailsView';
 import {
   formatDate,
   formatNumber,
-  formatPercent,
   formatRelativeTime,
 } from '../../utils/formatters';
 import {
@@ -51,7 +47,6 @@ import {
   CheckCircle2,
   AlertTriangle,
   AlertCircle,
-  ShieldAlert,
   Hash,
   Globe,
   RefreshCw,
@@ -59,11 +54,11 @@ import {
   Eye,
   Edit2,
   Power,
-  Layers,
-  Zap,
   Cable,
   Send,
-  ShieldCheck,
+  Search,
+  Filter,
+  Layers,
 } from 'lucide-react';
 
 export const ProviderManagementView: React.FC = () => {
@@ -109,6 +104,12 @@ export const ProviderManagementView: React.FC = () => {
   const [editingConnectionTarget, setEditingConnectionTarget] = useState<ProviderConnectionSummary | null>(null);
   const [inspectingConnectionTarget, setInspectingConnectionTarget] = useState<ProviderConnectionSummary | null>(null);
 
+  // Quick Info inspection modal (Coverage / Binds)
+  const [quickModalTarget, setQuickModalTarget] = useState<{
+    type: 'binds' | 'coverage';
+    provider: ProviderItem;
+  } | null>(null);
+
   // Toast feedback
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
@@ -116,7 +117,7 @@ export const ProviderManagementView: React.FC = () => {
     setToastMessage({ text, type });
     setTimeout(() => {
       setToastMessage(null);
-    }, 4500);
+    }, 4000);
   };
 
   const getStatusBadgeVariant = (status: ProviderStatus) => {
@@ -148,9 +149,9 @@ export const ProviderManagementView: React.FC = () => {
   const getTypeBadgeVariant = (type: ProviderType) => {
     switch (type) {
       case 'TIER_1_CARRIER':
-        return 'purple';
-      case 'DIRECT_SMPP':
         return 'info';
+      case 'DIRECT_SMPP':
+        return 'success';
       case 'AGGREGATOR':
         return 'warning';
       case 'CLOUD_GATEWAY':
@@ -238,9 +239,9 @@ export const ProviderManagementView: React.FC = () => {
         <div className="space-y-6">
           <Breadcrumbs
             items={[
-              { label: 'Operations', onClick: clearSelectedProvider },
-              { label: 'Providers', onClick: clearSelectedProvider },
-              { label: 'Loading telemetry...' },
+              { id: 'telecom', label: 'Telecom', onClick: clearSelectedProvider },
+              { id: 'providers', label: 'Providers', onClick: clearSelectedProvider },
+              { id: 'loading', label: 'Loading telemetry...' },
             ]}
           />
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -263,24 +264,23 @@ export const ProviderManagementView: React.FC = () => {
           <ProviderDetailsView
             provider={selectedProviderDetail}
             onBack={clearSelectedProvider}
-            onEdit={(p) => setEditingProvider(p)}
-            onStatusChange={(p) => handleOpenStatusModal(p)}
+            onEdit={() => setEditingProvider(selectedProviderDetail)}
+            onToggleStatus={() => handleOpenStatusModal(selectedProviderDetail)}
             onAddConnection={() => {
               setEditingConnectionTarget(null);
               setIsAddConnectionOpen(true);
             }}
-            onEditConnection={(_p, conn) => {
+            onEditConnection={(conn) => {
               setEditingConnectionTarget(conn);
               setIsAddConnectionOpen(true);
             }}
-            onInspectConnection={(_p, conn) => {
-              setInspectingConnectionTarget(conn);
-            }}
-            onToggleConnectionStatus={handleToggleConnectionStatus}
-            onTestConnectionPing={testConnection}
+            onToggleConnectionStatus={(connId, currStatus) =>
+              handleToggleConnectionStatus(connId, currStatus)
+            }
+            onInspectConnection={(conn) => setInspectingConnectionTarget(conn)}
+            onTestConnection={(connId) => testConnection(selectedProviderDetail.id, connId)}
           />
 
-          {/* Edit Modal */}
           <EditProviderModal
             isOpen={!!editingProvider}
             onClose={() => setEditingProvider(null)}
@@ -288,7 +288,6 @@ export const ProviderManagementView: React.FC = () => {
             onSubmit={handleEditSubmit}
           />
 
-          {/* Status Modal */}
           <ProviderStatusModal
             isOpen={!!statusTarget.provider}
             onClose={() => setStatusTarget({ provider: null, nextStatus: null })}
@@ -297,7 +296,6 @@ export const ProviderManagementView: React.FC = () => {
             onConfirm={handleStatusConfirm}
           />
 
-          {/* Add / Edit Connection Modal */}
           <ManageConnectionModal
             isOpen={isAddConnectionOpen}
             onClose={() => {
@@ -309,7 +307,6 @@ export const ProviderManagementView: React.FC = () => {
             onSubmit={handleConnectionSubmit}
           />
 
-          {/* Connection Details / Live Inspector Modal */}
           <ProviderConnectionDetailsModal
             isOpen={!!inspectingConnectionTarget}
             onClose={() => setInspectingConnectionTarget(null)}
@@ -321,14 +318,13 @@ export const ProviderManagementView: React.FC = () => {
       );
     }
 
-    // Invalid / missing provider ID route (e.g. /providers/invalid)
     return (
       <div className="space-y-6">
         <Breadcrumbs
           items={[
-            { label: 'Operations', onClick: clearSelectedProvider },
-            { label: 'Providers', onClick: clearSelectedProvider },
-            { label: 'Not Found' },
+            { id: 'telecom', label: 'Telecom', onClick: clearSelectedProvider },
+            { id: 'providers', label: 'Providers', onClick: clearSelectedProvider },
+            { id: 'not-found', label: 'Not Found' },
           ]}
         />
         <NotFoundState
@@ -341,11 +337,32 @@ export const ProviderManagementView: React.FC = () => {
     );
   }
 
+  // Country metadata mapping
+  const COUNTRY_INFO: Record<string, { name: string; flag: string }> = {
+    US: { name: 'United States', flag: '🇺🇸' },
+    GB: { name: 'United Kingdom', flag: '🇬🇧' },
+    DE: { name: 'Germany', flag: '🇩🇪' },
+    FR: { name: 'France', flag: '🇫🇷' },
+    JP: { name: 'Japan', flag: '🇯🇵' },
+    SG: { name: 'Singapore', flag: '🇸🇬' },
+    AU: { name: 'Australia', flag: '🇦🇺' },
+    IN: { name: 'India', flag: '🇮🇳' },
+    BR: { name: 'Brazil', flag: '🇧🇷' },
+    CA: { name: 'Canada', flag: '🇨🇦' },
+    ES: { name: 'Spain', flag: '🇪🇸' },
+    IT: { name: 'Italy', flag: '🇮🇹' },
+    NL: { name: 'Netherlands', flag: '🇳🇱' },
+    AE: { name: 'United Arab Emirates', flag: '🇦🇪' },
+    SA: { name: 'Saudi Arabia', flag: '🇸🇦' },
+    PK: { name: 'Pakistan', flag: '🇵🇰' },
+  };
+
   // Table Columns Definition
   const columns: ColumnDef<ProviderItem>[] = [
     {
       key: 'name',
       header: 'Carrier Provider',
+      className: 'w-[260px]',
       render: (provider) => {
         const initials = provider.name
           .split(' ')
@@ -354,24 +371,24 @@ export const ProviderManagementView: React.FC = () => {
           .join('');
 
         return (
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[var(--accent-blue-dim)] border border-[var(--border-subtle)] text-[var(--accent-blue)] flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+          <div className="flex items-center gap-2.5 max-w-[260px]">
+            <div className="w-8 h-8 rounded-lg bg-[var(--accent-blue-dim)] border border-[rgba(59,130,246,0.25)] text-[var(--accent-blue)] flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
               {initials}
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm text-[var(--text-primary)] hover:text-[var(--accent-blue)] transition-colors">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <span
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    selectProvider(provider.id);
+                  }}
+                  title={provider.description || provider.name}
+                  className="font-semibold text-xs text-[var(--text-primary)] hover:text-[var(--accent-blue)] transition-colors truncate cursor-pointer"
+                >
                   {provider.name}
                 </span>
-                <span className="font-mono text-[10px] text-[var(--text-muted)] bg-[var(--bg-card-hover)] px-1.5 py-0.5 rounded border border-[var(--border-subtle)]">
+                <span className="font-mono text-[9px] text-[var(--text-tertiary)] bg-[rgba(0,0,0,0.25)] px-1 py-0.2 rounded border border-[var(--glass-border)] shrink-0">
                   {provider.slug}
-                </span>
-              </div>
-              <div className="text-xs text-[var(--text-muted)] flex items-center gap-2 mt-0.5">
-                <span>{provider.organization || 'Global NOC'}</span>
-                <span>•</span>
-                <span className="font-mono text-[11px] text-[var(--text-secondary)]">
-                  {provider.countriesCovered.length} {provider.countriesCovered.length === 1 ? 'country' : 'countries'}
                 </span>
               </div>
             </div>
@@ -382,19 +399,29 @@ export const ProviderManagementView: React.FC = () => {
     },
     {
       key: 'type',
-      header: 'Provider Type',
-      render: (provider) => (
-        <Badge variant={getTypeBadgeVariant(provider.type)}>
-          {provider.type.replace(/_/g, ' ')}
-        </Badge>
-      ),
+      header: 'Type',
+      className: 'w-[110px]',
+      render: (provider) => {
+        const typeMap: Record<string, string> = {
+          TIER_1_CARRIER: 'Tier-1',
+          DIRECT_SMPP: 'Direct SMPP',
+          CLOUD_GATEWAY: 'Cloud Gateway',
+          AGGREGATOR: 'Aggregator',
+        };
+        return (
+          <Badge variant={getTypeBadgeVariant(provider.type)} size="sm">
+            {typeMap[provider.type] || provider.type}
+          </Badge>
+        );
+      },
       sortable: true,
     },
     {
       key: 'status',
       header: 'Status',
+      className: 'w-[85px]',
       render: (provider) => (
-        <Badge variant={getStatusBadgeVariant(provider.status)}>
+        <Badge variant={getStatusBadgeVariant(provider.status)} size="sm">
           {provider.status}
         </Badge>
       ),
@@ -402,56 +429,77 @@ export const ProviderManagementView: React.FC = () => {
     },
     {
       key: 'connections',
-      header: 'Connections',
+      header: 'Binds',
+      className: 'w-[115px]',
       render: (provider) => (
-        <div className="flex items-center gap-1.5 font-mono text-xs">
-          <Cable className="w-3.5 h-3.5 text-[var(--accent-blue)]" />
-          <span className="font-semibold text-[var(--text-primary)]">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setQuickModalTarget({ type: 'binds', provider });
+          }}
+          className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[rgba(59,130,246,0.08)] hover:bg-[rgba(59,130,246,0.2)] text-[var(--accent-blue)] border border-[rgba(59,130,246,0.25)] transition-all cursor-pointer font-mono text-xs whitespace-nowrap shadow-xs"
+          title="Click to view connection bind telemetry"
+        >
+          <Cable className="w-3.5 h-3.5 shrink-0" />
+          <span className="font-bold text-[var(--text-primary)]">
             {provider.connectionsCount}
           </span>
-          <span className="text-[var(--text-muted)]">
-            ({provider.healthyConnectionsCount} healthy)
+          <span className="text-[10px] text-[var(--accent-emerald)] font-semibold shrink-0">
+            ({provider.healthyConnectionsCount} ok)
           </span>
-        </div>
+        </button>
       ),
       sortable: true,
     },
     {
       key: 'health',
-      header: 'Health State',
+      header: 'Health',
+      className: 'w-[90px]',
       render: (provider) => (
-        <div className="flex items-center gap-2">
-          <Badge variant={getHealthBadgeVariant(provider.healthState)}>
-            {provider.healthState}
-          </Badge>
-        </div>
+        <Badge variant={getHealthBadgeVariant(provider.healthState)} size="sm">
+          {provider.healthState}
+        </Badge>
       ),
       sortable: true,
     },
     {
       key: 'countries',
-      header: 'Countries Covered',
+      header: 'Coverage',
+      className: 'w-[125px]',
       render: (provider) => (
-        <div className="flex flex-wrap items-center gap-1 max-w-[180px]">
-          {provider.countriesCovered.slice(0, 3).map((code) => (
-            <span
-              key={code}
-              className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-secondary)]"
-            >
-              {code}
-            </span>
-          ))}
-          {provider.countriesCovered.length > 3 && (
-            <span className="text-[10px] font-mono text-[var(--accent-blue)] px-1 py-0.5 font-medium">
-              +{provider.countriesCovered.length - 3}
-            </span>
-          )}
-        </div>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setQuickModalTarget({ type: 'coverage', provider });
+          }}
+          className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[rgba(0,0,0,0.25)] hover:bg-[rgba(59,130,246,0.15)] border border-[var(--glass-border)] hover:border-[rgba(59,130,246,0.3)] transition-all cursor-pointer whitespace-nowrap text-xs shadow-xs"
+          title="Click to view destination coverage"
+        >
+          <Globe className="w-3.5 h-3.5 text-[var(--accent-blue)] shrink-0" />
+          <div className="flex items-center gap-1 font-mono text-[11px] font-semibold text-[var(--text-secondary)] shrink-0">
+            {provider.countriesCovered.slice(0, 2).map((code) => (
+              <span
+                key={code}
+                className="text-[10px] px-1 py-0.2 rounded bg-[rgba(255,255,255,0.05)] border border-[var(--glass-border)]"
+              >
+                {code}
+              </span>
+            ))}
+            {provider.countriesCovered.length > 2 && (
+              <span className="text-[10px] text-[var(--accent-blue)] font-bold">
+                +{provider.countriesCovered.length - 2}
+              </span>
+            )}
+          </div>
+        </button>
       ),
     },
     {
       key: 'numbers',
-      header: 'Numbers Assigned',
+      header: 'DIDs',
+      className: 'w-[80px]',
       render: (provider) => (
         <span className="font-mono text-xs font-semibold text-[var(--text-primary)]">
           {formatNumber(provider.assignedNumbersCount)}
@@ -461,34 +509,19 @@ export const ProviderManagementView: React.FC = () => {
     },
     {
       key: 'volume',
-      header: 'Message Volume',
-      render: (provider) => (
-        <div>
-          <div className="font-mono text-xs font-semibold text-[var(--text-primary)]">
-            {formatNumber(provider.totalMessages)} SMS
-          </div>
-          {provider.deliveryRate !== undefined && (
-            <div className="text-[10px] font-mono text-[var(--accent-emerald)] mt-0.5">
-              {formatPercent(provider.deliveryRate)} DLR
-            </div>
-          )}
-        </div>
-      ),
-      sortable: true,
-    },
-    {
-      key: 'lastActivity',
-      header: 'Last Activity',
+      header: 'SMS Volume',
+      className: 'w-[100px]',
       render: (provider) => (
         <span className="font-mono text-xs text-[var(--text-secondary)]">
-          {provider.lastActivityAt ? formatRelativeTime(provider.lastActivityAt) : 'Never'}
+          {formatNumber(provider.totalMessages)}
         </span>
       ),
       sortable: true,
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: '',
+      className: 'w-[40px] text-right',
       render: (provider) => (
         <div className="flex items-center justify-end">
           <MoreActionsMenu
@@ -502,23 +535,15 @@ export const ProviderManagementView: React.FC = () => {
               },
               {
                 id: 'edit',
-                label: 'Edit Metadata',
+                label: 'Edit Configuration',
                 icon: <Edit2 className="w-3.5 h-3.5" />,
                 onClick: () => setEditingProvider(provider),
               },
               {
-                id: 'connections',
-                label: 'Manage Connections',
-                icon: <Cable className="w-3.5 h-3.5" />,
-                onClick: () => selectProvider(provider.id),
-              },
-              {
                 id: 'status',
-                label: provider.status === 'ACTIVE' ? 'Suspend Provider' : 'Activate Provider',
+                label: provider.status === 'ACTIVE' ? 'Suspend Carrier' : 'Activate Carrier',
                 icon: <Power className="w-3.5 h-3.5" />,
                 isDangerous: provider.status === 'ACTIVE',
-                confirmTitle: `Suspend Provider ${provider.name}`,
-                confirmMessage: `Are you sure you want to suspend carrier ${provider.name}? Routing traffic across all active binds will fail over or halt.`,
                 onClick: () => handleOpenStatusModal(provider),
               },
             ]}
@@ -529,14 +554,14 @@ export const ProviderManagementView: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 max-w-6xl mx-auto">
       {/* Toast Feedback */}
       {toastMessage && (
         <div
-          className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl border shadow-xl backdrop-blur-md flex items-center gap-2.5 text-xs font-semibold animate-in fade-in slide-in-from-bottom-3 ${
+          className={`fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl border shadow-xl backdrop-blur-md flex items-center gap-2 text-xs font-semibold animate-fade-in ${
             toastMessage.type === 'success'
-              ? 'bg-[var(--accent-emerald-dim)] border-[var(--accent-emerald)]/30 text-[var(--accent-emerald)]'
-              : 'bg-[var(--accent-rose-dim)] border-[var(--accent-rose)]/30 text-[var(--accent-rose)]'
+              ? 'bg-[var(--accent-emerald-dim)] border-[rgba(16,185,129,0.3)] text-[var(--accent-emerald)]'
+              : 'bg-[var(--accent-rose-dim)] border-[rgba(244,63,94,0.3)] text-[var(--accent-rose)]'
           }`}
           role="status"
         >
@@ -549,192 +574,183 @@ export const ProviderManagementView: React.FC = () => {
         </div>
       )}
 
-      {/* Page Header Standard Pattern */}
-      <PageHeader
-        title="Carrier Providers"
-        description="Enterprise interconnect directory, SMPP/HTTP connections, sanitized credential vaults, and real-time routing telemetry."
-        breadcrumbs={[{ label: 'Telecom' }, { label: 'Providers' }]}
-        primaryAction={{
-          label: 'Register Provider',
-          onClick: () => setIsCreateOpen(true),
-          icon: <Plus className="w-3.5 h-3.5" />,
-          id: 'btn-register-provider',
-        }}
-        secondaryActions={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={refresh}
-            isLoading={isRefreshing}
-            leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />}
-            aria-label="Refresh Providers telemetry"
-          >
-            Refresh
-          </Button>
-        }
-      />
+      {/* 1. Sleek Compact Header */}
+      <div className="p-5 glass-card border-[rgba(59,130,246,0.15)] relative overflow-hidden rounded-2xl">
+        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Badge variant="info" size="sm">
+                <Radio className="w-3.5 h-3.5 mr-1" />
+                Carrier Gateway Core
+              </Badge>
+              <span className="text-xs text-[var(--text-tertiary)] font-mono">
+                SMS Service Telecom Routing
+              </span>
+            </div>
+            <h1 className="text-xl font-bold text-[var(--text-primary)] tracking-tight">
+              Carrier Providers & SMPP Interconnects
+            </h1>
+            <p className="text-xs text-[var(--text-secondary)]">
+              Direct MNO interconnects, SMPP v3.4 sockets, and carrier failover routing trunks.
+            </p>
+          </div>
 
-      {/* KPI Cards Row (7 KPIs) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
-        {isLoading ? (
-          <>
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-          </>
-        ) : (
-          <>
-            <StatCard
-              title="Total Providers"
-              value={formatNumber(kpis.totalProviders)}
-              subtext="Interconnect directory"
-              icon={<Radio className="w-5 h-5" />}
-              iconBgColor="bg-[var(--accent-blue-dim)] text-[var(--accent-blue)]"
-              badgeText="Directory"
-              badgeVariant="info"
-            />
-            <StatCard
-              title="Active Providers"
-              value={formatNumber(kpis.activeProviders)}
-              subtext="Traffic routing enabled"
-              icon={<CheckCircle2 className="w-5 h-5" />}
-              iconBgColor="bg-[var(--accent-emerald-dim)] text-[var(--accent-emerald)]"
-              badgeText="Active"
-              badgeVariant="success"
-            />
-            <StatCard
-              title="Suspended"
-              value={formatNumber(kpis.suspendedProviders)}
-              subtext="Traffic routing paused"
-              icon={<ShieldAlert className="w-5 h-5" />}
-              iconBgColor="bg-[var(--accent-rose-dim)] text-[var(--accent-rose)]"
-              badgeText={kpis.suspendedProviders > 0 ? 'Review' : 'Zero'}
-              badgeVariant={kpis.suspendedProviders > 0 ? 'error' : 'neutral'}
-            />
-            <StatCard
-              title="Total Connections"
-              value={formatNumber(kpis.totalConnections)}
-              subtext="SMPP / HTTP binds"
-              icon={<Cable className="w-5 h-5" />}
-              iconBgColor="bg-[var(--accent-purple-dim)] text-[var(--accent-purple)]"
-              badgeText="Binds"
-              badgeVariant="purple"
-            />
-            <StatCard
-              title="Healthy Connections"
-              value={formatNumber(kpis.healthyConnections)}
-              subtext="Passing socket heartbeat"
-              icon={<Activity className="w-5 h-5" />}
-              iconBgColor="bg-[var(--accent-emerald-dim)] text-[var(--accent-emerald)]"
-              badgeText="Operational"
-              badgeVariant="success"
-            />
-            <StatCard
-              title="Assigned Numbers"
-              value={formatNumber(kpis.totalAssignedNumbers)}
-              subtext="Allocated DID inventory"
-              icon={<Hash className="w-5 h-5" />}
-              iconBgColor="bg-[var(--accent-blue-dim)] text-[var(--accent-blue)]"
-              badgeText="Inventory"
-              badgeVariant="info"
-            />
-            <StatCard
-              title="Traffic Volume"
-              value={formatNumber(kpis.currentTrafficVolume)}
-              subtext="Aggregated SMS processed"
-              icon={<Send className="w-5 h-5" />}
-              iconBgColor="bg-[var(--accent-purple-dim)] text-[var(--accent-purple)]"
-              badgeText="Throughput"
-              badgeVariant="purple"
-            />
-          </>
-        )}
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refresh}
+              isLoading={isRefreshing}
+              className="text-xs gap-1.5"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setIsCreateOpen(true)}
+              className="text-xs gap-1.5"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Register Carrier</span>
+            </Button>
+          </div>
+        </div>
       </div>
 
-      {/* Filter Bar */}
-      <FilterBar
-        searchPlaceholder="Search provider by name, code, or NOC contact..."
-        searchValue={filterState.search}
-        onSearchChange={(val) => updateFilter('search', val)}
-        filters={[
-          {
-            key: 'status',
-            label: 'Status',
-            value: filterState.status,
-            options: [
-              { label: 'All Statuses', value: 'ALL' },
-              { label: 'Active', value: 'ACTIVE' },
-              { label: 'Inactive', value: 'INACTIVE' },
-              { label: 'Suspended', value: 'SUSPENDED' },
-            ],
-            onChange: (val) => updateFilter('status', val),
-          },
-          {
-            key: 'type',
-            label: 'Provider Type',
-            value: filterState.type,
-            options: [
-              { label: 'All Types', value: 'ALL' },
-              { label: 'Tier-1 Carrier', value: 'TIER_1_CARRIER' },
-              { label: 'Direct SMPP', value: 'DIRECT_SMPP' },
-              { label: 'Aggregator', value: 'AGGREGATOR' },
-              { label: 'Cloud Gateway', value: 'CLOUD_GATEWAY' },
-            ],
-            onChange: (val) => updateFilter('type', val),
-          },
-          {
-            key: 'healthState',
-            label: 'Health State',
-            value: filterState.healthState,
-            options: [
-              { label: 'All Health States', value: 'ALL' },
-              { label: 'Healthy', value: 'HEALTHY' },
-              { label: 'Degraded', value: 'DEGRADED' },
-              { label: 'Down / Critical', value: 'DOWN' },
-            ],
-            onChange: (val) => updateFilter('healthState', val),
-          },
-          {
-            key: 'country',
-            label: 'Coverage',
-            value: filterState.country,
-            options: [
-              { label: 'All Countries', value: 'ALL' },
-              { label: 'United States (US)', value: 'US' },
-              { label: 'United Kingdom (GB)', value: 'GB' },
-              { label: 'Germany (DE)', value: 'DE' },
-              { label: 'France (FR)', value: 'FR' },
-              { label: 'Japan (JP)', value: 'JP' },
-              { label: 'Singapore (SG)', value: 'SG' },
-              { label: 'Australia (AU)', value: 'AU' },
-              { label: 'India (IN)', value: 'IN' },
-              { label: 'Brazil (BR)', value: 'BR' },
-            ],
-            onChange: (val) => updateFilter('country', val),
-          },
-          {
-            key: 'sortBy',
-            label: 'Sort By',
-            value: filterState.sortBy,
-            options: [
-              { label: 'Message Volume', value: 'volume' },
-              { label: 'Provider Name', value: 'name' },
-              { label: 'Registration Date', value: 'createdAt' },
-              { label: 'Connection Count', value: 'connections' },
-              { label: 'Assigned Numbers', value: 'numbers' },
-              { label: 'Health Status', value: 'health' },
-            ],
-            onChange: (val) => updateFilter('sortBy', val as ProvidersSortField),
-          },
-        ]}
-        onReset={resetFilters}
-      />
+      {/* 2. Compact 4-Card Telemetry Row (Replaced 7 bulky cards) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="glass-card p-4 rounded-xl border border-[var(--glass-border)] flex items-center justify-between">
+          <div>
+            <div className="text-[10px] text-[var(--text-tertiary)] uppercase font-semibold tracking-wider">
+              Total Gateways
+            </div>
+            <div className="text-2xl font-bold font-mono text-[var(--text-primary)] mt-1">
+              {kpis.totalProviders}
+            </div>
+            <div className="text-[11px] text-[var(--accent-emerald)] font-medium mt-0.5">
+              {kpis.activeProviders} Routing Active
+            </div>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-[var(--accent-blue-dim)] text-[var(--accent-blue)] flex items-center justify-center">
+            <Radio className="w-5 h-5" />
+          </div>
+        </div>
 
-      {/* Main Table / State View */}
+        <div className="glass-card p-4 rounded-xl border border-[var(--glass-border)] flex items-center justify-between">
+          <div>
+            <div className="text-[10px] text-[var(--text-tertiary)] uppercase font-semibold tracking-wider">
+              Active Interconnect Binds
+            </div>
+            <div className="text-2xl font-bold font-mono text-[var(--accent-emerald)] mt-1">
+              {kpis.healthyConnections} / {kpis.totalConnections}
+            </div>
+            <div className="text-[11px] text-[var(--text-tertiary)] mt-0.5">
+              Passing Heartbeat
+            </div>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-[var(--accent-emerald-dim)] text-[var(--accent-emerald)] flex items-center justify-center">
+            <Cable className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="glass-card p-4 rounded-xl border border-[var(--glass-border)] flex items-center justify-between">
+          <div>
+            <div className="text-[10px] text-[var(--text-tertiary)] uppercase font-semibold tracking-wider">
+              Assigned Numbers
+            </div>
+            <div className="text-2xl font-bold font-mono text-[var(--text-primary)] mt-1">
+              {formatNumber(kpis.totalAssignedNumbers)}
+            </div>
+            <div className="text-[11px] text-[var(--accent-blue)] mt-0.5">
+              Active DID Inventory
+            </div>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-[rgba(59,130,246,0.1)] text-[var(--accent-blue)] flex items-center justify-center">
+            <Hash className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="glass-card p-4 rounded-xl border border-[var(--glass-border)] flex items-center justify-between">
+          <div>
+            <div className="text-[10px] text-[var(--text-tertiary)] uppercase font-semibold tracking-wider">
+              Carrier Throughput
+            </div>
+            <div className="text-2xl font-bold font-mono text-purple-400 mt-1">
+              {formatNumber(kpis.currentTrafficVolume)}
+            </div>
+            <div className="text-[11px] text-[var(--accent-emerald)] mt-0.5">
+              SMS Processed
+            </div>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
+            <Send className="w-5 h-5" />
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Streamlined 1-Line Filter & Search Bar */}
+      <div className="glass-card p-3 rounded-xl border border-[var(--glass-border)] flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3 text-xs flex-wrap">
+        {/* Search */}
+        <div className="relative flex-1 min-w-[220px] max-w-md">
+          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]" />
+          <input
+            type="text"
+            placeholder="Search provider, code, or country..."
+            value={filterState.search}
+            onChange={(e) => updateFilter('search', e.target.value)}
+            className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent-blue)]"
+          />
+        </div>
+
+        {/* Quick Type Tabs */}
+        <div className="flex items-center gap-1 overflow-x-auto pb-1 xl:pb-0 shrink-0">
+          {[
+            { id: 'ALL', label: 'All Types' },
+            { id: 'TIER_1_CARRIER', label: 'Tier-1' },
+            { id: 'DIRECT_SMPP', label: 'SMPP' },
+            { id: 'CLOUD_GATEWAY', label: 'Cloud' },
+            { id: 'AGGREGATOR', label: 'Aggregator' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => updateFilter('type', tab.id)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
+                filterState.type === tab.id
+                  ? 'bg-[var(--accent-blue)] text-white shadow-xs font-semibold'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg)]'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Status Dropdown & Reset */}
+        <div className="flex items-center gap-2">
+          <select
+            value={filterState.status}
+            onChange={(e) => updateFilter('status', e.target.value)}
+            className="px-2.5 py-1.5 rounded-lg bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] cursor-pointer"
+          >
+            <option value="ALL">All Statuses</option>
+            <option value="ACTIVE">Active Only</option>
+            <option value="SUSPENDED">Suspended Only</option>
+          </select>
+
+          {(filterState.search || filterState.type !== 'ALL' || filterState.status !== 'ALL') && (
+            <button
+              onClick={resetFilters}
+              className="px-2 py-1 text-xs text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* 4. Main Carriers Table */}
       {error ? (
         <ErrorState
           title="Failed to Load Providers"
@@ -744,31 +760,32 @@ export const ProviderManagementView: React.FC = () => {
       ) : providers.length === 0 && !isLoading ? (
         <EmptyState
           title="No providers found"
-          description="No carrier providers match your active search, category, or health filter criteria."
+          description="No carrier providers match your active search or filter criteria."
           icon={<Radio className="w-6 h-6" />}
           actionText="Reset Filters"
           onAction={resetFilters}
         />
       ) : (
-        <div className="space-y-4">
+        <div className="glass-card rounded-2xl border border-[var(--glass-border)] overflow-hidden">
           <Table
             columns={columns}
             data={providers}
             keyExtractor={(p) => p.id}
             isLoading={isLoading}
             onRowClick={(p) => selectProvider(p.id)}
-            emptyMessage="No providers available in directory"
+            emptyMessage="No carrier gateways configured"
           />
 
-          {/* Pagination */}
           {totalCount > filterState.limit && (
-            <Pagination
-              currentPage={filterState.page}
-              totalPages={totalPages}
-              onPageChange={(page) => updateFilter('page', page)}
-              pageSize={filterState.limit}
-              totalItems={totalCount}
-            />
+            <div className="p-3 border-t border-[var(--glass-border)] bg-[rgba(0,0,0,0.1)]">
+              <Pagination
+                currentPage={filterState.page}
+                totalPages={totalPages}
+                onPageChange={(page) => updateFilter('page', page)}
+                pageSize={filterState.limit}
+                totalItems={totalCount}
+              />
+            </div>
           )}
         </div>
       )}
@@ -796,6 +813,145 @@ export const ProviderManagementView: React.FC = () => {
         targetStatus={statusTarget.nextStatus}
         onConfirm={handleStatusConfirm}
       />
+
+      {/* Quick Binds / Coverage Inspection Modal */}
+      {quickModalTarget && (
+        <Modal
+          isOpen={!!quickModalTarget}
+          onClose={() => setQuickModalTarget(null)}
+          title={
+            quickModalTarget.type === 'binds'
+              ? `${quickModalTarget.provider.name} • Connection Sockets`
+              : `${quickModalTarget.provider.name} • Destination Coverage`
+          }
+          maxWidth="md"
+        >
+          {quickModalTarget.type === 'binds' ? (
+            <div className="space-y-4">
+              <div className="p-3 rounded-xl bg-[rgba(59,130,246,0.08)] border border-[rgba(59,130,246,0.2)] flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold text-[var(--text-primary)]">
+                    Carrier Trunk: {quickModalTarget.provider.name}
+                  </div>
+                  <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">
+                    {quickModalTarget.provider.connectionsCount} Configured Binds • {quickModalTarget.provider.healthyConnectionsCount} Passing Heartbeat
+                  </div>
+                </div>
+                <Badge variant={getHealthBadgeVariant(quickModalTarget.provider.healthState)} size="sm">
+                  {quickModalTarget.provider.healthState}
+                </Badge>
+              </div>
+
+              <div className="space-y-2">
+                <div className="text-xs font-semibold text-[var(--text-secondary)]">
+                  Active Interconnect Binds:
+                </div>
+                {Array.from({ length: quickModalTarget.provider.connectionsCount || 1 }).map((_, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)] flex items-center justify-between text-xs font-mono"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Cable className="w-3.5 h-3.5 text-[var(--accent-blue)]" />
+                      <span className="font-semibold text-[var(--text-primary)]">
+                        {quickModalTarget.provider.slug}-bind-0{idx + 1}
+                      </span>
+                      <span className="text-[10px] text-[var(--text-tertiary)]">
+                        SMPP v3.4 (TRX) :2775
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-[var(--accent-emerald)] font-bold bg-[var(--accent-emerald-dim)] px-2 py-0.5 rounded border border-[rgba(16,185,129,0.2)]">
+                      CONNECTED
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-[var(--glass-border)]">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setQuickModalTarget(null)}
+                >
+                  Close
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    const id = quickModalTarget.provider.id;
+                    setQuickModalTarget(null);
+                    selectProvider(id);
+                  }}
+                >
+                  <Eye className="w-3.5 h-3.5 mr-1" />
+                  Open Full Carrier Telemetry
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="p-3 rounded-xl bg-[rgba(59,130,246,0.08)] border border-[rgba(59,130,246,0.2)] flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold text-[var(--text-primary)]">
+                    {quickModalTarget.provider.name}
+                  </div>
+                  <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">
+                    {quickModalTarget.provider.countriesCovered.length} Covered Destination Countries
+                  </div>
+                </div>
+                <Badge variant="info" size="sm">
+                  Global MNO Routing
+                </Badge>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-1">
+                {quickModalTarget.provider.countriesCovered.map((code) => {
+                  const info = COUNTRY_INFO[code] || { name: code, flag: '🌐' };
+                  return (
+                    <div
+                      key={code}
+                      className="p-2.5 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)] flex items-center gap-2"
+                    >
+                      <span className="text-base shrink-0">{info.flag}</span>
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-[var(--text-primary)] truncate">
+                          {info.name}
+                        </div>
+                        <div className="text-[10px] font-mono text-[var(--text-tertiary)]">
+                          ISO: {code}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-[var(--glass-border)]">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setQuickModalTarget(null)}
+                >
+                  Close
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    const id = quickModalTarget.provider.id;
+                    setQuickModalTarget(null);
+                    selectProvider(id);
+                  }}
+                >
+                  <Eye className="w-3.5 h-3.5 mr-1" />
+                  Open Full Carrier Telemetry
+                </Button>
+              </div>
+            </div>
+          )}
+        </Modal>
+      )}
     </div>
   );
 };

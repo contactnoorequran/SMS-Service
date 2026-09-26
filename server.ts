@@ -43,7 +43,7 @@ async function startServer() {
   }
 
   const server = app.listen(PORT, '0.0.0.0', () => {
-    logger.info(`🚀 SMS Management Platform server listening on port ${PORT} [${env.NODE_ENV}]`);
+    logger.info(`🚀 SMS Service server listening on port ${PORT} [${env.NODE_ENV}]`);
     logger.info(`👉 API Health Endpoint: http://localhost:${PORT}/api/health`);
   });
 

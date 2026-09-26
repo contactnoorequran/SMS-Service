@@ -113,34 +113,34 @@ export const ManagerDetailsView: React.FC<ManagerDetailsViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Header & Breadcrumbs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[var(--glass-border)]">
+        <div className="min-w-0 flex-1 space-y-2">
           <Breadcrumbs
             items={[
-              { label: 'Management', onClick: onBack },
-              { label: 'Managers', onClick: onBack },
-              { label: manager.name },
+              { id: 'mgmt', label: 'Management', onClick: onBack },
+              { id: 'managers', label: 'Managers', onClick: onBack },
+              { id: 'manager-name', label: manager.name },
             ]}
           />
-          <div className="flex items-center gap-3 mt-2">
+          <div className="flex items-center gap-3 flex-wrap min-w-0">
             <button
               onClick={onBack}
-              className="p-1.5 rounded-lg bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              className="p-1.5 rounded-lg bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors shrink-0 cursor-pointer"
               aria-label="Back to Managers directory"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <h1 className="text-xl font-bold text-[var(--text-primary)] tracking-tight">
+            <h1 className="text-xl font-bold text-[var(--text-primary)] tracking-tight truncate max-w-sm sm:max-w-md">
               {manager.name}
             </h1>
-            <Badge variant={getStatusBadgeVariant(manager.status)} size="md">
+            <Badge variant={getStatusBadgeVariant(manager.status)} size="md" className="shrink-0">
               {manager.status}
             </Badge>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
           <Button variant="secondary" size="sm" onClick={() => onEdit(manager)}>
             <Edit2 className="w-3.5 h-3.5 mr-1.5" />
             Edit Profile

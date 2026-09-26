@@ -267,6 +267,7 @@ export const ManagerManagementView: React.FC = () => {
     {
       key: 'name',
       header: 'Manager',
+      className: 'w-[230px]',
       render: (manager) => {
         const initials = manager.name
           .split(' ')
@@ -299,18 +300,9 @@ export const ManagerManagementView: React.FC = () => {
       sortable: true,
     },
     {
-      key: 'email',
-      header: 'Email',
-      render: (manager) => (
-        <span className="font-mono text-xs text-[var(--text-secondary)]">
-          {manager.email}
-        </span>
-      ),
-      sortable: true,
-    },
-    {
       key: 'department',
       header: 'Department',
+      className: 'w-[140px]',
       render: (manager) => (
         <div className="flex items-center gap-1.5 text-xs text-[var(--text-primary)]">
           <Building className="w-3.5 h-3.5 text-[var(--accent-blue)] shrink-0" />
@@ -322,6 +314,7 @@ export const ManagerManagementView: React.FC = () => {
     {
       key: 'status',
       header: 'Status',
+      className: 'w-[100px]',
       render: (manager) => (
         <Badge variant={getStatusBadgeVariant(manager.status)} size="sm">
           {manager.status}
@@ -332,6 +325,7 @@ export const ManagerManagementView: React.FC = () => {
     {
       key: 'agents',
       header: 'Agents',
+      className: 'w-[80px]',
       render: (manager) => (
         <span className="font-mono text-xs font-semibold text-[var(--text-primary)]">
           {manager.assignedAgentsCount}
@@ -342,6 +336,7 @@ export const ManagerManagementView: React.FC = () => {
     {
       key: 'capacity',
       header: 'Capacity',
+      className: 'w-[160px]',
       render: (manager) => (
         <div className="w-36">
           <CapacityIndicator
@@ -357,6 +352,7 @@ export const ManagerManagementView: React.FC = () => {
     {
       key: 'available',
       header: 'Available Slots',
+      className: 'w-[120px]',
       render: (manager) => (
         <span
           className={`font-mono text-xs font-bold ${
@@ -371,6 +367,7 @@ export const ManagerManagementView: React.FC = () => {
     {
       key: 'createdAt',
       header: 'Created',
+      className: 'w-[110px]',
       render: (manager) => (
         <span className="font-mono text-xs text-[var(--text-secondary)]">
           {formatDate(manager.createdAt)}
@@ -380,7 +377,8 @@ export const ManagerManagementView: React.FC = () => {
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: '',
+      className: 'w-[40px] text-right',
       render: (manager) => (
         <div className="flex items-center justify-end">
           <MoreActionsMenu

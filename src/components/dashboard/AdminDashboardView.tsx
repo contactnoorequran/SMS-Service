@@ -71,13 +71,6 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         {/* Ambient background glow */}
         <div className="absolute inset-0 bg-gradient-to-r from-[rgba(59,130,246,0.05)] via-transparent to-[rgba(139,92,246,0.04)] pointer-events-none" />
 
-        {/* Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="relative flex items-center gap-1.5 text-xs text-[var(--text-tertiary)] mb-2">
-          <span>Platform</span>
-          <ChevronRight className="w-3.5 h-3.5 opacity-60" />
-          <span className="text-[var(--text-primary)] font-medium">Dashboard</span>
-        </nav>
-
         <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-5">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">

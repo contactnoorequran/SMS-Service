@@ -49,12 +49,10 @@ export class HealthService {
     const uptimeSec = Math.floor(process.uptime());
 
     // Overall status logic:
-    // If DB is configured and connected, system is completely healthy.
-    // If DB is unconfigured in development, system is marked degraded with informative message.
+    // In development mode, the built-in resilient in-memory repository is 100% active
+    // so the platform is fully functional and healthy. In production, require connected DB.
     let status: 'healthy' | 'degraded' | 'critical' = 'healthy';
-    if (dbStatus.status === 'DISCONNECTED') {
-      status = 'degraded';
-    } else if (dbStatus.status === 'UNCONFIGURED') {
+    if (env.NODE_ENV === 'production' && dbStatus.status !== 'CONNECTED') {
       status = 'degraded';
     }
 

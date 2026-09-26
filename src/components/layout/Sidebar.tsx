@@ -28,14 +28,17 @@ import {
   BarChart3,
   ShieldCheck,
   Settings,
+  Search,
+  Plus,
   X,
   Shield,
   ChevronLeft,
   ChevronRight,
+  CheckCircle2,
 } from 'lucide-react';
 import {
-  PLATFORM_NAV_ITEMS,
-  PLATFORM_NAV_GROUPS,
+  getNavGroupsForRole,
+  getNavItemsForRole,
   NavItem,
   NavGroup,
 } from '../../types/navigation';
@@ -68,7 +71,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Dynamic notification/attention counts (only display when requiring attention)
   const attentionCounts: Record<string, number> = {
     messages: 12,
+    traffic: 12,
     'payment-requests': 3,
+    'manager-approvals': 3,
     notifications: 2,
   };
 
@@ -132,10 +137,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
         return <ShieldCheck className={className} />;
       case 'Settings':
         return <Settings className={className} />;
+      case 'Search':
+        return <Search className={className} />;
+      case 'Plus':
+        return <Plus className={className} />;
+      case 'CheckCircle2':
+        return <CheckCircle2 className={className} />;
       default:
         return <Layers className={className} />;
     }
   };
+
+  const navGroups = getNavGroupsForRole(role);
+  const navItems = getNavItemsForRole(role);
 
   // Permission-aware filtering:
   const isItemVisible = (item: NavItem): boolean => {
@@ -149,10 +163,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return true;
   };
 
-  const visibleItems = PLATFORM_NAV_ITEMS.filter(isItemVisible);
+  const visibleItems = navItems.filter(isItemVisible);
 
   // Group visible items by their respective NavGroup
-  const itemsByGroup = PLATFORM_NAV_GROUPS.reduce<Record<NavGroup, NavItem[]>>((acc, group) => {
+  const itemsByGroup = navGroups.reduce<Record<NavGroup, NavItem[]>>((acc, group) => {
     acc[group] = visibleItems.filter((item) => item.group === group);
     return acc;
   }, {} as Record<NavGroup, NavItem[]>);
@@ -168,11 +182,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {!isCollapsed && (
             <div className="min-w-0">
               <h1 className="text-xs font-bold text-[var(--text-primary)] tracking-tight uppercase">
-                Telecom Ops
+                SMS Service
               </h1>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-emerald)] animate-pulse-dot" />
-                <span className="text-[10px] text-[var(--text-tertiary)] font-mono">Carrier Online</span>
+                <span className="text-[10px] text-[var(--text-tertiary)] font-mono">Online</span>
               </div>
             </div>
           )}
@@ -214,7 +228,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Navigation Sections */}
       <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-4">
-        {PLATFORM_NAV_GROUPS.map((group) => {
+        {navGroups.map((group) => {
           const groupItems = itemsByGroup[group];
           if (!groupItems || groupItems.length === 0) return null;
 
@@ -248,7 +262,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         onSelectTab(item.id);
                         onClose();
                       }}
-                      className={`w-full flex items-center gap-2.5 rounded-xl text-xs font-medium transition-all text-left cursor-pointer ${
+                      className={`w-full flex items-center gap-2.5 rounded-xl text-xs font-medium transition-all text-left cursor-pointer min-w-0 ${
                         isCollapsed ? 'justify-center p-2.5' : 'px-3 py-2'
                       } ${
                         isSelected
@@ -256,19 +270,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg)] border border-transparent'
                       }`}
                     >
-                      <span className={isSelected ? 'text-[var(--accent-blue)]' : 'text-[var(--text-tertiary)]'}>
+                      <span className={`shrink-0 ${isSelected ? 'text-[var(--accent-blue)]' : 'text-[var(--text-tertiary)]'}`}>
                         {renderIcon(item.iconName)}
                       </span>
 
                       {!isCollapsed && (
                         <>
-                          <span className="truncate flex-1">{item.label}</span>
+                          <span className="min-w-0 flex-1 truncate whitespace-nowrap">{item.label}</span>
                           {/* Show badge only when there is something requiring attention */}
                           {badgeCount !== undefined && badgeCount > 0 && (
                             <Badge
                               variant={item.id === 'notifications' ? 'warning' : 'info'}
                               size="sm"
-                              className="font-mono text-[10px] px-1.5 py-0"
+                              className="font-mono text-[10px] px-1.5 py-0 shrink-0"
                             >
                               {badgeCount}
                             </Badge>

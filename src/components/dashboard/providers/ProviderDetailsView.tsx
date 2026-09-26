@@ -241,39 +241,41 @@ export const ProviderDetailsView: React.FC<ProviderDetailsViewProps> = ({
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl mx-auto">
       {/* Top Header & Breadcrumbs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[var(--glass-border)]">
+        <div className="min-w-0 flex-1 space-y-2">
           <Breadcrumbs
             items={[
-              { label: 'Operations', onClick: onBack },
-              { label: 'Providers', onClick: onBack },
-              { label: provider.name },
+              { id: 'telecom', label: 'Telecom', onClick: onBack },
+              { id: 'providers', label: 'Providers', onClick: onBack },
+              { id: 'carrier', label: provider.name },
             ]}
           />
-          <div className="flex items-center gap-3 mt-2">
+          <div className="flex items-center gap-3 flex-wrap min-w-0">
             <button
               onClick={onBack}
-              className="p-1.5 rounded-lg bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              className="p-1.5 rounded-lg bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors shrink-0 cursor-pointer"
               aria-label="Back to Providers directory"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <h1 className="text-xl font-bold text-[var(--text-primary)] tracking-tight">
+            <h1 className="text-xl font-bold text-[var(--text-primary)] tracking-tight truncate max-w-sm sm:max-w-md">
               {provider.name}
             </h1>
-            <Badge variant={getStatusBadgeVariant(provider.status)} size="md">
-              {provider.status}
-            </Badge>
-            <Badge variant="purple" size="md">
-              {provider.type}
-            </Badge>
+            <div className="flex items-center gap-2 shrink-0">
+              <Badge variant={getStatusBadgeVariant(provider.status)} size="md">
+                {provider.status}
+              </Badge>
+              <Badge variant="purple" size="md">
+                {provider.type}
+              </Badge>
+            </div>
           </div>
         </div>
 
         {/* Top Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
           <Button variant="secondary" size="sm" onClick={() => onAddConnection(provider)}>
             <Plus className="w-3.5 h-3.5 mr-1.5 text-[var(--accent-blue)]" />
             Add Connection Bind

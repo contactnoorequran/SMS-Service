@@ -66,23 +66,23 @@ export const UserProfileMenu: React.FC = () => {
         <button
           id="btn-user-profile-menu"
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2.5 p-1.5 pl-2 pr-2.5 rounded-xl border border-[var(--glass-border)] hover:bg-[var(--glass-bg)] hover:border-[var(--glass-border-hover)] transition-all text-left"
+          className="flex items-center gap-2 p-1.5 pl-2 pr-2.5 rounded-xl border border-[var(--glass-border)] hover:bg-[var(--glass-bg)] hover:border-[var(--glass-border-hover)] transition-all text-left cursor-pointer shrink-0"
         >
           {/* Avatar */}
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-[0_0_12px_var(--accent-blue-dim)]">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-xs shrink-0">
             {getInitials()}
           </div>
 
           <div className="hidden sm:block min-w-0">
-            <div className="text-xs font-semibold text-[var(--text-primary)] leading-tight truncate">
+            <div className="text-xs font-semibold text-[var(--text-primary)] leading-tight truncate max-w-[100px] md:max-w-[130px]">
               {user.firstName ? `${user.firstName} ${user.lastName || ''}` : user.email}
             </div>
-            <div className="text-[11px] text-[var(--text-secondary)] leading-tight font-medium">
+            <div className="text-[10px] text-[var(--text-secondary)] leading-tight font-medium truncate max-w-[100px] md:max-w-[130px]">
               {user.role.displayName}
             </div>
           </div>
 
-          <ChevronDown className="w-3.5 h-3.5 text-[var(--text-tertiary)] ml-0.5" />
+          <ChevronDown className="w-3.5 h-3.5 text-[var(--text-tertiary)] ml-0.5 shrink-0" />
         </button>
 
         {/* Dropdown Menu */}

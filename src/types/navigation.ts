@@ -1,12 +1,27 @@
 import { UserRole } from './auth';
 
 export type NavGroup =
+  // Common / Agent groups
+  | 'Main'
+  | 'SMS Module'
+  | 'SMS Test Panel'
+  | 'Users'
+  | 'Stats & Finance'
+  | 'Account'
+  // Super Admin groups
   | 'Overview'
-  | 'Management'
-  | 'Telecom'
-  | 'Messaging'
-  | 'Finance'
-  | 'Platform';
+  | 'Telecom & Gateways'
+  | 'User Directory'
+  | 'Inventory & Routing'
+  | 'Financials & CDR'
+  | 'System'
+  // Manager groups
+  | 'Team Management'
+  | 'Operations & Approvals'
+  // Client groups
+  | 'My SMS Numbers'
+  | 'API & Webhooks'
+  | 'Billing';
 
 export interface NavItem {
   id: string;
@@ -22,271 +37,506 @@ export interface NavItem {
   targetTab?: string;
 }
 
-export const PLATFORM_NAV_GROUPS: NavGroup[] = [
-  'Overview',
-  'Management',
-  'Telecom',
-  'Messaging',
-  'Finance',
-  'Platform',
+// ─────────────────────────────────────────────────────────────────────────────
+// 1. AGENT NAVIGATION (IMS SMS Portal)
+// ─────────────────────────────────────────────────────────────────────────────
+export const AGENT_NAV_GROUPS: NavGroup[] = [
+  'Main',
+  'SMS Module',
+  'SMS Test Panel',
+  'Users',
+  'Stats & Finance',
+  'Account',
 ];
 
-export const PLATFORM_NAV_ITEMS: NavItem[] = [
-  // 1. Overview
+export const AGENT_NAV_ITEMS: NavItem[] = [
   {
     id: 'dashboard',
     label: 'Dashboard',
-    group: 'Overview',
+    group: 'Main',
     iconName: 'LayoutDashboard',
     status: 'active',
-    description: 'Executive overview, real-time telemetry, and platform status',
+    description: 'SMS earnings overview, volume chart and top ranges',
     targetTab: 'dashboard',
-  },
-
-  // 2. Management
-  {
-    id: 'users',
-    label: 'Users',
-    group: 'Management',
-    iconName: 'Users',
-    status: 'active',
-    requiredPermission: 'users.view',
-    allowedRoles: ['SUPER_ADMIN', 'MANAGER', 'AGENT'],
-    description: 'User directory, security roles, and permission assignments',
-    targetTab: 'users',
+    allowedRoles: ['AGENT'],
   },
   {
-    id: 'managers',
-    label: 'Managers',
-    group: 'Management',
-    iconName: 'UserCheck',
-    status: 'active',
-    requiredPermission: 'users.view',
-    allowedRoles: ['SUPER_ADMIN'],
-    description: 'Manager directory, capacity, and agent supervision',
-    targetTab: 'managers',
-  },
-  {
-    id: 'agents',
-    label: 'Agents',
-    group: 'Management',
-    iconName: 'UserCog',
-    status: 'active',
-    requiredPermission: 'agents.view',
-    allowedRoles: ['SUPER_ADMIN', 'MANAGER', 'AGENT'],
-    description: 'Agent directory, commission rates, and client portfolio allocations',
-    targetTab: 'agents',
-  },
-  {
-    id: 'clients',
-    label: 'Clients',
-    group: 'Management',
-    iconName: 'Building2',
-    status: 'active',
-    requiredPermission: 'clients.view',
-    allowedRoles: ['SUPER_ADMIN', 'MANAGER', 'AGENT', 'CLIENT'],
-    description: 'Enterprise client tenants, balances, and API credentials',
-    targetTab: 'clients',
-  },
-
-  // 3. Telecom
-  {
-    id: 'providers',
-    label: 'Providers',
-    group: 'Telecom',
-    iconName: 'Radio',
-    status: 'active',
-    requiredPermission: 'providers.view',
-    allowedRoles: ['SUPER_ADMIN', 'MANAGER'],
-    description: 'Carrier gateways and routing priority',
-    targetTab: 'providers',
-  },
-  {
-    id: 'connections',
-    label: 'Connections',
-    group: 'Telecom',
-    iconName: 'Cable',
-    status: 'active',
-    requiredPermission: 'providers.view',
-    allowedRoles: ['SUPER_ADMIN', 'MANAGER'],
-    description: 'HTTP REST & SMPP v3.4 carrier trunks',
-    targetTab: 'providers',
-  },
-  {
-    id: 'countries',
-    label: 'Countries',
-    group: 'Telecom',
-    iconName: 'Globe',
-    status: 'active',
-    requiredPermission: 'numbers.view',
-    description: 'International dialing codes and destination routing',
-    targetTab: 'numbers',
-  },
-  {
-    id: 'operators',
-    label: 'Operators',
-    group: 'Telecom',
-    iconName: 'Server',
-    status: 'active',
-    requiredPermission: 'numbers.view',
-    description: 'Mobile network operators and carrier MCC/MNC codes',
-    targetTab: 'numbers',
-  },
-  {
-    id: 'ranges',
-    label: 'Number Ranges',
-    group: 'Telecom',
+    id: 'sms-ranges',
+    label: 'SMS Ranges',
+    group: 'SMS Module',
     iconName: 'Layers',
     status: 'active',
-    requiredPermission: 'numbers.view',
-    description: 'E.164 prefixes and allocated wholesale blocks',
-    targetTab: 'numbers',
+    description: 'Browse available prefixes, request free ranges or ask support',
+    targetTab: 'sms-ranges',
+    allowedRoles: ['AGENT'],
   },
   {
-    id: 'numbers',
-    label: 'Numbers',
-    group: 'Telecom',
+    id: 'cli-search',
+    label: 'CLI Search',
+    group: 'SMS Module',
+    iconName: 'Search',
+    status: 'active',
+    description: 'Search by sender CLI or message text across active ranges',
+    targetTab: 'cli-search',
+    allowedRoles: ['AGENT'],
+  },
+  {
+    id: 'my-numbers',
+    label: 'My Numbers',
+    group: 'SMS Module',
     iconName: 'Hash',
     status: 'active',
-    requiredPermission: 'numbers.view',
-    description: 'Inventory of phone numbers and carrier pools',
-    targetTab: 'numbers',
+    description: 'Your number inventory: allocate, unassign, or return numbers',
+    targetTab: 'my-numbers',
+    allowedRoles: ['AGENT'],
   },
   {
-    id: 'assignments',
-    label: 'Assignments',
-    group: 'Telecom',
-    iconName: 'UserCheck',
+    id: 'bulk-add',
+    label: 'Bulk Add',
+    group: 'SMS Module',
+    iconName: 'Plus',
     status: 'active',
-    requiredPermission: 'numbers.view',
-    description: 'Active client number allocations and history',
-    targetTab: 'numbers',
-  },
-
-  // 4. Messaging
-  {
-    id: 'messages',
-    label: 'Messages',
-    group: 'Messaging',
-    iconName: 'MessageSquare',
-    status: 'active',
-    requiredPermission: 'sms.view',
-    description: 'Real-time inbound SMS stream and delivery receipts',
-    targetTab: 'traffic',
+    description: 'Queue bulk number assignments across multiple ranges',
+    targetTab: 'bulk-add',
+    allowedRoles: ['AGENT'],
   },
   {
-    id: 'cdr',
-    label: 'CDR',
-    group: 'Messaging',
-    iconName: 'Receipt',
+    id: 'sms-test-panel',
+    label: 'SMS Test Panel',
+    group: 'SMS Test Panel',
+    iconName: 'Radio',
     status: 'active',
-    requiredPermission: 'billing.view',
-    description: 'Call Detail Records and carrier wholesale margins',
-    targetTab: 'cdr',
-  },
-
-  // 5. Finance
-  {
-    id: 'rates',
-    label: 'Rates',
-    group: 'Finance',
-    iconName: 'Tag',
-    status: 'active',
-    requiredPermission: 'billing.view',
-    description: 'Customer pricing cards and wholesale carrier costs',
-    targetTab: 'financials',
+    description: 'Test numbers and live inbound SMS stream',
+    targetTab: 'sms-test-panel',
+    allowedRoles: ['AGENT'],
   },
   {
-    id: 'wallets',
-    label: 'Wallets',
-    group: 'Finance',
-    iconName: 'Wallet',
+    id: 'my-clients',
+    label: 'My Clients',
+    group: 'Users',
+    iconName: 'Users',
     status: 'active',
-    requiredPermission: 'billing.view',
-    description: 'Multi-party prepaid balances and master treasury',
-    targetTab: 'financials',
+    description: 'View and manage your assigned client accounts',
+    targetTab: 'my-clients',
+    allowedRoles: ['AGENT'],
   },
   {
-    id: 'transactions',
-    label: 'Transactions',
-    group: 'Finance',
-    iconName: 'DollarSign',
+    id: 'notifications',
+    label: 'Notifications',
+    group: 'Users',
+    iconName: 'Bell',
     status: 'active',
-    requiredPermission: 'billing.view',
-    description: 'Sequential double-entry balance movements',
-    targetTab: 'financials',
+    description: 'Your inbox and sent notification history',
+    targetTab: 'notifications',
+    allowedRoles: ['AGENT'],
   },
   {
-    id: 'payment-requests',
-    label: 'Payment Requests',
-    group: 'Finance',
-    iconName: 'CreditCard',
+    id: 'cdr-statistics',
+    label: 'CDR & Statistics',
+    group: 'Stats & Finance',
+    iconName: 'BarChart3',
     status: 'active',
-    requiredPermission: 'billing.view',
-    description: 'Invoices, top-up requests, and wire transfers',
-    targetTab: 'financials',
+    description: 'Call detail records and SMS traffic statistics',
+    targetTab: 'cdr-statistics',
+    allowedRoles: ['AGENT'],
   },
   {
     id: 'credit-notes',
     label: 'Credit Notes',
-    group: 'Finance',
+    group: 'Stats & Finance',
     iconName: 'FileText',
     status: 'active',
-    requiredPermission: 'billing.view',
-    description: 'Refund adjustments and customer credits',
-    targetTab: 'financials',
+    description: 'Your refund adjustments and agent credits',
+    targetTab: 'credit-notes',
+    allowedRoles: ['AGENT'],
   },
-
-  // 6. Platform
   {
-    id: 'notifications',
-    label: 'Notifications',
-    group: 'Platform',
-    iconName: 'Bell',
+    id: 'payment-requests',
+    label: 'Payment Requests',
+    group: 'Stats & Finance',
+    iconName: 'CreditCard',
     status: 'active',
-    description: 'Real-time system telemetry and security alerts',
-    targetTab: 'audit',
+    description: 'Submit and track payment and top-up requests',
+    targetTab: 'payment-requests',
+    allowedRoles: ['AGENT'],
   },
   {
-    id: 'api',
-    label: 'API',
-    group: 'Platform',
+    id: 'rest-api',
+    label: 'REST API',
+    group: 'Account',
     iconName: 'Code',
     status: 'active',
-    requiredPermission: 'users.view',
-    allowedRoles: ['SUPER_ADMIN', 'MANAGER'],
-    description: 'REST API endpoints, webhook testing, and developer tokens',
-    targetTab: 'diagnostics',
+    description: 'Your API keys, webhooks, and developer tokens',
+    targetTab: 'rest-api',
+    allowedRoles: ['AGENT'],
   },
   {
-    id: 'reports',
-    label: 'Reports',
-    group: 'Platform',
-    iconName: 'BarChart3',
+    id: 'profile-settings',
+    label: 'Profile Settings',
+    group: 'Account',
+    iconName: 'Settings',
     status: 'active',
-    requiredPermission: 'billing.view',
-    description: 'Traffic volume, carrier delivery performance, and revenue reports',
+    description: 'Update your profile, password and preferences',
+    targetTab: 'profile-settings',
+    allowedRoles: ['AGENT'],
+  },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 2. SUPER ADMIN NAVIGATION (Telecom Operations Platform)
+// ─────────────────────────────────────────────────────────────────────────────
+export const ADMIN_NAV_GROUPS: NavGroup[] = [
+  'Overview',
+  'Telecom & Gateways',
+  'User Directory',
+  'Inventory & Routing',
+  'Financials & CDR',
+  'System',
+];
+
+export const ADMIN_NAV_ITEMS: NavItem[] = [
+  {
+    id: 'dashboard',
+    label: 'Executive Overview',
+    group: 'Overview',
+    iconName: 'LayoutDashboard',
+    status: 'active',
+    description: 'Telecommunications throughput, gateway binds & ledger summary',
+    targetTab: 'dashboard',
+    allowedRoles: ['SUPER_ADMIN'],
+  },
+  {
+    id: 'providers',
+    label: 'Providers & Gateways',
+    group: 'Telecom & Gateways',
+    iconName: 'Server',
+    status: 'active',
+    description: 'SMPP binds, HTTP carrier connections & failover routes',
+    targetTab: 'providers',
+    allowedRoles: ['SUPER_ADMIN'],
+  },
+  {
+    id: 'users',
+    label: 'All Users',
+    group: 'User Directory',
+    iconName: 'Users',
+    status: 'active',
+    description: 'Global user identity list and RBAC role assignments',
+    targetTab: 'users',
+    allowedRoles: ['SUPER_ADMIN'],
+  },
+  {
+    id: 'managers',
+    label: 'Managers',
+    group: 'User Directory',
+    iconName: 'UserCheck',
+    status: 'active',
+    description: 'Manager accounts, team capacity and agent assignments',
+    targetTab: 'managers',
+    allowedRoles: ['SUPER_ADMIN'],
+  },
+  {
+    id: 'agents',
+    label: 'Agents',
+    group: 'User Directory',
+    iconName: 'UserCog',
+    status: 'active',
+    description: 'Agent roster, commission structures and allocated quotas',
+    targetTab: 'agents',
+    allowedRoles: ['SUPER_ADMIN'],
+  },
+  {
+    id: 'clients',
+    label: 'Clients',
+    group: 'User Directory',
+    iconName: 'Building2',
+    status: 'active',
+    description: 'Client organizations, leased pools and account balances',
+    targetTab: 'clients',
+    allowedRoles: ['SUPER_ADMIN'],
+  },
+  {
+    id: 'numbers',
+    label: 'Number Inventory',
+    group: 'Inventory & Routing',
+    iconName: 'Hash',
+    status: 'active',
+    description: 'Global number inventory, ranges, prefixes and carrier routes',
+    targetTab: 'numbers',
+    allowedRoles: ['SUPER_ADMIN'],
+  },
+  {
+    id: 'traffic',
+    label: 'Live Traffic',
+    group: 'Inventory & Routing',
+    iconName: 'MessageSquare',
+    status: 'active',
+    description: 'Real-time SMS dispatch feed, queuing, and delivery receipts',
+    targetTab: 'traffic',
+    allowedRoles: ['SUPER_ADMIN'],
+  },
+  {
+    id: 'cdr',
+    label: 'CDR Logs',
+    group: 'Financials & CDR',
+    iconName: 'Receipt',
+    status: 'active',
+    description: 'Carrier call detail records and telemetry verification',
     targetTab: 'cdr',
+    allowedRoles: ['SUPER_ADMIN'],
+  },
+  {
+    id: 'financials',
+    label: 'Billing & Wallets',
+    group: 'Financials & CDR',
+    iconName: 'Wallet',
+    status: 'active',
+    description: 'Double-entry transaction ledger, balances and invoices',
+    targetTab: 'financials',
+    allowedRoles: ['SUPER_ADMIN'],
   },
   {
     id: 'audit',
-    label: 'Audit Logs',
-    group: 'Platform',
+    label: 'Audit Trail',
+    group: 'System',
     iconName: 'ShieldCheck',
     status: 'active',
-    requiredPermission: 'audit.view',
-    allowedRoles: ['SUPER_ADMIN'],
-    description: 'Immutable security audit trail and access logs',
+    description: 'Immutable security log of administrative actions',
     targetTab: 'audit',
+    allowedRoles: ['SUPER_ADMIN'],
+  },
+  {
+    id: 'diagnostics',
+    label: 'System Diagnostics',
+    group: 'System',
+    iconName: 'Radio',
+    status: 'active',
+    description: 'API latency, telemetry health, and endpoint tester',
+    targetTab: 'diagnostics',
+    allowedRoles: ['SUPER_ADMIN'],
+  },
+  {
+    id: 'database-schema',
+    label: 'Database Schema',
+    group: 'System',
+    iconName: 'Code',
+    status: 'active',
+    description: 'Live PostgreSQL schema explorer and entity relations',
+    targetTab: 'database-schema',
+    allowedRoles: ['SUPER_ADMIN'],
   },
   {
     id: 'settings',
-    label: 'Settings',
-    group: 'Platform',
+    label: 'Platform Settings',
+    group: 'System',
     iconName: 'Settings',
     status: 'active',
-    allowedRoles: ['SUPER_ADMIN'],
-    description: 'Global system parameters and platform defaults',
+    description: 'Security policies, rate limits, and system parameters',
     targetTab: 'settings',
+    allowedRoles: ['SUPER_ADMIN'],
   },
 ];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3. MANAGER NAVIGATION (Manager Ops & Team Oversight)
+// ─────────────────────────────────────────────────────────────────────────────
+export const MANAGER_NAV_GROUPS: NavGroup[] = [
+  'Overview',
+  'Team Management',
+  'Operations & Approvals',
+  'Account',
+];
+
+export const MANAGER_NAV_ITEMS: NavItem[] = [
+  {
+    id: 'dashboard',
+    label: 'Manager Overview',
+    group: 'Overview',
+    iconName: 'LayoutDashboard',
+    status: 'active',
+    description: 'Team performance, pending approvals queue, and monthly volume',
+    targetTab: 'dashboard',
+    allowedRoles: ['MANAGER'],
+  },
+  {
+    id: 'managers-team',
+    label: 'My Team',
+    group: 'Team Management',
+    iconName: 'Users',
+    status: 'active',
+    description: 'Assigned agents and allocated client accounts',
+    targetTab: 'managers-team',
+    allowedRoles: ['MANAGER'],
+  },
+  {
+    id: 'manager-approvals',
+    label: 'Approvals Queue',
+    group: 'Operations & Approvals',
+    iconName: 'CheckCircle2',
+    status: 'active',
+    description: 'Review and approve client deposits & agent payout requests',
+    targetTab: 'manager-approvals',
+    allowedRoles: ['MANAGER'],
+  },
+  {
+    id: 'sms-ranges',
+    label: 'Allocated Ranges',
+    group: 'Operations & Approvals',
+    iconName: 'Layers',
+    status: 'active',
+    description: 'Inspect prefix pools and range quotas assigned to your team',
+    targetTab: 'sms-ranges',
+    allowedRoles: ['MANAGER'],
+  },
+  {
+    id: 'cdr-statistics',
+    label: 'Team CDR Stats',
+    group: 'Operations & Approvals',
+    iconName: 'BarChart3',
+    status: 'active',
+    description: 'SMS traffic and delivery statistics across your team',
+    targetTab: 'cdr-statistics',
+    allowedRoles: ['MANAGER'],
+  },
+  {
+    id: 'notifications',
+    label: 'Team Broadcasts',
+    group: 'Operations & Approvals',
+    iconName: 'Bell',
+    status: 'active',
+    description: 'Broadcast alerts and communications to team agents',
+    targetTab: 'notifications',
+    allowedRoles: ['MANAGER'],
+  },
+  {
+    id: 'profile-settings',
+    label: 'Manager Profile',
+    group: 'Account',
+    iconName: 'Settings',
+    status: 'active',
+    description: 'Update your manager credentials and preferences',
+    targetTab: 'profile-settings',
+    allowedRoles: ['MANAGER'],
+  },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4. CLIENT NAVIGATION (Customer Self-Service Portal)
+// ─────────────────────────────────────────────────────────────────────────────
+export const CLIENT_NAV_GROUPS: NavGroup[] = [
+  'Overview',
+  'My SMS Numbers',
+  'API & Webhooks',
+  'Billing',
+  'Account',
+];
+
+export const CLIENT_NAV_ITEMS: NavItem[] = [
+  {
+    id: 'dashboard',
+    label: 'Client Overview',
+    group: 'Overview',
+    iconName: 'LayoutDashboard',
+    status: 'active',
+    description: 'Active leased numbers, inbound OTP rate, and wallet balance',
+    targetTab: 'dashboard',
+    allowedRoles: ['CLIENT'],
+  },
+  {
+    id: 'client-numbers',
+    label: 'Leased Numbers',
+    group: 'My SMS Numbers',
+    iconName: 'Hash',
+    status: 'active',
+    description: 'Your leased phone numbers, expiry dates, and lease renewal',
+    targetTab: 'client-numbers',
+    allowedRoles: ['CLIENT'],
+  },
+  {
+    id: 'client-inbound',
+    label: 'Live OTP Stream',
+    group: 'My SMS Numbers',
+    iconName: 'Radio',
+    status: 'active',
+    description: 'Live real-time feed of received SMS & 1-click OTP copying',
+    targetTab: 'client-inbound',
+    allowedRoles: ['CLIENT'],
+  },
+  {
+    id: 'client-webhooks',
+    label: 'Webhooks & Ping',
+    group: 'API & Webhooks',
+    iconName: 'Cable',
+    status: 'active',
+    description: 'Configure endpoint URL, secret key and simulate webhook pings',
+    targetTab: 'client-webhooks',
+    allowedRoles: ['CLIENT'],
+  },
+  {
+    id: 'rest-api',
+    label: 'API Keys & Docs',
+    group: 'API & Webhooks',
+    iconName: 'Code',
+    status: 'active',
+    description: 'Client REST API endpoints, authorization tokens, and code snippets',
+    targetTab: 'rest-api',
+    allowedRoles: ['CLIENT'],
+  },
+  {
+    id: 'client-wallet',
+    label: 'Wallet & Deposits',
+    group: 'Billing',
+    iconName: 'Wallet',
+    status: 'active',
+    description: 'Current funds, request deposit top-up, and invoice statements',
+    targetTab: 'client-wallet',
+    allowedRoles: ['CLIENT'],
+  },
+  {
+    id: 'profile-settings',
+    label: 'Account Profile',
+    group: 'Account',
+    iconName: 'Settings',
+    status: 'active',
+    description: 'Company information, notification preferences and password',
+    targetTab: 'profile-settings',
+    allowedRoles: ['CLIENT'],
+  },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dynamic Helper Functions
+// ─────────────────────────────────────────────────────────────────────────────
+export function getNavGroupsForRole(role: UserRole): NavGroup[] {
+  switch (role) {
+    case 'SUPER_ADMIN':
+      return ADMIN_NAV_GROUPS;
+    case 'MANAGER':
+      return MANAGER_NAV_GROUPS;
+    case 'AGENT':
+      return AGENT_NAV_GROUPS;
+    case 'CLIENT':
+      return CLIENT_NAV_GROUPS;
+    default:
+      return AGENT_NAV_GROUPS;
+  }
+}
+
+export function getNavItemsForRole(role: UserRole): NavItem[] {
+  switch (role) {
+    case 'SUPER_ADMIN':
+      return ADMIN_NAV_ITEMS;
+    case 'MANAGER':
+      return MANAGER_NAV_ITEMS;
+    case 'AGENT':
+      return AGENT_NAV_ITEMS;
+    case 'CLIENT':
+      return CLIENT_NAV_ITEMS;
+    default:
+      return AGENT_NAV_ITEMS;
+  }
+}
+
+// Backward compatibility exports
+export const PLATFORM_NAV_GROUPS = AGENT_NAV_GROUPS;
+export const PLATFORM_NAV_ITEMS = AGENT_NAV_ITEMS;

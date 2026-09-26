@@ -65,42 +65,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         return refreshed.token;
       } catch {
-        // Fall back to silent login with preferred seed account
-        try {
-          const savedRole = (localStorage.getItem('sms_current_role') as UserRole) || 'SUPER_ADMIN';
-          const creds = SEED_ACCOUNTS[savedRole] || SEED_ACCOUNTS.SUPER_ADMIN;
-          const res = await apiClient.login(creds.email, creds.pass);
-          if (isMounted) {
-            setUser(res.user);
-            setToken(res.token);
-          }
-          return res.token;
-        } catch {
-          if (isMounted) {
-            setUser(null);
-            setToken(null);
-          }
-          return null;
+        if (isMounted) {
+          setUser(null);
+          setToken(null);
         }
+        return null;
       }
     });
 
     const handleSessionExpired = () => {
       if (isMounted) {
-        // Attempt quick recovery
-        const savedRole = (localStorage.getItem('sms_current_role') as UserRole) || 'SUPER_ADMIN';
-        const creds = SEED_ACCOUNTS[savedRole] || SEED_ACCOUNTS.SUPER_ADMIN;
-        apiClient.login(creds.email, creds.pass).then((res) => {
-          if (isMounted) {
-            setUser(res.user);
-            setToken(res.token);
-          }
-        }).catch(() => {
-          if (isMounted) {
-            setUser(null);
-            setToken(null);
-          }
-        });
+        setUser(null);
+        setToken(null);
       }
     };
 
@@ -108,8 +84,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     async function initAuth() {
       setIsLoading(true);
-      const savedToken = apiClient.getToken();
-      const savedRole = (localStorage.getItem('sms_current_role') as UserRole) || 'SUPER_ADMIN';
+      const isSessionActive = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('sms_active_session') === 'true';
+      const savedToken = isSessionActive ? apiClient.getToken() : null;
 
       if (savedToken) {
         try {
@@ -119,35 +95,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setToken(savedToken);
           }
         } catch {
-          // Token expired or invalid, authenticate with seed credentials
-          try {
-            const creds = SEED_ACCOUNTS[savedRole] || SEED_ACCOUNTS.SUPER_ADMIN;
-            const res = await apiClient.login(creds.email, creds.pass);
-            if (isMounted) {
-              setUser(res.user);
-              setToken(res.token);
-            }
-          } catch {
-            if (isMounted) {
-              setUser(null);
-              setToken(null);
-            }
-          }
-        }
-      } else {
-        // Attempt initial silent login with seed account
-        try {
-          const creds = SEED_ACCOUNTS[savedRole] || SEED_ACCOUNTS.SUPER_ADMIN;
-          const res = await apiClient.login(creds.email, creds.pass);
-          if (isMounted) {
-            setUser(res.user);
-            setToken(res.token);
-          }
-        } catch {
+          // Token expired or invalid
           if (isMounted) {
             setUser(null);
             setToken(null);
+            if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem('sms_active_session');
           }
+        }
+      } else {
+        // No active session — show login view on opening panel!
+        if (isMounted) {
+          setUser(null);
+          setToken(null);
+          apiClient.setToken(null);
+          if (typeof localStorage !== 'undefined') localStorage.removeItem('sms_auth_token');
         }
       }
 
@@ -198,6 +159,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await apiClient.login(email, pass);
       setUser(res.user);
       setToken(res.token);
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem('sms_active_session', 'true');
+      }
+      try {
+        localStorage.setItem('sms_current_role', res.user.role.name);
+      } catch {}
     } finally {
       setIsLoading(false);
     }
@@ -207,10 +174,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       await apiClient.logout();
+    } catch {
+      // ignore
+    } finally {
       setUser(null);
       setToken(null);
-    } finally {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem('sms_active_session');
+      }
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('sms_auth_token');
+      }
       setIsLoading(false);
+      if (typeof window !== 'undefined') {
+        window.history.pushState({}, '', '/login');
+        window.dispatchEvent(new Event('popstate'));
+      }
     }
   }, []);
 

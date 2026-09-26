@@ -263,6 +263,7 @@ export const AgentManagementView: React.FC = () => {
     {
       key: 'name',
       header: 'Agent',
+      className: 'w-[230px]',
       render: (agent) => {
         const initials = agent.name
           .split(' ')
@@ -295,18 +296,9 @@ export const AgentManagementView: React.FC = () => {
       sortable: true,
     },
     {
-      key: 'email',
-      header: 'Email',
-      render: (agent) => (
-        <span className="font-mono text-xs text-[var(--text-secondary)]">
-          {agent.email}
-        </span>
-      ),
-      sortable: true,
-    },
-    {
       key: 'manager',
       header: 'Supervising Manager',
+      className: 'w-[170px]',
       render: (agent) =>
         agent.managerName ? (
           <div>
@@ -321,6 +313,7 @@ export const AgentManagementView: React.FC = () => {
     {
       key: 'status',
       header: 'Status',
+      className: 'w-[100px]',
       render: (agent) => (
         <Badge variant={getStatusBadgeVariant(agent.status)} size="sm">
           {agent.status}
@@ -331,6 +324,7 @@ export const AgentManagementView: React.FC = () => {
     {
       key: 'clients',
       header: 'Clients',
+      className: 'w-[100px]',
       render: (agent) => (
         <span className="font-mono text-xs font-bold text-[var(--text-primary)]">
           {agent.clientsCount} accounts
@@ -341,6 +335,7 @@ export const AgentManagementView: React.FC = () => {
     {
       key: 'numbers',
       header: 'Assigned Numbers',
+      className: 'w-[120px]',
       render: (agent) => (
         <span className="font-mono text-xs text-[var(--text-secondary)]">
           {agent.assignedNumbersCount} E.164
@@ -350,7 +345,8 @@ export const AgentManagementView: React.FC = () => {
     },
     {
       key: 'earnings',
-      header: 'Commission / Earnings',
+      header: 'Commission',
+      className: 'w-[130px]',
       render: (agent) => (
         <span className="font-mono text-xs font-bold text-[var(--accent-emerald)]">
           {formatCurrency(agent.earnings)}
@@ -361,6 +357,7 @@ export const AgentManagementView: React.FC = () => {
     {
       key: 'lastActivity',
       header: 'Last Activity',
+      className: 'w-[120px]',
       render: (agent) => (
         <span className="font-mono text-xs text-[var(--text-secondary)]">
           {agent.lastLoginAt ? formatRelativeTime(agent.lastLoginAt) : 'Never'}
@@ -370,7 +367,8 @@ export const AgentManagementView: React.FC = () => {
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: '',
+      className: 'w-[40px] text-right',
       render: (agent) => (
         <div className="flex items-center justify-end">
           <MoreActionsMenu

@@ -13,7 +13,6 @@ import {
 } from '../../../types/providers';
 import {
   Radio,
-  Building2,
   Globe,
   Mail,
   User,
@@ -75,15 +74,12 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
 
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
-
     if (!formData.name.trim()) {
       errs.name = 'Provider carrier name is required.';
     }
-
     if (!formData.countriesCovered.trim()) {
-      errs.countriesCovered = 'Specify at least one ISO-2 country code (e.g. GB, US).';
+      errs.countriesCovered = 'Specify at least one ISO-2 code (e.g. GB, US).';
     }
-
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -120,36 +116,26 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Create Carrier Gateway Provider"
-      size="lg"
+      title="Register Carrier Gateway"
+      subtitle="Connect a new SMPP trunk or HTTP provider gateway"
+      maxWidth="md"
     >
-      <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-        {/* Security & KMS Architecture Callout */}
-        <div className="p-3 bg-[var(--accent-blue-dim)] border border-[var(--accent-blue)]/20 rounded-xl flex items-center gap-2.5 text-xs text-[var(--accent-blue)]">
-          <Shield className="w-4 h-4 shrink-0" />
-          <span>
-            Carrier credentials use envelope-encrypted KMS references. Plaintext secrets are never stored or exposed in the UI.
-          </span>
-        </div>
-
-        {/* Name & Type Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
+        {/* Name & Type */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-              Provider Carrier Name <span className="text-[var(--accent-rose)]">*</span>
+            <label className="block font-semibold text-[var(--text-secondary)] mb-1">
+              Carrier Name <span className="text-[var(--accent-rose)]">*</span>
             </label>
-            <div className="relative">
-              <Radio className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
-              <input
-                type="text"
-                placeholder="e.g. Sinch Tier-1 Global"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className={`w-full pl-9 pr-3 py-2 text-xs bg-[var(--bg-glass-card)] border rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)] transition-all ${
-                  errors.name ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
-                }`}
-              />
-            </div>
+            <input
+              type="text"
+              placeholder="e.g. Sinch Tier-1 Global"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className={`w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent-blue)] transition-all ${
+                errors.name ? 'border-[var(--accent-rose)]' : 'border-[var(--glass-border)]'
+              }`}
+            />
             {errors.name && (
               <p className="text-[11px] text-[var(--accent-rose)] mt-1 flex items-center gap-1">
                 <AlertCircle className="w-3 h-3" /> {errors.name}
@@ -158,57 +144,51 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-              Carrier Architecture Type
+            <label className="block font-semibold text-[var(--text-secondary)] mb-1">
+              Gateway Type
             </label>
             <select
               value={formData.type}
               onChange={(e) => setFormData({ ...formData, type: e.target.value as ProviderType })}
-              className="w-full px-3 py-2 text-xs bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)]"
+              className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] cursor-pointer"
             >
-              <option value="TIER_1_CARRIER">TIER_1_CARRIER (Direct MNO / CLEC Interconnect)</option>
-              <option value="DIRECT_SMPP">DIRECT_SMPP (Direct Socket Trunk)</option>
-              <option value="AGGREGATOR">AGGREGATOR (Wholesale Carrier Aggregator)</option>
-              <option value="CLOUD_GATEWAY">CLOUD_GATEWAY (Programmable API Gateway)</option>
+              <option value="TIER_1_CARRIER">Tier-1 Direct Carrier (MNO)</option>
+              <option value="DIRECT_SMPP">Direct SMPP v3.4 Trunk</option>
+              <option value="CLOUD_GATEWAY">Cloud API Gateway</option>
+              <option value="AGGREGATOR">Wholesale Aggregator</option>
             </select>
           </div>
         </div>
 
         {/* Description */}
         <div>
-          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-            Operational Description
+          <label className="block font-semibold text-[var(--text-secondary)] mb-1">
+            Trunk Description
           </label>
-          <div className="relative">
-            <FileText className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
-            <input
-              type="text"
-              placeholder="e.g. Primary direct SS7 routing trunk for UK and European destination networks"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full pl-9 pr-3 py-2 text-xs bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)]"
-            />
-          </div>
+          <input
+            type="text"
+            placeholder="e.g. Primary direct SS7 routing trunk for UK/EU destinations"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent-blue)]"
+          />
         </div>
 
-        {/* Country Coverage & Initial Status */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Coverage & Status */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-              Countries Covered (ISO-2 Codes) <span className="text-[var(--accent-rose)]">*</span>
+            <label className="block font-semibold text-[var(--text-secondary)] mb-1">
+              Covered ISO Codes <span className="text-[var(--accent-rose)]">*</span>
             </label>
-            <div className="relative">
-              <Globe className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
-              <input
-                type="text"
-                placeholder="e.g. GB, US, DE, FR, CA"
-                value={formData.countriesCovered}
-                onChange={(e) => setFormData({ ...formData, countriesCovered: e.target.value })}
-                className={`w-full pl-9 pr-3 py-2 text-xs bg-[var(--bg-glass-card)] border rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)] ${
-                  errors.countriesCovered ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
-                }`}
-              />
-            </div>
+            <input
+              type="text"
+              placeholder="e.g. GB, US, DE, FR"
+              value={formData.countriesCovered}
+              onChange={(e) => setFormData({ ...formData, countriesCovered: e.target.value })}
+              className={`w-full px-3 py-2 font-mono bg-[rgba(0,0,0,0.2)] border rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent-blue)] ${
+                errors.countriesCovered ? 'border-[var(--accent-rose)]' : 'border-[var(--glass-border)]'
+              }`}
+            />
             {errors.countriesCovered && (
               <p className="text-[11px] text-[var(--accent-rose)] mt-1 flex items-center gap-1">
                 <AlertCircle className="w-3 h-3" /> {errors.countriesCovered}
@@ -217,80 +197,56 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-              Initial Operational Status
+            <label className="block font-semibold text-[var(--text-secondary)] mb-1">
+              Initial Status
             </label>
             <select
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value as ProviderStatus })}
-              className="w-full px-3 py-2 text-xs bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)]"
+              className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] cursor-pointer"
             >
-              <option value="ACTIVE">ACTIVE (Ready for connection binds)</option>
-              <option value="INACTIVE">INACTIVE (Staging / Pre-deployment)</option>
+              <option value="ACTIVE">ACTIVE (Route immediately)</option>
+              <option value="INACTIVE">INACTIVE (Staging / Offline)</option>
             </select>
           </div>
         </div>
 
-        {/* Technical Contacts Grid */}
-        <div className="p-3.5 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl space-y-3">
-          <span className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-[var(--accent-purple)]" />
-            NOC & Technical Support Escort
-          </span>
+        {/* NOC Contacts */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block font-semibold text-[var(--text-secondary)] mb-1">
+              NOC Team Contact
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Frankfurt NOC"
+              value={formData.technicalContact}
+              onChange={(e) => setFormData({ ...formData, technicalContact: e.target.value })}
+              className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent-blue)]"
+            />
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs text-[var(--text-secondary)] mb-1 font-medium">
-                NOC Team / Contact Person
-              </label>
-              <div className="relative">
-                <User className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
-                <input
-                  type="text"
-                  placeholder="e.g. Carrier NOC Frankfurt"
-                  value={formData.technicalContact}
-                  onChange={(e) => setFormData({ ...formData, technicalContact: e.target.value })}
-                  className="w-full pl-9 pr-3 py-1.5 text-xs bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)]"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs text-[var(--text-secondary)] mb-1 font-medium">
-                NOC Operations Email
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
-                <input
-                  type="email"
-                  placeholder="e.g. noc@carrier.com"
-                  value={formData.nocEmail}
-                  onChange={(e) => setFormData({ ...formData, nocEmail: e.target.value })}
-                  className="w-full pl-9 pr-3 py-1.5 text-xs bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)]"
-                />
-              </div>
-            </div>
+          <div>
+            <label className="block font-semibold text-[var(--text-secondary)] mb-1">
+              NOC Operations Email
+            </label>
+            <input
+              type="email"
+              placeholder="noc@carrier.com"
+              value={formData.nocEmail}
+              onChange={(e) => setFormData({ ...formData, nocEmail: e.target.value })}
+              className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent-blue)]"
+            />
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-2 pt-3 border-t border-[var(--border-subtle)]">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={handleClose}
-            disabled={isSubmitting}
-          >
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[var(--glass-border)]">
+          <Button variant="outline" size="sm" type="button" onClick={handleClose}>
             Cancel
           </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            size="sm"
-            isLoading={isSubmitting}
-          >
-            Create Provider
+          <Button variant="primary" size="sm" type="submit" isLoading={isSubmitting}>
+            Save Carrier Gateway
           </Button>
         </div>
       </form>

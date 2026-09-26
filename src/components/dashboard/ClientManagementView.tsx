@@ -269,6 +269,7 @@ export const ClientManagementView: React.FC = () => {
     {
       key: 'name',
       header: 'Client Identity',
+      className: 'w-[230px]',
       render: (client) => {
         const initials = client.companyName
           .split(' ')
@@ -292,7 +293,7 @@ export const ClientManagementView: React.FC = () => {
                 {client.companyName}
               </div>
               <div className="text-[11px] text-[var(--text-muted)] truncate">
-                Contact: {client.name} • <span className="font-mono">{client.id}</span>
+                {client.email}
               </div>
             </div>
           </div>
@@ -301,18 +302,9 @@ export const ClientManagementView: React.FC = () => {
       sortable: true,
     },
     {
-      key: 'email',
-      header: 'Operations Email',
-      render: (client) => (
-        <span className="font-mono text-xs text-[var(--text-secondary)]">
-          {client.email}
-        </span>
-      ),
-      sortable: true,
-    },
-    {
       key: 'agent',
       header: 'Supervising Agent',
+      className: 'w-[160px]',
       render: (client) =>
         client.agentName ? (
           <div>
@@ -325,18 +317,9 @@ export const ClientManagementView: React.FC = () => {
       sortable: true,
     },
     {
-      key: 'manager',
-      header: 'Manager',
-      render: (client) => (
-        <span className="text-xs text-[var(--text-secondary)]">
-          {client.managerName || 'Operations'}
-        </span>
-      ),
-      sortable: true,
-    },
-    {
       key: 'billingType',
-      header: 'Billing Model',
+      header: 'Billing',
+      className: 'w-[100px]',
       render: (client) => (
         <Badge variant={client.billingType === 'POSTPAID' ? 'info' : 'purple'} size="sm">
           {client.billingType}
@@ -347,6 +330,7 @@ export const ClientManagementView: React.FC = () => {
     {
       key: 'status',
       header: 'Status',
+      className: 'w-[90px]',
       render: (client) => (
         <Badge variant={getStatusBadgeVariant(client.status)} size="sm">
           {client.status}
@@ -356,7 +340,8 @@ export const ClientManagementView: React.FC = () => {
     },
     {
       key: 'numbers',
-      header: 'Assigned DIDs',
+      header: 'DIDs',
+      className: 'w-[80px]',
       render: (client) => (
         <span className="inline-flex items-center gap-1 font-mono text-xs text-[var(--accent-purple)] font-medium">
           <Phone className="w-3 h-3" />
@@ -367,7 +352,8 @@ export const ClientManagementView: React.FC = () => {
     },
     {
       key: 'smsCount',
-      header: 'Monthly Volume',
+      header: 'Volume',
+      className: 'w-[100px]',
       render: (client) => (
         <span className="font-mono text-xs font-semibold text-[var(--text-primary)]">
           {formatNumber(client.smsCount)} SMS
@@ -377,7 +363,8 @@ export const ClientManagementView: React.FC = () => {
     },
     {
       key: 'balance',
-      header: 'Wallet Balance',
+      header: 'Wallet',
+      className: 'w-[110px]',
       render: (client) => (
         <span className="font-mono text-xs font-bold text-[var(--accent-emerald)]">
           {formatCurrency(client.balance)}
@@ -388,6 +375,7 @@ export const ClientManagementView: React.FC = () => {
     {
       key: 'lastActivity',
       header: 'Last Activity',
+      className: 'w-[110px]',
       render: (client) => (
         <span className="font-mono text-xs text-[var(--text-secondary)]">
           {client.lastLoginAt ? formatRelativeTime(client.lastLoginAt) : 'Never'}
@@ -397,7 +385,8 @@ export const ClientManagementView: React.FC = () => {
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: '',
+      className: 'w-[40px] text-right',
       render: (client) => (
         <div className="flex items-center justify-end">
           <MoreActionsMenu
@@ -484,7 +473,7 @@ export const ClientManagementView: React.FC = () => {
       />
 
       {/* Executive KPI Summary (5 StatCards) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
         {isLoading ? (
           <>
             <StatCardSkeleton />

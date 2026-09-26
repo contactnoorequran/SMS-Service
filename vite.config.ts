@@ -2,7 +2,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import fs from 'fs';
 import path from 'path';
-import {defineConfig, Plugin} from 'vite';
+import { defineConfig, Plugin } from 'vite';
 
 // LINT.IfChange(aistudio_media_plugin)
 function aistudioMediaPlugin(): Plugin {
@@ -74,10 +74,47 @@ export default defineConfig(() => {
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
+      // Do not modify—file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
+    },
+    build: {
+      // ── Performance: raise warning limit, use fast esbuild minifier ──
+      chunkSizeWarningLimit: 600,
+      minify: 'esbuild',
+      target: 'esnext',
+      rollupOptions: {
+        output: {
+          // ── Split 995KB monolith into focused chunks ──────────────────
+          manualChunks(id) {
+            // 1. React runtime — browser caches this forever
+            if (
+              id.includes('node_modules/react/') ||
+              id.includes('node_modules/react-dom/') ||
+              id.includes('node_modules/react-router')
+            ) {
+              return 'vendor-react';
+            }
+            // 2. Lucide icons — tree-shaken but still large
+            if (id.includes('node_modules/lucide-react')) {
+              return 'vendor-lucide';
+            }
+            // 3. Charting / data-vis libraries
+            if (
+              id.includes('node_modules/recharts') ||
+              id.includes('node_modules/d3-') ||
+              id.includes('node_modules/victory')
+            ) {
+              return 'vendor-charts';
+            }
+            // 4. All other node_modules
+            if (id.includes('node_modules/')) {
+              return 'vendor-misc';
+            }
+          },
+        },
+      },
     },
   };
 });

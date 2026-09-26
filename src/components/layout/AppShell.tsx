@@ -10,11 +10,45 @@ import { DashboardOverview } from '../dashboard/DashboardOverview';
 import { GlobalSearchModal } from './GlobalSearchModal';
 import { apiClient } from '../../services/api';
 import { SystemHealthReport } from '../../types/api';
+import { useAuth } from '../../context/AuthContext';
+import { getNavItemsForRole } from '../../types/navigation';
 
-export const AppShell: React.FC = () => {
+interface AppShellProps {
+  initialTab?: string;
+}
+
+export const AppShell: React.FC<AppShellProps> = ({ initialTab }) => {
+  const { role } = useAuth();
+
   const getTabFromPath = (pathname: string): string => {
     const cleanPath = pathname.replace(/\/+$/, '') || '/';
     if (cleanPath === '/') return 'dashboard';
+
+    // Agent IMS SMS portal routes
+    if (cleanPath.startsWith('/sms-ranges')) return 'sms-ranges';
+    if (cleanPath.startsWith('/cli-search')) return 'cli-search';
+    if (cleanPath.startsWith('/my-numbers')) return 'my-numbers';
+    if (cleanPath.startsWith('/bulk-add')) return 'bulk-add';
+    if (cleanPath.startsWith('/sms-test-panel')) return 'sms-test-panel';
+    if (cleanPath.startsWith('/my-clients')) return 'my-clients';
+    if (cleanPath.startsWith('/notifications')) return 'notifications';
+    if (cleanPath.startsWith('/cdr-statistics')) return 'cdr-statistics';
+    if (cleanPath.startsWith('/credit-notes')) return 'credit-notes';
+    if (cleanPath.startsWith('/payment-requests')) return 'payment-requests';
+    if (cleanPath.startsWith('/rest-api')) return 'rest-api';
+    if (cleanPath.startsWith('/profile-settings')) return 'profile-settings';
+
+    // Manager routes
+    if (cleanPath.startsWith('/manager-approvals')) return 'manager-approvals';
+    if (cleanPath.startsWith('/managers-team')) return 'managers-team';
+
+    // Client routes
+    if (cleanPath.startsWith('/client-numbers')) return 'client-numbers';
+    if (cleanPath.startsWith('/client-inbound')) return 'client-inbound';
+    if (cleanPath.startsWith('/client-webhooks')) return 'client-webhooks';
+    if (cleanPath.startsWith('/client-wallet')) return 'client-wallet';
+
+    // Super Admin routes
     if (cleanPath.startsWith('/providers')) return 'providers';
     if (cleanPath.startsWith('/connections')) return 'connections';
     if (cleanPath.startsWith('/clients')) return 'clients';
@@ -25,22 +59,42 @@ export const AppShell: React.FC = () => {
     if (cleanPath.startsWith('/ranges') || cleanPath.startsWith('/countries') || cleanPath.startsWith('/operators') || cleanPath.startsWith('/assignments')) return 'numbers';
     if (cleanPath.startsWith('/traffic') || cleanPath.startsWith('/messages')) return 'traffic';
     if (cleanPath.startsWith('/cdr')) return 'cdr';
-    if (cleanPath.startsWith('/financials') || cleanPath.startsWith('/billing') || cleanPath.startsWith('/wallets') || cleanPath.startsWith('/transactions') || cleanPath.startsWith('/rates') || cleanPath.startsWith('/payment-requests') || cleanPath.startsWith('/credit-notes')) return 'financials';
-    if (cleanPath.startsWith('/audit') || cleanPath.startsWith('/notifications')) return 'audit';
+    if (cleanPath.startsWith('/financials') || cleanPath.startsWith('/billing') || cleanPath.startsWith('/wallets')) return 'financials';
+    if (cleanPath.startsWith('/audit')) return 'audit';
     if (cleanPath.startsWith('/settings')) return 'settings';
     if (cleanPath.startsWith('/api') || cleanPath.startsWith('/diagnostics')) return 'diagnostics';
-    if (cleanPath.startsWith('/reports')) return 'cdr';
     if (cleanPath.startsWith('/database-schema')) return 'database-schema';
     if (cleanPath.startsWith('/architecture')) return 'architecture';
     return 'not-found';
   };
 
   const [currentTab, setCurrentTab] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      return getTabFromPath(window.location.pathname);
+    if (initialTab) return initialTab;
+    if (typeof window !== 'undefined' && window.location.pathname !== '/' && window.location.pathname !== '') {
+      const tab = getTabFromPath(window.location.pathname);
+      if (tab !== 'not-found') return tab;
     }
     return 'dashboard';
   });
+
+  useEffect(() => {
+    if (initialTab) {
+      setCurrentTab(initialTab);
+    }
+  }, [initialTab]);
+
+  // When user role changes (e.g. from RBAC dropdown switch in UserProfileMenu),
+  // verify whether currentTab is valid for the new role; if not, default to dashboard.
+  useEffect(() => {
+    const validItems = getNavItemsForRole(role);
+    const isValid = validItems.some((item) => item.id === currentTab || item.targetTab === currentTab);
+    if (!isValid && currentTab !== 'dashboard') {
+      setCurrentTab('dashboard');
+      if (typeof window !== 'undefined' && window.history) {
+        window.history.pushState({}, '', '/');
+      }
+    }
+  }, [role, currentTab]);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);

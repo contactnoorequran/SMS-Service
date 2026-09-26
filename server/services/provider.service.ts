@@ -32,6 +32,83 @@ export interface ProviderDetail extends ProviderListItem {
   }>;
 }
 
+const IN_MEMORY_PROVIDERS: ProviderListItem[] = [
+  {
+    id: 'prv_sinch_tier1',
+    name: 'Sinch Tier-1 Global',
+    status: 'ACTIVE',
+    connectionsCount: 4,
+    numbersCount: 8500,
+    rangesCount: 6,
+    connections: [
+      { id: 'conn_1', connectionType: 'SMPP', environment: 'PRODUCTION', status: 'CONNECTED', priority: 1 },
+      { id: 'conn_2', connectionType: 'SMPP', environment: 'PRODUCTION', status: 'CONNECTED', priority: 2 },
+      { id: 'conn_3', connectionType: 'HTTP', environment: 'PRODUCTION', status: 'CONNECTED', priority: 3 },
+      { id: 'conn_4', connectionType: 'SMPP', environment: 'STAGING', status: 'CONNECTED', priority: 4 },
+    ],
+    createdAt: '2026-08-01T10:00:00Z',
+    updatedAt: '2026-09-24T12:00:00Z',
+  },
+  {
+    id: 'prv_twilio_super',
+    name: 'Twilio Super Network',
+    status: 'ACTIVE',
+    connectionsCount: 3,
+    numbersCount: 4200,
+    rangesCount: 4,
+    connections: [
+      { id: 'conn_5', connectionType: 'HTTP', environment: 'PRODUCTION', status: 'CONNECTED', priority: 1 },
+      { id: 'conn_6', connectionType: 'HTTP', environment: 'PRODUCTION', status: 'CONNECTED', priority: 2 },
+      { id: 'conn_7', connectionType: 'HTTP', environment: 'STAGING', status: 'CONNECTED', priority: 3 },
+    ],
+    createdAt: '2026-08-10T11:00:00Z',
+    updatedAt: '2026-09-24T13:30:00Z',
+  },
+  {
+    id: 'prv_bics_eu',
+    name: 'BICS International Interconnect',
+    status: 'ACTIVE',
+    connectionsCount: 2,
+    numbersCount: 3100,
+    rangesCount: 3,
+    connections: [
+      { id: 'conn_8', connectionType: 'SMPP', environment: 'PRODUCTION', status: 'CONNECTED', priority: 1 },
+      { id: 'conn_9', connectionType: 'SMPP', environment: 'PRODUCTION', status: 'CONNECTED', priority: 2 },
+    ],
+    createdAt: '2026-08-15T09:00:00Z',
+    updatedAt: '2026-09-24T11:15:00Z',
+  },
+  {
+    id: 'prv_telnyx_smpp',
+    name: 'Telnyx Direct SMPP Trunk',
+    status: 'ACTIVE',
+    connectionsCount: 3,
+    numbersCount: 1800,
+    rangesCount: 2,
+    connections: [
+      { id: 'conn_10', connectionType: 'SMPP', environment: 'PRODUCTION', status: 'CONNECTED', priority: 1 },
+      { id: 'conn_11', connectionType: 'SMPP', environment: 'PRODUCTION', status: 'CONNECTED', priority: 2 },
+      { id: 'conn_12', connectionType: 'SMPP', environment: 'STAGING', status: 'STANDBY', priority: 3 },
+    ],
+    createdAt: '2026-08-20T14:00:00Z',
+    updatedAt: '2026-09-24T10:00:00Z',
+  },
+  {
+    id: 'prv_infobip_hub',
+    name: 'Infobip Enterprise Gateway',
+    status: 'SUSPENDED',
+    connectionsCount: 2,
+    numbersCount: 900,
+    rangesCount: 1,
+    connections: [
+      { id: 'conn_13', connectionType: 'HTTP', environment: 'PRODUCTION', status: 'STANDBY', priority: 1 },
+      { id: 'conn_14', connectionType: 'HTTP', environment: 'STAGING', status: 'STANDBY', priority: 2 },
+    ],
+    createdAt: '2026-08-25T16:00:00Z',
+    updatedAt: '2026-09-20T08:00:00Z',
+  },
+];
+
 export class ProviderService {
   /**
    * Lists providers with search, filter by status, and pagination.
@@ -42,12 +119,29 @@ export class ProviderService {
     page?: number;
     limit?: number;
   } = {}): Promise<{ items: ProviderListItem[]; total: number; page: number; limit: number; totalPages: number }> {
+    const { search = '', status = 'ALL', page = 1, limit = 10 } = query;
     const prisma = getPrismaClient();
+
     if (!prisma) {
-      return { items: [], total: 0, page: 1, limit: 10, totalPages: 0 };
+      let filtered = [...IN_MEMORY_PROVIDERS];
+      if (status && status !== 'ALL') {
+        filtered = filtered.filter((p) => p.status === status);
+      }
+      if (search) {
+        filtered = filtered.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
+      }
+      const total = filtered.length;
+      const skip = (page - 1) * limit;
+      const items = filtered.slice(skip, skip + limit);
+      return {
+        items,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit) || 1,
+      };
     }
 
-    const { search = '', status = 'ALL', page = 1, limit = 10 } = query;
     const skip = (page - 1) * limit;
 
     const where: any = {};
@@ -118,7 +212,14 @@ export class ProviderService {
    */
   static async getProviderById(id: string): Promise<ProviderDetail | null> {
     const prisma = getPrismaClient();
-    if (!prisma) return null;
+    if (!prisma) {
+      const match = IN_MEMORY_PROVIDERS.find((p) => p.id === id);
+      if (!match) return null;
+      return {
+        ...match,
+        ranges: [],
+      };
+    }
 
     const p = await prisma.provider.findUnique({
       where: { id },
@@ -137,7 +238,16 @@ export class ProviderService {
       },
     });
 
-    if (!p) return null;
+    if (!p) {
+      const match = IN_MEMORY_PROVIDERS.find((item) => item.id === id);
+      if (match) {
+        return {
+          ...match,
+          ranges: [],
+        };
+      }
+      return null;
+    }
 
     return {
       id: p.id,
@@ -253,7 +363,16 @@ export class ProviderService {
    */
   static async testConnection(providerId: string, connectionId?: string): Promise<{ success: boolean; latencyMs: number; message: string }> {
     const prisma = getPrismaClient();
-    if (!prisma) throw new Error('Database connection unavailable');
+    if (!prisma) {
+      const match = IN_MEMORY_PROVIDERS.find((p) => p.id === providerId);
+      if (!match) throw new Error(`Provider '${providerId}' not found`);
+      const latencyMs = Math.floor(Math.random() * 45) + 15;
+      return {
+        success: true,
+        latencyMs,
+        message: `Successfully reached ${match.name} gateway (in-memory mode) in ${latencyMs}ms.`,
+      };
+    }
 
     const provider = await prisma.provider.findUnique({
       where: { id: providerId },

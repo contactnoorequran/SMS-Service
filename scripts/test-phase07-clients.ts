@@ -54,6 +54,7 @@
 import http from 'http';
 import { createExpressApp } from '../server/app';
 import { env } from '../server/config/env';
+import { UserRepository } from '../server/services/user.repository';
 import { ManagerService } from '../server/services/manager.service';
 import { AgentService } from '../server/services/agent.service';
 import { ClientService } from '../server/services/client.service';
@@ -132,6 +133,7 @@ async function runClientTests() {
 
   try {
     // Pre-initialize seed entities
+    await UserRepository.initializeSeedUsers();
     await ManagerService.initializeSeedManagers();
     await AgentService.initializeSeedAgents();
     await ClientService.initializeSeedClients();

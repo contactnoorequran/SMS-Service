@@ -289,6 +289,7 @@ export const NumberManagementView: React.FC = () => {
     {
       key: 'e164',
       header: 'E.164 Number',
+      className: 'w-[220px]',
       render: (item) => (
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-[var(--accent-blue-dim)] border border-[var(--border-subtle)] text-[var(--accent-blue)] flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
@@ -311,6 +312,7 @@ export const NumberManagementView: React.FC = () => {
     {
       key: 'provider',
       header: 'Carrier Provider',
+      className: 'w-[170px]',
       render: (item) => (
         <div>
           <span className="font-semibold text-xs text-[var(--text-primary)] block">
@@ -326,6 +328,7 @@ export const NumberManagementView: React.FC = () => {
     {
       key: 'range',
       header: 'Allocated Range',
+      className: 'w-[120px]',
       render: (item) => (
         <span className="font-mono text-xs text-[var(--text-secondary)]">
           {item.range ? `${item.range.startE164}…` : 'Single DID'}
@@ -335,6 +338,7 @@ export const NumberManagementView: React.FC = () => {
     {
       key: 'status',
       header: 'Status',
+      className: 'w-[100px]',
       render: (item) => (
         <Badge variant={getStatusBadgeVariant(item.status)}>
           {item.status}
@@ -345,6 +349,7 @@ export const NumberManagementView: React.FC = () => {
     {
       key: 'assignment',
       header: 'Active Assignment',
+      className: 'w-[190px]',
       render: (item) => {
         if (item.activeAssignment) {
           return (
@@ -373,6 +378,7 @@ export const NumberManagementView: React.FC = () => {
     {
       key: 'messages',
       header: 'Total Traffic',
+      className: 'w-[110px]',
       render: (item) => (
         <span className="font-mono text-xs font-semibold text-[var(--text-primary)]">
           {formatNumber(item.totalMessages)} SMS
@@ -383,6 +389,7 @@ export const NumberManagementView: React.FC = () => {
     {
       key: 'lastActivity',
       header: 'Last Activity',
+      className: 'w-[120px]',
       render: (item) => (
         <span className="font-mono text-xs text-[var(--text-secondary)]">
           {item.lastActivityAt ? formatRelativeTime(item.lastActivityAt) : 'Never'}
@@ -392,7 +399,8 @@ export const NumberManagementView: React.FC = () => {
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: '',
+      className: 'w-[40px] text-right',
       render: (item) => (
         <div className="flex items-center justify-end">
           <MoreActionsMenu
@@ -504,8 +512,8 @@ export const NumberManagementView: React.FC = () => {
         }
       />
 
-      {/* KPI Cards Row (8 KPIs) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+      {/* KPI Cards Row (8 KPIs in 2 clean rows of 4) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3.5">
         {isLoading ? (
           <>
             <StatCardSkeleton />

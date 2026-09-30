@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { getPrismaClient } from '../db/prisma';
 import { Logger } from '../utils/logger';
 import { AuditService } from './audit.service';
@@ -33,8 +34,8 @@ export class BillingService {
     numberId: string;
     clientId?: string | null;
     agentId?: string | null;
-  }) {
-    const prisma = getPrismaClient();
+  }, transaction?: Prisma.TransactionClient) {
+    const prisma = transaction || getPrismaClient();
     if (!prisma) throw new Error('Database connection unavailable');
 
     // Default rate values if no custom rate card is defined:
@@ -54,6 +55,7 @@ export class BillingService {
     const [providerRate, clientRate] = await Promise.all([
       prisma.rate.findFirst({
         where: {
+          organizationId: message.organizationId,
           providerId: message.providerId,
           isActive: true,
           effectiveFrom: { lte: now },
@@ -64,6 +66,7 @@ export class BillingService {
       message.clientId
         ? prisma.rate.findFirst({
             where: {
+              organizationId: message.organizationId,
               clientId: message.clientId,
               isActive: true,
               effectiveFrom: { lte: now },
@@ -82,7 +85,10 @@ export class BillingService {
       platformMarginMicrounits = clientChargeMicrounits - providerCostMicrounits - agentCommissionMicrounits;
     }
 
-    return prisma.$transaction(async (tx) => {
+    platformMarginMicrounits = clientChargeMicrounits - providerCostMicrounits - agentCommissionMicrounits;
+
+    const processBilling = async (tx: Prisma.TransactionClient) => {
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${message.id}, 0))`;
       // 0. Idempotency Check: Prevent duplicate billing events for the same message
       const existingBilling = await tx.billingEvent.findFirst({
         where: { inboundMessageId: message.id, status: 'BILLED' },
@@ -241,7 +247,7 @@ export class BillingService {
 
       // 5. Platform Profit Credit
       const platformWallet = await tx.wallet.findFirst({
-        where: { isPlatform: true },
+        where: { isPlatform: true, organizationId: message.organizationId },
       });
 
       if (platformWallet && platformMarginMicrounits > 0n) {
@@ -287,7 +293,8 @@ export class BillingService {
       });
 
       return { billingEvent, cdr };
-    }, { maxWait: 15000, timeout: 30000 });
+    };
+    return transaction ? processBilling(transaction) : getPrismaClient()!.$transaction(processBilling, { maxWait: 15000, timeout: 30000 });
   }
 
   /**

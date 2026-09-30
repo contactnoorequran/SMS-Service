@@ -82,10 +82,10 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 Sub-Cent Decimal Clearing
               </span>
             </div>
-            <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">
+            <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight font-page-title">
               Executive Dashboard
             </h1>
-            <p className="text-xs text-[var(--text-secondary)] max-w-2xl leading-relaxed">
+            <p className="text-xs text-[var(--text-secondary)] max-w-2xl leading-relaxed font-body">
               Real-time telecommunications operational metrics, gateway connectivity, and financial clearing.
             </p>
           </div>
@@ -208,7 +208,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         />
       ) : (
         <EmptyState
-          icon={<BarChart3 className="w-6 h-6" />}
+          iconName="network-analytics"
           title="No Platform Metrics Available"
           description="Operational metrics have not been recorded yet. Launch gateway simulation or check connectivity."
           actionText="Refresh Telemetry"
@@ -233,10 +233,10 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
       {data && (
         <QuickOperationalPanels
           healthyGateways={data.summary.healthyGateways}
-          totalGateways={data?.charts?.providerTraffic?.length ?? 2}
+          totalGateways={data?.charts?.providerTraffic?.length ?? 0}
           activeChannels={data.summary.activeChannels}
-          unreadNotificationsCount={2}
-          pendingPaymentRequestsCount={3}
+          unreadNotificationsCount={data.summary.unreadNotificationsCount ?? 0}
+          pendingPaymentRequestsCount={data.summary.pendingPaymentRequestsCount ?? 0}
           onNavigateToTab={onNavigateToTab}
         />
       )}

@@ -5,7 +5,7 @@ import { sendSuccess, sendError } from '../utils/api-response';
 export class CdrController {
   static async list(req: Request, res: Response): Promise<void> {
     try {
-      const { providerId, clientId, agentId, numberId, page, limit } = req.query;
+      const { providerId, clientId, agentId, numberId, page, limit, from, to } = req.query;
 
       // Scoping
       let effectiveClientId = clientId ? String(clientId) : undefined;
@@ -17,7 +17,11 @@ export class CdrController {
         effectiveAgentId = req.user.agentId;
       }
 
+      if ((from && !Number.isFinite(Date.parse(String(from)))) || (to && !Number.isFinite(Date.parse(String(to))))) {sendError(res,400,'INVALID_DATE','Invalid reporting date');return;}
+      if ((req.user?.role.name === 'AGENT' && !req.user.agentId) || (req.user?.role.name === 'CLIENT' && !req.user.clientId)) {sendError(res,403,'FORBIDDEN','Account association required');return;}
       const result = await CdrService.listCdrs({
+        from: from ? String(from) : undefined,
+        to: to ? String(to) : undefined,
         providerId: providerId ? String(providerId) : undefined,
         clientId: effectiveClientId,
         agentId: effectiveAgentId,

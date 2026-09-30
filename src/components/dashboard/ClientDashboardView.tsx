@@ -105,13 +105,13 @@ export const ClientDashboardView: React.FC<ClientDashboardViewProps> = ({ onNavi
                 Client Self-Service Portal
               </Badge>
               <span className="text-xs text-[var(--text-tertiary)] font-mono">
-                SMS Service API & Numbers
+                WORLD SMS SERVICE API & Numbers
               </span>
             </div>
-            <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">
+            <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight font-page-title">
               Client Overview
             </h1>
-            <p className="text-xs text-[var(--text-secondary)] max-w-2xl leading-relaxed">
+            <p className="text-xs text-[var(--text-secondary)] max-w-2xl leading-relaxed font-body">
               Real-time inbound SMS stream, automated OTP verification extraction, leased phone numbers, and webhook integrations.
             </p>
           </div>

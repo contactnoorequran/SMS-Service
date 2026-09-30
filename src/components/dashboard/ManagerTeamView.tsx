@@ -189,7 +189,7 @@ export const ManagerTeamView: React.FC = () => {
                 Team Roster & Account Portfolios
               </Badge>
               <span className="text-xs text-[var(--text-tertiary)] font-mono">
-                SMS Service Team Management
+                WORLD SMS SERVICE Team Management
               </span>
             </div>
             <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">

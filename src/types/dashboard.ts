@@ -79,6 +79,8 @@ export interface DashboardResponseData {
     healthyGateways: number;
     activeChannels: number;
     platformUtilizationRate: number;
+    unreadNotificationsCount?: number;
+    pendingPaymentRequestsCount?: number;
   };
 }
 

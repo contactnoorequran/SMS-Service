@@ -30,51 +30,15 @@ interface WebhookLog {
   payloadSummary: string;
 }
 
-const INITIAL_LOGS: WebhookLog[] = [
-  {
-    id: 'LOG-771',
-    event: 'sms.received',
-    endpoint: 'https://api.acmetelematics.com/v1/sms/inbound',
-    statusCode: 200,
-    latencyMs: 38,
-    timestamp: '2 mins ago',
-    payloadSummary: 'WhatsApp OTP 729-104 -> +44 7911 123456',
-  },
-  {
-    id: 'LOG-770',
-    event: 'sms.received',
-    endpoint: 'https://api.acmetelematics.com/v1/sms/inbound',
-    statusCode: 200,
-    latencyMs: 44,
-    timestamp: '5 mins ago',
-    payloadSummary: 'Google OTP 904128 -> +1 202 555 0192',
-  },
-  {
-    id: 'LOG-769',
-    event: 'otp.extracted',
-    endpoint: 'https://api.acmetelematics.com/v1/sms/inbound',
-    statusCode: 200,
-    latencyMs: 31,
-    timestamp: '11 mins ago',
-    payloadSummary: 'Telegram code 44812 -> +44 7911 987654',
-  },
-  {
-    id: 'LOG-768',
-    event: 'sms.received',
-    endpoint: 'https://api.acmetelematics.com/v1/sms/inbound',
-    statusCode: 200,
-    latencyMs: 52,
-    timestamp: '18 mins ago',
-    payloadSummary: 'Uber code 3190 -> +49 151 2345678',
-  },
-];
+// Logs load from real webhook delivery events
+const INITIAL_LOGS: WebhookLog[] = [];
 
 export const ClientWebhookView: React.FC = () => {
   const [webhookUrl, setWebhookUrl] = useState<string>(
-    'https://api.acmetelematics.com/v1/sms/inbound'
+    'https://api.yourdomain.com/v1/sms/inbound'
   );
   const [secretKey, setSecretKey] = useState<string>(
-    'whsec_88f9210c49ba7e0291dbe55c829910a3'
+    'whsec_••••••••••••••••••••••••••••••••'
   );
   const [copiedSecret, setCopiedSecret] = useState<boolean>(false);
   const [isSaved, setIsSaved] = useState<boolean>(false);
@@ -321,35 +285,43 @@ export const ClientWebhookView: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--glass-border)]">
-              {logs.map((log) => (
-                <tr key={log.id} className="hover:bg-[var(--glass-bg)] transition-colors">
-                  <td className="p-3.5 pl-5 font-mono text-[var(--accent-blue)] font-semibold">
-                    {log.id}
-                  </td>
-                  <td className="p-3.5">
-                    <Badge variant="neutral" size="sm">
-                      {log.event}
-                    </Badge>
-                  </td>
-                  <td className="p-3.5 font-mono text-[var(--text-secondary)] max-w-xs truncate">
-                    {log.endpoint}
-                  </td>
-                  <td className="p-3.5 text-[var(--text-primary)] max-w-sm truncate">
-                    {log.payloadSummary}
-                  </td>
-                  <td className="p-3.5">
-                    <Badge variant="success" size="sm">
-                      {log.statusCode} OK
-                    </Badge>
-                  </td>
-                  <td className="p-3.5 font-mono text-[var(--text-tertiary)]">
-                    {log.latencyMs}ms
-                  </td>
-                  <td className="p-3.5 pr-5 text-right font-mono text-[var(--text-tertiary)]">
-                    {log.timestamp}
+              {logs.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-xs text-[var(--text-tertiary)]">
+                    No webhook delivery events logged yet. Use the simulator above to dispatch a test ping.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                logs.map((log) => (
+                  <tr key={log.id} className="hover:bg-[var(--glass-bg)] transition-colors">
+                    <td className="p-3.5 pl-5 font-mono text-[var(--accent-blue)] font-semibold">
+                      {log.id}
+                    </td>
+                    <td className="p-3.5">
+                      <Badge variant="neutral" size="sm">
+                        {log.event}
+                      </Badge>
+                    </td>
+                    <td className="p-3.5 font-mono text-[var(--text-secondary)] max-w-xs truncate">
+                      {log.endpoint}
+                    </td>
+                    <td className="p-3.5 text-[var(--text-primary)] max-w-sm truncate">
+                      {log.payloadSummary}
+                    </td>
+                    <td className="p-3.5">
+                      <Badge variant="success" size="sm">
+                        {log.statusCode} OK
+                      </Badge>
+                    </td>
+                    <td className="p-3.5 font-mono text-[var(--text-tertiary)]">
+                      {log.latencyMs}ms
+                    </td>
+                    <td className="p-3.5 pr-5 text-right font-mono text-[var(--text-tertiary)]">
+                      {log.timestamp}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

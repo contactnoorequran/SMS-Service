@@ -10,7 +10,7 @@ import {
   Legend,
 } from 'recharts';
 import { SmsVolumePoint } from '../../../types/dashboard';
-import { MessageSquare, Inbox } from 'lucide-react';
+import { AppIcon } from '../../ui/AppIcon';
 import { formatNumber, formatPercent } from '../../../utils/formatters';
 
 interface SmsVolumeChartProps {
@@ -32,8 +32,8 @@ export const SmsVolumeChart: React.FC<SmsVolumeChartProps> = ({ data }) => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[var(--glass-border)]">
         <div>
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-[var(--accent-blue-dim)] text-[var(--accent-blue)]">
-              <MessageSquare className="w-4 h-4" />
+            <div className="p-1.5 rounded-lg bg-[var(--brand-primary-soft)] text-[var(--brand-primary)] border border-[var(--brand-border)]">
+              <AppIcon name="sms-routing" size="sm" />
             </div>
             <h3 className="text-sm font-semibold text-[var(--text-primary)]">
               SMS Traffic & Delivery Volume
@@ -87,7 +87,7 @@ export const SmsVolumeChart: React.FC<SmsVolumeChartProps> = ({ data }) => {
       {totalVolume === 0 ? (
         <div className="py-16 text-center flex flex-col items-center justify-center text-[var(--text-tertiary)]">
           <div className="w-10 h-10 rounded-xl bg-[var(--glass-bg-active)] flex items-center justify-center text-[var(--text-tertiary)] mb-2">
-            <Inbox className="w-5 h-5" />
+            <AppIcon name="sms-routing" size="md" />
           </div>
           <p className="text-xs font-medium text-[var(--text-primary)]">No data available for this period</p>
           <p className="text-[11px] text-[var(--text-tertiary)] mt-0.5 max-w-sm">
@@ -128,8 +128,8 @@ export const SmsVolumeChart: React.FC<SmsVolumeChartProps> = ({ data }) => {
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
                   </linearGradient>
                   <linearGradient id="totalGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.35} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0} />
+                    <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.0} />
                   </linearGradient>
                   <linearGradient id="failedGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4} />
@@ -188,7 +188,7 @@ export const SmsVolumeChart: React.FC<SmsVolumeChartProps> = ({ data }) => {
                     type="monotone"
                     dataKey="total"
                     name="Total Volume"
-                    stroke="#3b82f6"
+                    stroke="#38bdf8"
                     strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#totalGradient)"

@@ -678,8 +678,10 @@ class ApiClient {
   }
 
   // Enterprise CDR & Margin Accounting (Phase 18)
-  async getCdrs(query: { search?: string; status?: string; clientId?: string; providerId?: string; page?: number; limit?: number } = {}): Promise<any> {
+  async getCdrs(query: { from?: string; to?: string; search?: string; status?: string; clientId?: string; providerId?: string; page?: number; limit?: number } = {}): Promise<any> {
     const params = new URLSearchParams();
+    if(query.from) params.set('from',query.from);
+    if(query.to) params.set('to',query.to);
     if (query.search) params.set('search', query.search);
     if (query.status && query.status !== 'ALL') params.set('status', query.status);
     if (query.clientId && query.clientId !== 'ALL') params.set('clientId', query.clientId);
@@ -742,6 +744,44 @@ class ApiClient {
 
   async getBillingSummary(): Promise<any> {
     const response = await this.request<any>('/billing/summary');
+    return response.data;
+  }
+
+  async getBillingRates(): Promise<any> {
+    const response = await this.request<any>('/billing/rates');
+    return response.data;
+  }
+
+  async getPaymentRequests(query: { status?: string; page?: number; limit?: number } = {}): Promise<any> {
+    const params = new URLSearchParams();
+    if (query.status && query.status !== 'ALL') params.set('status', query.status);
+    if (query.page) params.set('page', query.page.toString());
+    if (query.limit) params.set('limit', query.limit.toString());
+    const qs = params.toString();
+    const response = await this.request<any>(`/billing/payment-requests${qs ? `?${qs}` : ''}`);
+    return response.data;
+  }
+
+  async createPaymentRequest(data: { walletId: string; amountDecimal: number; reason?: string; reference?: string }): Promise<any> {
+    const response = await this.request<any>('/billing/payment-requests', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return response.data;
+  }
+
+  async approvePaymentRequest(id: string): Promise<any> {
+    const response = await this.request<any>(`/billing/payment-requests/${id}/approve`, {
+      method: 'POST',
+    });
+    return response.data;
+  }
+
+  async rejectPaymentRequest(id: string, reason?: string): Promise<any> {
+    const response = await this.request<any>(`/billing/payment-requests/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
     return response.data;
   }
 }

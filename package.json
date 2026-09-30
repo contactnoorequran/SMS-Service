@@ -1,7 +1,7 @@
 {
-  "name": "react-example",
+  "name": "world-sms-service",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
@@ -14,7 +14,8 @@
     "test:phase05": "tsx scripts/test-phase05-managers.ts",
     "test:phase06": "tsx scripts/test-phase06-agents.ts",
     "test:phase07": "tsx scripts/test-phase07-clients.ts",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test:carriers": "tsx scripts/test-carrier-connections.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -33,6 +34,7 @@
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "recharts": "^3.10.1",
+    "smpp": "0.6.0-rc.4",
     "vite": "^6.2.3",
     "zod": "^4.6.1"
   },

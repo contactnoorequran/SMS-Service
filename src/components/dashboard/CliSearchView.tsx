@@ -2,24 +2,14 @@ import React, { useState, useMemo } from 'react';
 import { Search, ChevronRight, Radio, Clock, AlertCircle } from 'lucide-react';
 import { DataTableToolbar, ColumnVisibility } from '../ui/DataTableToolbar';
 
+import { apiClient } from '../../services/api';
+
 /* ─── Types ─── */
 interface CliResult {
   id: string;
   range: string;
   prefix: string;
   lastSeen: string;
-}
-
-/* ─── Mock search function ─── */
-function mockSearch(sender: string, text: string): CliResult[] {
-  if (!sender && !text) return [];
-  const pool: CliResult[] = [
-    { id: '1', range: 'UK Premium +44 7911', prefix: '+44 7911', lastSeen: '2026-09-24 07:42:10 UTC' },
-    { id: '2', range: 'US California +1 213', prefix: '+1 213', lastSeen: '2026-09-24 06:18:55 UTC' },
-    { id: '3', range: 'Germany +49 151', prefix: '+49 151', lastSeen: '2026-09-23 22:05:33 UTC' },
-    { id: '4', range: 'France +33 6', prefix: '+33 6', lastSeen: '2026-09-23 19:11:02 UTC' },
-  ];
-  return pool.filter(() => true); // In real: filter by CLI match
 }
 
 const INIT_COLS: ColumnVisibility[] = [
@@ -40,15 +30,54 @@ export const CliSearchView: React.FC = () => {
   const [pageSize, setPageSize] = useState(25);
   const [colDefs, setColDefs] = useState<ColumnVisibility[]>(INIT_COLS);
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!sender.trim() && !messageText.trim()) return;
     setIsSearching(true);
-    setTimeout(() => {
-      setResults(mockSearch(sender, messageText));
-      setSearched(true);
+    setSearched(true);
+    try {
+      const queryTerm = sender.trim() || messageText.trim();
+      const res = await apiClient.getInboundMessages({
+        search: queryTerm,
+        limit: 50,
+      });
+
+      if (res && Array.isArray(res.items)) {
+        const mapped: CliResult[] = res.items
+          .filter((item: any) => {
+            const matchSender = !sender.trim() || (item.fromNumber || '').toLowerCase().includes(sender.toLowerCase().trim());
+            const matchBody = !messageText.trim() || (item.body || '').toLowerCase().includes(messageText.toLowerCase().trim());
+            return matchSender && matchBody;
+          })
+          .map((item: any) => {
+            const dt = item.receivedAt ? new Date(item.receivedAt) : new Date(item.createdAt || Date.now());
+            const lastSeenStr = dt.toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+            return {
+              id: item.id,
+              range: item.number?.range?.name || item.number?.country?.name || `Range ${item.toNumber?.slice(0, 5) || 'Standard'}`,
+              prefix: item.number?.range?.prefix || item.number?.country?.prefix || item.toNumber?.slice(0, 4) || '+',
+              lastSeen: lastSeenStr,
+            };
+          });
+
+        // Deduplicate by range name to show unique ranges running this CLI
+        const uniqueMap = new Map<string, CliResult>();
+        mapped.forEach((m) => {
+          if (!uniqueMap.has(m.range)) {
+            uniqueMap.set(m.range, m);
+          }
+        });
+
+        setResults(Array.from(uniqueMap.values()));
+      } else {
+        setResults([]);
+      }
+    } catch (err) {
+      console.warn('CLI search API failed:', err);
+      setResults([]);
+    } finally {
       setIsSearching(false);
       setPage(1);
-    }, 500);
+    }
   };
 
   const handleReset = () => {

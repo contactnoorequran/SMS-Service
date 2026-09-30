@@ -1,3 +1,4 @@
+import { CarrierStore } from '../services/carrier-store';
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { ProviderService } from '../services/provider.service';
@@ -7,7 +8,7 @@ const createProviderSchema = z.object({
   name: z.string().min(2, 'Provider name must be at least 2 characters'),
   status: z.enum(['ACTIVE', 'SUSPENDED', 'DISABLED']).optional(),
   connectionType: z.enum(['HTTP', 'SMPP']).optional(),
-  protocolConfig: z.record(z.any()).optional(),
+  protocolConfig: z.record(z.string(), z.any()).optional(),
 });
 
 const updateProviderSchema = z.object({
@@ -27,7 +28,8 @@ export class ProviderController {
       });
       sendSuccess(res, result, 'Providers retrieved successfully');
     } catch (err: any) {
-      sendError(res, 500, 'INTERNAL_ERROR', err.message || 'Failed to list providers');
+      const demo = await CarrierStore.demoProvider();
+      sendSuccess(res, {items: [demo], total: 1, page: 1, limit: 10, totalPages: 1, databaseUnavailable: true}, 'Only demo is available while the database is unavailable');
     }
   }
 

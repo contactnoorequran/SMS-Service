@@ -115,7 +115,7 @@ export class AppErrorBoundary extends ComponentBase {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase bg-[var(--accent-rose-dim)] text-[var(--accent-rose)] border border-[rgba(244,63,94,0.2)]">
-                    System Safeguard Active
+                    WORLD SMS SERVICE · Safeguard Active
                   </span>
                 </div>
                 <h2 className="text-xl font-bold text-[var(--text-primary)] tracking-tight mt-1.5">

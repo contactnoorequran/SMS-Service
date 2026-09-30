@@ -23,6 +23,7 @@ import { Pagination } from '../ui/Pagination';
 import { StatCardSkeleton } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import { ErrorState } from '../ui/ErrorState';
+import { CountryFlag } from '../ui/CountryFlag';
 import { Breadcrumbs } from '../ui/Breadcrumbs';
 import { NotFoundState } from '../system/NotFoundState';
 import { MoreActionsMenu } from '../ui/MoreActionsMenu';
@@ -210,7 +211,7 @@ export const ProviderManagementView: React.FC = () => {
         showToast('Connection bind configuration updated');
       } else {
         await createConnection(providerId, payload as CreateConnectionPayload);
-        showToast('New carrier connection bind established');
+        showToast('Carrier connection configuration saved');
       }
       setIsAddConnectionOpen(false);
       setEditingConnectionTarget(null);
@@ -265,20 +266,20 @@ export const ProviderManagementView: React.FC = () => {
             provider={selectedProviderDetail}
             onBack={clearSelectedProvider}
             onEdit={() => setEditingProvider(selectedProviderDetail)}
-            onToggleStatus={() => handleOpenStatusModal(selectedProviderDetail)}
+            onStatusChange={() => handleOpenStatusModal(selectedProviderDetail)}
             onAddConnection={() => {
               setEditingConnectionTarget(null);
               setIsAddConnectionOpen(true);
             }}
-            onEditConnection={(conn) => {
+            onEditConnection={(_provider, conn) => {
               setEditingConnectionTarget(conn);
               setIsAddConnectionOpen(true);
             }}
             onToggleConnectionStatus={(connId, currStatus) =>
               handleToggleConnectionStatus(connId, currStatus)
             }
-            onInspectConnection={(conn) => setInspectingConnectionTarget(conn)}
-            onTestConnection={(connId) => testConnection(selectedProviderDetail.id, connId)}
+            onInspectConnection={(_provider, conn) => setInspectingConnectionTarget(conn)}
+            onTestConnectionPing={(providerId, connId) => testConnection(providerId, connId)}
           />
 
           <EditProviderModal
@@ -584,7 +585,7 @@ export const ProviderManagementView: React.FC = () => {
                 Carrier Gateway Core
               </Badge>
               <span className="text-xs text-[var(--text-tertiary)] font-mono">
-                SMS Service Telecom Routing
+                WORLD SMS SERVICE Telecom Routing
               </span>
             </div>
             <h1 className="text-xl font-bold text-[var(--text-primary)] tracking-tight">
@@ -761,7 +762,7 @@ export const ProviderManagementView: React.FC = () => {
         <EmptyState
           title="No providers found"
           description="No carrier providers match your active search or filter criteria."
-          icon={<Radio className="w-6 h-6" />}
+          iconName="provider"
           actionText="Reset Filters"
           onAction={resetFilters}
         />
@@ -846,22 +847,22 @@ export const ProviderManagementView: React.FC = () => {
                 <div className="text-xs font-semibold text-[var(--text-secondary)]">
                   Active Interconnect Binds:
                 </div>
-                {Array.from({ length: quickModalTarget.provider.connectionsCount || 1 }).map((_, idx) => (
+                {(quickModalTarget.provider.connections || []).map((connection) => (
                   <div
-                    key={idx}
+                    key={connection.id}
                     className="p-3 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)] flex items-center justify-between text-xs font-mono"
                   >
                     <div className="flex items-center gap-2">
                       <Cable className="w-3.5 h-3.5 text-[var(--accent-blue)]" />
                       <span className="font-semibold text-[var(--text-primary)]">
-                        {quickModalTarget.provider.slug}-bind-0{idx + 1}
+                        {connection.name}
                       </span>
                       <span className="text-[10px] text-[var(--text-tertiary)]">
-                        SMPP v3.4 (TRX) :2775
+                        {connection.connectionType}
                       </span>
                     </div>
                     <span className="text-[10px] text-[var(--accent-emerald)] font-bold bg-[var(--accent-emerald-dim)] px-2 py-0.5 rounded border border-[rgba(16,185,129,0.2)]">
-                      CONNECTED
+                      {connection.status}
                     </span>
                   </div>
                 ))}
@@ -913,7 +914,7 @@ export const ProviderManagementView: React.FC = () => {
                       key={code}
                       className="p-2.5 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)] flex items-center gap-2"
                     >
-                      <span className="text-base shrink-0">{info.flag}</span>
+                      <CountryFlag flag={info.flag} countryName={info.name} size="sm" className="text-base shrink-0" />
                       <div className="min-w-0">
                         <div className="text-xs font-semibold text-[var(--text-primary)] truncate">
                           {info.name}

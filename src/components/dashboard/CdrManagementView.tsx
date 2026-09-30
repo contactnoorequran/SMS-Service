@@ -384,7 +384,7 @@ export const CdrManagementView: React.FC = () => {
         />
       ) : cdrs.length === 0 && !isLoading ? (
         <EmptyState
-          icon={<Receipt className="w-8 h-8 text-[var(--text-tertiary)]" />}
+          iconName="cdr"
           title="No Call Detail Records Available"
           description="There are currently no CDR entries logged in the financial clearing pipeline. Any incoming SMS processed via carrier webhooks will generate immutable CDR records here."
         />

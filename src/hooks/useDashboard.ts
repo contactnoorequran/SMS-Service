@@ -82,7 +82,7 @@ export function useDashboard(initialRange: DashboardTimeRange = '7d'): UseDashbo
       return {
         providerCost: cost,
         clientRevenue: gross,
-        agentCommission: 0.05,
+        agentCommission: 0,
         platformProfit: profit,
         profitMargin: gross > 0 ? Number(((profit / gross) * 100).toFixed(1)) : 0,
       };

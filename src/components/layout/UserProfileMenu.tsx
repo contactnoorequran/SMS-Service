@@ -69,7 +69,7 @@ export const UserProfileMenu: React.FC = () => {
           className="flex items-center gap-2 p-1.5 pl-2 pr-2.5 rounded-xl border border-[var(--glass-border)] hover:bg-[var(--glass-bg)] hover:border-[var(--glass-border-hover)] transition-all text-left cursor-pointer shrink-0"
         >
           {/* Avatar */}
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-xs shrink-0">
+          <div className="w-7 h-7 rounded-lg bg-[var(--brand-primary)] text-white font-bold text-xs flex items-center justify-center shadow-xs shrink-0">
             {getInitials()}
           </div>
 
@@ -91,7 +91,7 @@ export const UserProfileMenu: React.FC = () => {
             {/* Header info */}
             <div className="p-4 border-b border-[var(--glass-border)] bg-[rgba(0,0,0,0.15)]">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-sm flex items-center justify-center shadow-[0_0_16px_var(--accent-blue-dim)]">
+                <div className="w-10 h-10 rounded-xl bg-[var(--brand-primary)] text-white font-bold text-sm flex items-center justify-center shadow-[0_0_16px_var(--accent-blue-dim)]">
                   {getInitials()}
                 </div>
                 <div className="min-w-0">

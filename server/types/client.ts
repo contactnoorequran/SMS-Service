@@ -81,6 +81,7 @@ export interface ClientListItem {
   lastName: string;
   name: string;
   email: string;
+  teams?: string;
   companyName: string;
   contact: string;
   billingType: BillingType;
@@ -144,6 +145,7 @@ export interface CreateClientDTO {
   firstName: string;
   lastName: string;
   email: string;
+  teams?: string;
   companyName: string;
   contact: string;
   managerId?: string | null;
@@ -159,6 +161,7 @@ export interface CreateClientDTO {
 export interface UpdateClientDTO {
   firstName?: string;
   lastName?: string;
+  teams?: string;
   companyName?: string;
   contact?: string;
   billingType?: BillingType;

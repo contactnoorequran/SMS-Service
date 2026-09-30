@@ -24,7 +24,7 @@ export const AppShell: React.FC<AppShellProps> = ({ initialTab }) => {
     const cleanPath = pathname.replace(/\/+$/, '') || '/';
     if (cleanPath === '/') return 'dashboard';
 
-    // Agent IMS SMS portal routes
+    // Agent WORLD SMS SERVICE portal routes
     if (cleanPath.startsWith('/sms-ranges')) return 'sms-ranges';
     if (cleanPath.startsWith('/cli-search')) return 'cli-search';
     if (cleanPath.startsWith('/my-numbers')) return 'my-numbers';
@@ -158,7 +158,7 @@ export const AppShell: React.FC<AppShellProps> = ({ initialTab }) => {
   }, [fetchHealth]);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[var(--bg-deep)] font-sans text-[var(--text-primary)] relative z-10">
+    <div data-agent-panel={role === 'AGENT' ? 'true' : undefined} className={` ${role === 'AGENT' ? 'agent-workspace' : ''} flex h-screen w-screen overflow-hidden bg-[var(--bg-deep)] font-sans text-[var(--text-primary)] relative z-10`}>
       {/* Platform Sidebar */}
       <Sidebar
         currentTab={currentTab}
@@ -184,7 +184,7 @@ export const AppShell: React.FC<AppShellProps> = ({ initialTab }) => {
         />
 
         {/* Scrollable Main Content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-5 md:p-6">
           <DashboardOverview
             currentTab={currentTab}
             onSelectTab={handleSelectTab}

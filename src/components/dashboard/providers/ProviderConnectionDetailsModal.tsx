@@ -162,7 +162,7 @@ export const ProviderConnectionDetailsModal: React.FC<ProviderConnectionDetailsM
           <div className="flex items-center justify-between">
             <span className="font-semibold text-[var(--text-primary)] flex items-center gap-2">
               <Lock className="w-4 h-4 text-[var(--accent-blue)]" />
-              KMS Vault Credential Reference
+              Encrypted Credential Reference
             </span>
             <Badge variant="success" size="sm">
               Vault Bound
@@ -177,11 +177,11 @@ export const ProviderConnectionDetailsModal: React.FC<ProviderConnectionDetailsM
 
             <div>
               <span className="text-[var(--text-muted)]">Key Label:</span>
-              <span className="text-[var(--text-primary)] font-medium ml-2">{connection.credential?.label || 'Primary KMS Trunk Vault'}</span>
+              <span className="text-[var(--text-primary)] font-medium ml-2">{connection.credential?.label || 'Carrier credentials'}</span>
             </div>
 
             <div>
-              <span className="text-[var(--text-muted)]">KMS Version:</span>
+              <span className="text-[var(--text-muted)]">Key Version:</span>
               <span className="font-mono text-[var(--text-primary)] ml-2">{connection.credential?.keyVersion || 'v1'}</span>
             </div>
 
@@ -193,7 +193,7 @@ export const ProviderConnectionDetailsModal: React.FC<ProviderConnectionDetailsM
             </div>
           </div>
           <p className="text-[10px] text-[var(--text-muted)] italic pt-1">
-            Plaintext API secrets and SMPP passwords reside in AWS KMS HSM modules and cannot be exported or rendered in the browser.
+            Configured secrets are encrypted with AES-256-GCM on the server. Demo connections contain no real credentials.
           </p>
         </div>
 

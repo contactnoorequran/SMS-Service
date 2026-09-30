@@ -2,16 +2,7 @@ import React from 'react';
 import { MetricCardData } from '../../types/dashboard';
 import { FinancialTotals } from '../../hooks/useDashboard';
 import { StatCard } from '../ui/Card';
-import {
-  Hash,
-  CheckCircle2,
-  MessageSquare,
-  Users,
-  Layers,
-  TrendingUp,
-  Building2,
-  DollarSign,
-} from 'lucide-react';
+import { AppIcon } from '../ui/AppIcon';
 import { Badge } from '../ui/Badge';
 import { formatCurrency, formatNumber } from '../../utils/formatters';
 
@@ -51,7 +42,7 @@ export const ExecutiveStatsSection: React.FC<ExecutiveStatsSectionProps> = ({
             title="Total Numbers"
             value={formatNumber(metrics.totalNumbers)}
             subtitle={`${formatNumber(metrics.unassignedNumbers)} available in pool`}
-            icon={<Hash className="w-5 h-5" />}
+            icon={<AppIcon name="number-inventory" size="md" />}
             iconBgColor="bg-[var(--accent-blue-dim)] text-[var(--accent-blue)]"
             badge={
               <Badge variant="info" size="sm">
@@ -67,7 +58,7 @@ export const ExecutiveStatsSection: React.FC<ExecutiveStatsSectionProps> = ({
             title="Active Numbers"
             value={formatNumber(metrics.assignedNumbers)}
             subtitle={`${summary.platformUtilizationRate}% pool utilization`}
-            icon={<CheckCircle2 className="w-5 h-5" />}
+            icon={<AppIcon name="check-circle" size="md" />}
             iconBgColor="bg-[var(--accent-emerald-dim)] text-[var(--accent-emerald)]"
             badge={
               <Badge variant="success" size="sm">
@@ -83,7 +74,7 @@ export const ExecutiveStatsSection: React.FC<ExecutiveStatsSectionProps> = ({
             title="Messages Today"
             value={formatNumber(metrics.smsToday)}
             subtitle={`${formatNumber(metrics.smsThisWeek)} msgs this week`}
-            icon={<MessageSquare className="w-5 h-5" />}
+            icon={<AppIcon name="sms-routing" size="md" />}
             iconBgColor="bg-[var(--accent-cyan-dim)] text-[var(--accent-cyan)]"
             badge={
               <Badge variant="info" size="sm">
@@ -99,7 +90,7 @@ export const ExecutiveStatsSection: React.FC<ExecutiveStatsSectionProps> = ({
             title="Active Clients"
             value={formatNumber(metrics.totalClients)}
             subtitle="Enterprise tenant accounts"
-            icon={<Users className="w-5 h-5" />}
+            icon={<AppIcon name="users" size="md" />}
             iconBgColor="bg-[var(--accent-violet-dim)] text-[var(--accent-violet)]"
             badge={
               <Badge variant="purple" size="sm">
@@ -128,7 +119,7 @@ export const ExecutiveStatsSection: React.FC<ExecutiveStatsSectionProps> = ({
             title="Provider Cost"
             value={formatCurrency(financials.providerCost, metrics.currency)}
             subtitle="Wholesale carrier network charges"
-            icon={<Layers className="w-5 h-5" />}
+            icon={<AppIcon name="provider-cost" size="md" />}
             iconBgColor="bg-[var(--accent-blue-dim)] text-[var(--accent-blue)]"
             badge={
               <Badge variant="neutral" size="sm">
@@ -144,7 +135,7 @@ export const ExecutiveStatsSection: React.FC<ExecutiveStatsSectionProps> = ({
             title="Client Revenue"
             value={formatCurrency(financials.clientRevenue, metrics.currency)}
             subtitle="Gross customer traffic billing"
-            icon={<TrendingUp className="w-5 h-5" />}
+            icon={<AppIcon name="client-revenue" size="md" />}
             iconBgColor="bg-[var(--accent-emerald-dim)] text-[var(--accent-emerald)]"
             badge={
               <Badge variant="success" size="sm">
@@ -160,7 +151,7 @@ export const ExecutiveStatsSection: React.FC<ExecutiveStatsSectionProps> = ({
             title="Agent Commission"
             value={formatCurrency(financials.agentCommission, metrics.currency)}
             subtitle="Portfolio partner payouts"
-            icon={<Building2 className="w-5 h-5" />}
+            icon={<AppIcon name="agent-commission" size="md" />}
             iconBgColor="bg-[var(--accent-violet-dim)] text-[var(--accent-violet)]"
             badge={
               <Badge variant="purple" size="sm">
@@ -185,7 +176,7 @@ export const ExecutiveStatsSection: React.FC<ExecutiveStatsSectionProps> = ({
                   }
                 : undefined
             }
-            icon={<DollarSign className="w-5 h-5" />}
+            icon={<AppIcon name="platform-margin" size="md" />}
             iconBgColor="bg-[var(--accent-amber-dim)] text-[var(--accent-amber)]"
             badge={
               <Badge variant="warning" size="sm">

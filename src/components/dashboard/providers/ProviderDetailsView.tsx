@@ -161,7 +161,7 @@ export const ProviderDetailsView: React.FC<ProviderDetailsViewProps> = ({
     },
     {
       key: 'credential',
-      header: 'KMS Credential Reference',
+      header: 'Credential Reference',
       render: (conn) => (
         <div className="flex items-center gap-1.5">
           <Lock className="w-3.5 h-3.5 text-[var(--accent-emerald)] shrink-0" />
@@ -170,7 +170,7 @@ export const ProviderDetailsView: React.FC<ProviderDetailsViewProps> = ({
               {conn.credential?.id || conn.credentialRefId || 'Vault Ref'}
             </span>
             <span className="text-[10px] text-[var(--text-muted)]">
-              KMS {conn.credential?.keyVersion || 'v1'} • Envelope TLS
+              {conn.mode === 'DEMO' ? 'Demo · no credentials' : 'Server-encrypted credentials'}
             </span>
           </div>
         </div>
@@ -224,14 +224,15 @@ export const ProviderDetailsView: React.FC<ProviderDetailsViewProps> = ({
 
           {/* Toggle Enable / Disable */}
           <button
-            onClick={() => onToggleConnectionStatus(conn.id, conn.status)}
+            onClick={() => onToggleConnectionStatus(conn.id, conn.enabled ? 'ACTIVE' : 'DISABLED')}
             className={`p-1.5 rounded-lg transition-colors ${
-              conn.status === 'CONNECTED'
+              conn.enabled
                 ? 'text-[var(--text-secondary)] hover:text-[var(--accent-rose)] hover:bg-[var(--accent-rose-dim)]'
                 : 'text-[var(--text-secondary)] hover:text-[var(--accent-emerald)] hover:bg-[var(--accent-emerald-dim)]'
             }`}
-            title={conn.status === 'CONNECTED' ? 'Disable Bind' : 'Enable Bind'}
-            aria-label={`${conn.status === 'CONNECTED' ? 'Disable' : 'Enable'} ${conn.name}`}
+            disabled={conn.mode === 'DEMO'}
+            title={conn.enabled ? 'Disable Bind' : 'Enable Bind'}
+            aria-label={`${conn.enabled ? 'Disable' : 'Enable'} ${conn.name}`}
           >
             <Power className="w-3.5 h-3.5" />
           </button>
@@ -563,7 +564,7 @@ export const ProviderDetailsView: React.FC<ProviderDetailsViewProps> = ({
                     Carrier Protocol Interconnects & Sockets
                   </h3>
                   <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-                    Dual SMPP binds and HTTP/REST Webhook pipelines configured with KMS credential references
+                    HTTP and SMPP connections. DEMO is a local simulation; edit a connection to configure LIVE mode.
                   </p>
                 </div>
                 <Button variant="secondary" size="sm" onClick={() => onAddConnection(provider)}>
@@ -635,7 +636,7 @@ export const ProviderDetailsView: React.FC<ProviderDetailsViewProps> = ({
                     Carrier Gateway Audit Feed
                   </h3>
                   <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-                    Socket state changes, automated latency checks, and KMS credential rotations
+                    Socket state changes, automated latency checks, and credential updates
                   </p>
                 </div>
               </div>

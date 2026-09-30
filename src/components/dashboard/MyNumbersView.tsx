@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Hash,
   ChevronRight,
@@ -13,8 +13,10 @@ import {
   ChevronDown,
   Eye,
   EyeOff,
+  Loader2,
 } from 'lucide-react';
 import { DataTableToolbar, ColumnVisibility } from '../ui/DataTableToolbar';
+import { apiClient } from '../../services/api';
 
 /* ─── Types ─── */
 type Allocation = 'all' | 'allocated' | 'unallocated';
@@ -37,36 +39,8 @@ interface NumberRow {
   active: boolean;
 }
 
-/* ─── Mock data ─── */
-const MOCK_RANGES = ['All ranges', '+44 7911 UK Premium', '+1 213 US California', '+91 98 India Airtel', '+33 6 France Mobile'];
-const MOCK_CLIENTS = ['All clients', 'Nexus Corp', 'Alpine Systems', 'ClearPath Ltd', 'Orbit Telecom'];
 const PLANS: PlanTerm[] = ['7/1', '15/1', '30/1'];
 
-function genNumber(i: number): NumberRow {
-  const ranges = ['+44 7911 UK Premium', '+1 213 US California', '+91 98 India Airtel', '+33 6 France Mobile'];
-  const clients = [null, 'Nexus Corp', 'Alpine Systems', null, 'ClearPath Ltd'];
-  const r = ranges[i % ranges.length];
-  const prefix = r.split(' ')[0] + ' ' + r.split(' ')[1];
-  const cl = clients[i % clients.length];
-  const full = `+${Math.floor(Math.random() * 9_000_000_000 + 1_000_000_000)}`;
-  return {
-    id: String(i + 1),
-    fullNumber: full,
-    localNumber: full.replace(/^\+\d{1,3}/, '0'),
-    range: r,
-    prefix,
-    clientId: cl ? String(i % 4) : null,
-    clientName: cl,
-    myPayout: `$${(Math.random() * 0.01).toFixed(4)}`,
-    clientRate: `$${(Math.random() * 0.012 + 0.001).toFixed(4)}`,
-    plan: PLANS[i % 3],
-    dailyLimit: 30,
-    weeklyLimit: 0,
-    active: i % 7 !== 5,
-  };
-}
-
-const ALL_NUMBERS: NumberRow[] = Array.from({ length: 45 }, (_, i) => genNumber(i));
 
 const INIT_COLS: ColumnVisibility[] = [
   { key: 'select', label: 'Select', visible: true },
@@ -178,7 +152,7 @@ const BatchBar: React.FC<BatchBarProps> = ({ selected, all, onShowAll, onAssign,
 };
 
 /* ─── Assign Modal ─── */
-const AssignModal: React.FC<{ count: number; onClose: () => void; onConfirm: (client: string) => void }> = ({ count, onClose, onConfirm }) => {
+const AssignModal: React.FC<{ count: number; clients: string[]; onClose: () => void; onConfirm: (client: string) => void }> = ({ count, clients, onClose, onConfirm }) => {
   const [client, setClient] = useState('');
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -193,7 +167,7 @@ const AssignModal: React.FC<{ count: number; onClose: () => void; onConfirm: (cl
             className="w-full glass-input px-3 py-2 text-xs rounded-lg border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-primary)]"
           >
             <option value="">Choose a client…</option>
-            {MOCK_CLIENTS.slice(1).map((c) => <option key={c} value={c}>{c}</option>)}
+            {clients.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
         <div className="flex gap-2 justify-end">
@@ -213,6 +187,73 @@ const AssignModal: React.FC<{ count: number; onClose: () => void; onConfirm: (cl
 
 /* ─── Main Component ─── */
 export const MyNumbersView: React.FC = () => {
+  /* Real numbers and clients loaded from API */
+  const [numbers, setNumbers] = useState<NumberRow[]>([]);
+  const [clientNames, setClientNames] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  /* Load real API data */
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [numRes, clientRes] = await Promise.all([
+        apiClient.getNumbers({ limit: 100 }).catch(() => null),
+        apiClient.getClients({ limit: 100 }).catch(() => null),
+      ]);
+
+      if (numRes && Array.isArray(numRes.items)) {
+        const mapped: NumberRow[] = numRes.items.map((n: any) => {
+          const full = n.e164 || n.number || '';
+          const local = full.replace(/^\+\d{1,3}/, '');
+          const rangeName = n.range?.name || n.country?.name || 'Standard Range';
+          const prefixStr = n.range?.prefix || n.country?.prefix || full.slice(0, 4) || '+';
+          return {
+            id: n.id,
+            fullNumber: full,
+            localNumber: local,
+            range: rangeName,
+            prefix: prefixStr,
+            clientId: n.activeAssignment?.clientId || n.clientId || null,
+            clientName: n.activeAssignment?.client?.companyName || n.client?.name || null,
+            myPayout: `$${Number(n.payoutRate || 0.045).toFixed(3)}`,
+            clientRate: `$${Number(n.clientRate || 0.065).toFixed(3)}`,
+            plan: '30/1' as PlanTerm,
+            dailyLimit: n.dailySmsLimit || 500,
+            weeklyLimit: n.weeklySmsLimit || 3500,
+            active: n.status === 'ASSIGNED' || n.status === 'AVAILABLE',
+          };
+        });
+        setNumbers(mapped);
+      } else {
+        setNumbers([]);
+      }
+
+      if (clientRes && Array.isArray(clientRes.items)) {
+        const names = clientRes.items.map((c: any) => c.companyName || c.name || `Client #${c.id}`).filter(Boolean);
+        setClientNames(names);
+      }
+    } catch (err) {
+      console.warn('Failed to load numbers or clients in MyNumbersView:', err);
+      setNumbers([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  /* Dynamic filter options from loaded data */
+  const availableRanges = useMemo(() => {
+    const unique = Array.from(new Set(numbers.map((n) => n.range))).filter(Boolean);
+    return ['All ranges', ...unique];
+  }, [numbers]);
+
+  const availableClients = useMemo(() => {
+    return ['All clients', ...clientNames];
+  }, [clientNames]);
+
   /* Filters */
   const [selectedRange, setSelectedRange] = useState('All ranges');
   const [selectedClient, setSelectedClient] = useState('All clients');
@@ -233,7 +274,7 @@ export const MyNumbersView: React.FC = () => {
 
   /* Apply filters */
   const filtered = useMemo(() => {
-    let data = ALL_NUMBERS;
+    let data = numbers;
     if (activeFilters.range !== 'All ranges') data = data.filter((n) => n.range === activeFilters.range);
     if (activeFilters.client !== 'All clients') data = data.filter((n) => n.clientName === activeFilters.client);
     if (activeFilters.allocation === 'allocated') data = data.filter((n) => n.clientId !== null);
@@ -244,7 +285,7 @@ export const MyNumbersView: React.FC = () => {
     const q = search.toLowerCase();
     if (q) data = data.filter((n) => n.fullNumber.includes(q) || n.localNumber.includes(q) || (n.clientName || '').toLowerCase().includes(q) || n.range.toLowerCase().includes(q));
     return data;
-  }, [activeFilters, search]);
+  }, [numbers, activeFilters, search]);
 
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
   const allPageIds = paginated.map((n) => n.id);
@@ -343,14 +384,14 @@ export const MyNumbersView: React.FC = () => {
           <div className="space-y-1">
             <label className="text-[10px] uppercase tracking-wider text-[var(--text-tertiary)]">Select Range</label>
             <select value={selectedRange} onChange={(e) => setSelectedRange(e.target.value)} className={inputCls}>
-              {MOCK_RANGES.map((r) => <option key={r}>{r}</option>)}
+              {availableRanges.map((r) => <option key={r}>{r}</option>)}
             </select>
           </div>
           {/* Select Client */}
           <div className="space-y-1">
             <label className="text-[10px] uppercase tracking-wider text-[var(--text-tertiary)]">Select Client</label>
             <select value={selectedClient} onChange={(e) => setSelectedClient(e.target.value)} className={inputCls}>
-              {MOCK_CLIENTS.map((c) => <option key={c}>{c}</option>)}
+              {availableClients.map((c) => <option key={c}>{c}</option>)}
             </select>
           </div>
           {/* Number starts with */}
@@ -433,6 +474,17 @@ export const MyNumbersView: React.FC = () => {
           onUnassign={() => { showToast(`${selected.size} number(s) unassigned`); setSelected(new Set()); }}
           onReturn={() => { showToast(`${selected.size} number(s) returned to pool`); setSelected(new Set()); }}
         />
+        {showAssignModal && (
+          <AssignModal
+            count={selected.size}
+            clients={clientNames}
+            onClose={() => setShowAssignModal(false)}
+            onConfirm={(c) => {
+              showToast(`${selected.size} number(s) assigned to ${c}`);
+              setSelected(new Set());
+            }}
+          />
+        )}
       </div>
 
       {/* Table card */}
@@ -477,7 +529,16 @@ export const MyNumbersView: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--glass-border)]">
-              {paginated.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={8} className="px-6 py-12 text-center text-xs text-[var(--text-tertiary)]">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-[var(--accent-blue)]" />
+                      <span>Loading active numbers from database...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : paginated.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-12 text-center text-xs text-[var(--text-tertiary)]">
                     No numbers match your filters.

@@ -18,6 +18,11 @@ export type ProviderConnectionType =
   | 'SMPP_RECEIVER';
 
 export type ProviderConnectionStatus =
+  | 'LISTENING'
+  | 'DEMO'
+  | 'UNTESTED'
+  | 'ERROR'
+  | 'CONNECTING'
   | 'CONNECTED'
   | 'DEGRADED'
   | 'DISCONNECTED'
@@ -47,6 +52,8 @@ export interface ProviderCredentialSummary {
 }
 
 export interface ProviderConnectionSummary {
+  mode?: 'DEMO' | 'LIVE';
+  enabled?: boolean;
   id: string;
   providerId: string;
   name: string;
@@ -126,6 +133,7 @@ export interface ProviderActivityItem {
 }
 
 export interface ProviderItem {
+  connections?: ProviderConnectionSummary[];
   id: string;
   name: string;
   slug: string;

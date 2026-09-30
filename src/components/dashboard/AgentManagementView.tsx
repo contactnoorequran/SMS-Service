@@ -577,7 +577,7 @@ export const AgentManagementView: React.FC = () => {
         <EmptyState
           title="No agents found"
           message="No commercial agent profiles match your active search and filter criteria."
-          icon={Users}
+          iconName="agent"
           actionLabel="Reset Filters"
           onAction={resetFilters}
         />

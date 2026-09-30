@@ -20,15 +20,17 @@ import {
   Save,
   CheckCircle2,
   RefreshCw,
+  Palette,
 } from 'lucide-react';
+import { ColorPaletteStudio } from '../theme/ColorPaletteStudio';
 
 export const SettingsView: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'general' | 'telecom' | 'security' | 'notifications'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'telecom' | 'security' | 'notifications' | 'palettes'>('general');
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   // Form states
-  const [platformName, setPlatformName] = useState('Enterprise Telecom Operations Platform');
+  const [platformName, setPlatformName] = useState('WORLD SMS SERVICE Enterprise Platform');
   const [defaultCurrency, setDefaultCurrency] = useState('USD');
   const [autoDlrReconcile, setAutoDlrReconcile] = useState(true);
   const [lowBalanceAlertThreshold, setLowBalanceAlertThreshold] = useState('50.00');
@@ -77,6 +79,7 @@ export const SettingsView: React.FC = () => {
       <div className="flex items-center gap-1 bg-[var(--glass-bg-active)] p-1 rounded-xl w-fit text-xs border border-[var(--glass-border)]">
         {[
           { id: 'general', label: 'Platform & General', icon: <Settings className="w-3.5 h-3.5" /> },
+          { id: 'palettes', label: 'Theme & Palettes', icon: <Palette className="w-3.5 h-3.5" /> },
           { id: 'telecom', label: 'Telecom & Webhooks', icon: <Radio className="w-3.5 h-3.5" /> },
           { id: 'security', label: 'Security & RBAC', icon: <Shield className="w-3.5 h-3.5" /> },
           { id: 'notifications', label: 'Alert Thresholds', icon: <Bell className="w-3.5 h-3.5" /> },
@@ -272,6 +275,8 @@ export const SettingsView: React.FC = () => {
           </div>
         </Card>
       )}
+
+      {activeTab === 'palettes' && <ColorPaletteStudio />}
     </div>
   );
 };

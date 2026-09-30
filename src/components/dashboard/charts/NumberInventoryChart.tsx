@@ -1,7 +1,7 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { NumberInventoryData } from '../../../types/dashboard';
-import { Hash, Globe, Inbox } from 'lucide-react';
+import { AppIcon } from '../../ui/AppIcon';
 
 interface NumberInventoryChartProps {
   data: NumberInventoryData;
@@ -26,7 +26,7 @@ export const NumberInventoryChart: React.FC<NumberInventoryChartProps> = ({ data
         <div className="flex items-center justify-between gap-3 pb-3 border-b border-[var(--glass-border)]">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-lg bg-[var(--accent-violet-dim)] text-[var(--accent-violet)]">
-              <Hash className="w-4 h-4" />
+              <AppIcon name="number-inventory" size="sm" />
             </div>
             <div>
               <h3 className="text-sm font-semibold text-[var(--text-primary)]">
@@ -45,7 +45,7 @@ export const NumberInventoryChart: React.FC<NumberInventoryChartProps> = ({ data
         {totalCount === 0 ? (
           <div className="py-14 text-center flex flex-col items-center justify-center text-[var(--text-tertiary)]">
             <div className="w-10 h-10 rounded-xl bg-[var(--glass-bg-active)] flex items-center justify-center text-[var(--text-tertiary)] mb-2">
-              <Inbox className="w-5 h-5" />
+              <AppIcon name="number-inventory" size="md" />
             </div>
             <p className="text-xs font-medium text-[var(--text-primary)]">No numbers available in inventory</p>
             <p className="text-[11px] text-[var(--text-tertiary)] mt-0.5 max-w-sm">
@@ -127,7 +127,7 @@ export const NumberInventoryChart: React.FC<NumberInventoryChartProps> = ({ data
             <div className="mt-5 pt-4 border-t border-[var(--glass-border)]">
               <div className="flex items-center justify-between mb-2 text-xs">
                 <span className="font-medium text-[var(--text-secondary)] flex items-center gap-1.5">
-                  <Globe className="w-3.5 h-3.5 text-[var(--accent-blue)]" />
+                  <AppIcon name="global-coverage" size="xs" className="text-[var(--brand-primary)]" />
                   <span>Country Coverage</span>
                 </span>
                 <span className="text-[11px] font-mono text-[var(--text-tertiary)]">Assigned / Total</span>
@@ -148,7 +148,7 @@ export const NumberInventoryChart: React.FC<NumberInventoryChartProps> = ({ data
                       </div>
                       <div className="w-full bg-[var(--glass-bg-active)] rounded-full h-1.5 overflow-hidden">
                         <div
-                          className="bg-[var(--accent-blue)] h-1.5 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)] transition-all duration-500"
+                          className="bg-[var(--brand-primary)] h-1.5 rounded-full shadow-[0_0_8px_var(--brand-primary-glow)] transition-all duration-500"
                           style={{ width: `${pct}%` }}
                         />
                       </div>

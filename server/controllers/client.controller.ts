@@ -100,13 +100,15 @@ export class ClientController {
       const actor = ClientController.getActor(req);
       const body = req.body as CreateClientDTO;
 
-      if (!body.email || !body.username || !body.firstName || !body.lastName || !body.companyName || !body.contact) {
-        res.status(400).json({
-          success: false,
-          error: 'Validation failed: username, firstName, lastName, email, companyName, and contact are required.',
-        });
-        return;
+      if (typeof body.username !== 'string' || !/^[A-Za-z0-9_.-]{3,64}$/.test(body.username) || (body.password && (typeof body.password !== 'string' || body.password.length < 8))) {
+        res.status(400).json({success:false,error:'Use a 3–64 character username and a password with at least 8 characters.'}); return;
       }
+      for (const key of ['email','firstName','lastName','companyName','contact','teams'] as const) {
+        if ((body as any)[key] !== undefined && typeof (body as any)[key] !== 'string') {res.status(400).json({success:false,error:'Invalid client profile fields'});return;}
+        (body as any)[key] = (body as any)[key] || '';
+      }
+      if (body.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) {res.status(400).json({success:false,error:'Invalid email address'});return;}
+      body.email = body.email || body.username.toLowerCase() + '@clients.invalid';
 
       const meta = {
         ipAddress: req.ip || req.socket.remoteAddress,

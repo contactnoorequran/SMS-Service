@@ -2,7 +2,7 @@ import React from 'react';
 import { Loader2 } from 'lucide-react';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'brand';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
@@ -22,7 +22,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseStyles =
-    'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-blue)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-deep)] disabled:opacity-40 disabled:pointer-events-none cursor-pointer select-none';
+    'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-deep)] disabled:opacity-40 disabled:pointer-events-none cursor-pointer select-none';
 
   const isIconOnly = !children && (Boolean(leftIcon) || Boolean(rightIcon) || isLoading);
 
@@ -34,7 +34,9 @@ export const Button: React.FC<ButtonProps> = ({
 
   const variantStyles = {
     primary:
-      'bg-[var(--accent-blue)] text-white hover:bg-blue-500 active:bg-blue-600 shadow-[0_0_20px_var(--accent-blue-dim)]',
+      'bg-[var(--accent-blue)] text-white hover:bg-[var(--brand-primary-hover)] active:bg-black shadow-[0_0_20px_var(--brand-primary-glow)]',
+    brand:
+      'bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-hover)] font-semibold shadow-[0_0_20px_var(--brand-primary-glow)]',
     secondary:
       'bg-[var(--glass-bg-active)] text-[var(--text-primary)] border border-[var(--glass-border)] hover:bg-[var(--glass-bg-hover)] hover:border-[var(--glass-border-hover)]',
     outline:

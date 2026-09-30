@@ -114,7 +114,7 @@ export const ClientWalletView: React.FC = () => {
                 Wallet & Billing
               </Badge>
               <span className="text-xs text-[var(--text-tertiary)] font-mono">
-                SMS Service Financial Clearing
+                WORLD SMS SERVICE Financial Clearing
               </span>
             </div>
             <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">

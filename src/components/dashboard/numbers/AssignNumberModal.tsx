@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { Modal } from '../../ui/Modal';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
+import { CountryFlag } from '../../ui/CountryFlag';
 import {
   NumberItem,
   NumberDetail,
@@ -78,7 +79,7 @@ export const AssignNumberModal: React.FC<AssignNumberModalProps> = ({
         <div className="p-3.5 rounded-xl bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-base">{number.country.flag || '🌐'}</span>
+              <CountryFlag flag={number.country.flag} countryName={number.country.name} size="sm" className="text-base" />
               <span className="font-mono text-sm font-bold text-[var(--text-primary)]">
                 {number.e164}
               </span>

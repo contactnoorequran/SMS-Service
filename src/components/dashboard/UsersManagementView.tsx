@@ -507,7 +507,7 @@ export const UsersManagementView: React.FC = () => {
           {/* 4. Users Table & Pagination */}
           {users.length === 0 && !isLoading ? (
             <EmptyState
-              icon={<Users className="w-6 h-6" />}
+              iconName="users"
               title="No users found"
               description="No user accounts matched the current search or filter criteria. Try clearing filters or create a new user."
               actionText="Reset Filters"

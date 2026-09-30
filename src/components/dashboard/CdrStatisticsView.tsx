@@ -1,122 +1,18 @@
-import React, { useState, useMemo } from 'react';
-import { BarChart3, ChevronRight, Receipt } from 'lucide-react';
-import { DataTableToolbar, ColumnVisibility } from '../ui/DataTableToolbar';
-
-interface CdrRow {
-  id: string;
-  date: string;
-  range: string;
-  number: string;
-  cli: string;
-  duration: string;
-  charge: string;
-  status: 'billed' | 'unbilled' | 'disputed';
-}
-
-const MOCK_CDR: CdrRow[] = Array.from({ length: 20 }, (_, i) => ({
-  id: String(i + 1),
-  date: `2026-09-${String(24 - (i % 10)).padStart(2, '0')} ${String(10 + (i % 12)).padStart(2, '0')}:${String(i % 60).padStart(2, '0')}:00 UTC`,
-  range: ['+44 7911 UK', '+1 213 US', '+91 98 IN', '+33 6 FR'][i % 4],
-  number: `+4479110000${String(i).padStart(2, '0')}`,
-  cli: ['AUTXXXX', 'FACXXXX', 'TikXXXX', 'INFXXXX'][i % 4],
-  duration: `${Math.floor(Math.random() * 120 + 1)}s`,
-  charge: `$${(Math.random() * 0.02 + 0.001).toFixed(4)}`,
-  status: (['billed', 'unbilled', 'disputed'] as const)[i % 3],
-}));
-
-const INIT_COLS: ColumnVisibility[] = [
-  { key: 'date', label: 'Date', visible: true },
-  { key: 'range', label: 'Range', visible: true },
-  { key: 'number', label: 'Number', visible: true },
-  { key: 'cli', label: 'CLI', visible: true },
-  { key: 'duration', label: 'Duration', visible: true },
-  { key: 'charge', label: 'Charge', visible: true },
-  { key: 'status', label: 'Status', visible: true },
-];
-
-const statusStyles: Record<string, string> = {
-  billed: 'bg-[var(--accent-emerald-dim)] text-[var(--accent-emerald)] border-[rgba(16,185,129,0.25)]',
-  unbilled: 'bg-[var(--accent-amber-dim)] text-[var(--accent-amber)] border-[rgba(245,158,11,0.25)]',
-  disputed: 'bg-[var(--accent-rose-dim)] text-[var(--accent-rose)] border-[rgba(244,63,94,0.25)]',
-};
-
-export const CdrStatisticsView: React.FC = () => {
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
-  const [colDefs, setColDefs] = useState<ColumnVisibility[]>(INIT_COLS);
-
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    return MOCK_CDR.filter((r) =>
-      r.range.toLowerCase().includes(q) || r.number.includes(q) || r.cli.toLowerCase().includes(q) || r.status.includes(q),
-    );
-  }, [search]);
-
-  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
-  const handleColChange = (key: string, v: boolean) => setColDefs((prev) => prev.map((c) => (c.key === key ? { ...c, visible: v } : c)));
-  const exportData = filtered.map((r) => ({ date: r.date, range: r.range, number: r.number, cli: r.cli, duration: r.duration, charge: r.charge, status: r.status }));
-
-  return (
-    <div className="space-y-5">
-      <div className="glass-card p-5 border-[rgba(139,92,246,0.15)] relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-[rgba(139,92,246,0.05)] to-transparent pointer-events-none" />
-        <div className="relative flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[var(--accent-violet-dim)] border border-[rgba(139,92,246,0.25)] flex items-center justify-center">
-            <BarChart3 className="w-4 h-4 text-[var(--accent-violet)]" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-[var(--text-primary)]">CDR & Statistics</h1>
-          </div>
-        </div>
-      </div>
-
-      <div className="glass-card overflow-hidden">
-        <div className="p-4 border-b border-[var(--glass-border)]">
-          <DataTableToolbar exportData={exportData} columnDefs={colDefs} onColumnVisibilityChange={handleColChange}
-            currentPage={page} totalItems={filtered.length} pageSize={pageSize} onPageChange={setPage}
-            onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} searchValue={search}
-            onSearchChange={(v) => { setSearch(v); setPage(1); }} />
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs border-collapse">
-            <thead>
-              <tr className="bg-[rgba(255,255,255,0.03)] border-b border-[var(--glass-border)] text-[var(--text-secondary)] uppercase tracking-wider font-semibold text-[11px]">
-                {colDefs.find(c => c.key === 'date')?.visible && <th className="px-4 py-3.5 text-left w-36">Date</th>}
-                {colDefs.find(c => c.key === 'range')?.visible && <th className="px-4 py-3.5 text-left w-44">Range</th>}
-                {colDefs.find(c => c.key === 'number')?.visible && <th className="px-4 py-3.5 text-left w-40">Number</th>}
-                {colDefs.find(c => c.key === 'cli')?.visible && <th className="px-4 py-3.5 text-left w-32">CLI</th>}
-                {colDefs.find(c => c.key === 'duration')?.visible && <th className="px-4 py-3.5 text-left w-28">Duration</th>}
-                {colDefs.find(c => c.key === 'charge')?.visible && <th className="px-4 py-3.5 text-left w-28">Charge</th>}
-                {colDefs.find(c => c.key === 'status')?.visible && <th className="px-4 py-3.5 text-left w-28">Status</th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--glass-border)]">
-              {paginated.length === 0 ? (
-                <tr><td colSpan={7} className="px-6 py-10 text-center text-[11px] text-[var(--text-tertiary)]">No CDR records found.</td></tr>
-              ) : paginated.map((r) => (
-                <tr key={r.id} className="hover:bg-[var(--glass-bg-hover)] transition-colors">
-                  {colDefs.find(c => c.key === 'date')?.visible && <td className="px-4 py-3.5 font-mono text-[10px] text-[var(--text-tertiary)]">{r.date}</td>}
-                  {colDefs.find(c => c.key === 'range')?.visible && <td className="px-4 py-3.5 text-[var(--text-secondary)]">{r.range}</td>}
-                  {colDefs.find(c => c.key === 'number')?.visible && <td className="px-4 py-3.5 font-mono text-[var(--accent-blue)] text-[11px]">{r.number}</td>}
-                  {colDefs.find(c => c.key === 'cli')?.visible && <td className="px-4 py-3.5 font-mono text-[var(--text-tertiary)] text-[10px]">{r.cli}</td>}
-                  {colDefs.find(c => c.key === 'duration')?.visible && <td className="px-4 py-3.5 font-mono text-[var(--text-secondary)]">{r.duration}</td>}
-                  {colDefs.find(c => c.key === 'charge')?.visible && <td className="px-4 py-3.5 font-mono text-[var(--accent-emerald)]">{r.charge}</td>}
-                  {colDefs.find(c => c.key === 'status')?.visible && <td className="px-4 py-3.5">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border capitalize ${statusStyles[r.status]}`}>{r.status}</span>
-                  </td>}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="p-4 border-t border-[var(--glass-border)]">
-          <DataTableToolbar exportData={exportData} columnDefs={colDefs} onColumnVisibilityChange={handleColChange}
-            currentPage={page} totalItems={filtered.length} pageSize={pageSize} onPageChange={setPage}
-            onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} searchValue={search}
-            onSearchChange={(v) => { setSearch(v); setPage(1); }} />
-        </div>
-      </div>
-    </div>
-  );
+import React,{useEffect,useMemo,useState} from 'react';
+import {apiClient} from '../../services/api';
+import {AgentHeading,AgentReferenceTable,allPages} from './AgentReferenceTable';
+const columns=[['date','Date'],['range','Range'],['number','Number'],['cli','CLI'],['sms','SMS'],['client','Client'],['currency','Currency'],['myPayout','My Payout'],['clientPayout','Client Payout'],['status','Status']].map(([key,label])=>({key,label}));
+const today=new Date().toISOString().slice(0,10);
+const initial={from:today+'T00:00',to:today+'T23:59',range:'',client:'',number:'',cli:''};
+const money=(n:number)=>n.toFixed(4).replace(/0+$/,'').replace(/\.$/,'.00');
+export const CdrStatisticsView:React.FC=()=>{
+ const [raw,setRaw]=useState<any[]>([]),[loading,setLoading]=useState(false),[error,setError]=useState(''),[draft,setDraft]=useState(initial),[filter,setFilter]=useState(initial),[groups,setGroups]=useState<string[]>([]);
+ async function load(){setLoading(true);setError('');try{setRaw(await allPages(page=>apiClient.getCdrs({page,limit:100,from:filter.from+'Z',to:filter.to+':59Z'} as any)));}catch(e:any){setError(e.message);}finally{setLoading(false);}}
+ useEffect(()=>{void load();},[filter]);
+ const options=(key:string)=>[...new Set(raw.map(r=>key==='range'?r.rangeName:r.clientName).filter(Boolean))];
+ const records=useMemo(()=>raw.map(c=>({id:c.id,date:(c.receivedAt||c.createdAt||'').replace('T',' ').slice(0,19),range:c.rangeName||'—',number:c.e164||c.toNumber||'—',cli:c.fromNumber||'—',sms:c.body||'—',client:c.clientName||'—',currency:c.currency||'USD',myPayout:Number(c.agentCommissionDecimal||0),clientPayout:Number(c.clientChargeDecimal||0),status:c.status||'Billed'})).filter(r=>(!filter.range||r.range===filter.range)&&(!filter.client||r.client===filter.client)&&r.number.includes(filter.number)&&r.cli.toLowerCase().includes(filter.cli.toLowerCase())),[raw,filter]);
+ const grouped=useMemo(()=>{if(!groups.length)return records;const map=new Map<string,any>();for(const r of records){const parts=groups.map(g=>g==='hour'?r.date.slice(0,13):g==='day'?r.date.slice(0,10):g==='month'?r.date.slice(0,7):(r as any)[g]);const key=JSON.stringify([r.currency,...parts]);if(!map.has(key)){const item:any={id:key,date:'—',range:'—',number:'—',cli:'—',client:'—',currency:r.currency,status:'—',myPayout:0,clientPayout:0,count:0};groups.forEach((g,i)=>item[['hour','day','month'].includes(g)?'date':g]=parts[i]);map.set(key,item);}const item=map.get(key);item.count++;item.myPayout+=r.myPayout;item.clientPayout+=r.clientPayout;item.sms=`${item.count} SMS`;}return [...map.values()];},[records,groups]);
+ const rows=grouped.map(r=>({...r,myPayout:money(r.myPayout),clientPayout:money(r.clientPayout)}));
+ function exportReport(){const quote=(s:any)=>'"'+String(s??'').replace(/"/g,'""')+'"';const blob=new Blob([[columns.map(c=>quote(c.label)).join(','),...rows.map(r=>columns.map(c=>quote((r as any)[c.key])).join(','))].join('\r\n')],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='cdr-report.csv';a.click();URL.revokeObjectURL(url);}
+ return <div className="agent-reference"><AgentHeading title="Detailed Reports" group="CDR & Statistics" description="Detailed records of every inbound SMS."/><form className="agent-panel agent-report-filters" onSubmit={e=>{e.preventDefault();setFilter({...draft});}}><div className="agent-filter-row">{(['from','to'] as const).map(key=><label key={key}>{key}<input type="datetime-local" required value={draft[key]} onChange={e=>setDraft({...draft,[key]:e.target.value})}/></label>)}{(['range','client'] as const).map(key=><label key={key}>Filter {key}<select value={draft[key]} onChange={e=>setDraft({...draft,[key]:e.target.value})}><option value="">All {key}s</option>{options(key).map(v=><option key={v}>{v}</option>)}</select></label>)}{(['number','cli'] as const).map(key=><label key={key}>Search {key}<input placeholder={`Search ${key.toUpperCase()}`} value={draft[key]} onChange={e=>setDraft({...draft,[key]:e.target.value})}/></label>)}<button type="button" onClick={exportReport}>Export Report</button><button className="agent-primary" type="submit">Show Report</button></div><div className="agent-group-row">Group by {['Hour','Day','Month','Range','Number','CLI','Client','Currency','Status'].map(label=><label key={label}><input type="checkbox" checked={groups.includes(label.toLowerCase())} onChange={e=>setGroups(gs=>e.target.checked?[...gs,label.toLowerCase()]:gs.filter(g=>g!==label.toLowerCase()))}/>{label}</label>)}</div></form><AgentReferenceTable title="CDR Reports & Stats" columns={columns} rows={rows} loading={loading} error={error} footer={<div className="agent-totals"><span>Total SMS <strong>{records.length}</strong></span>{[...new Set(records.map(r=>r.currency))].map(currency=><span key={currency}>{currency} · My Payout <strong>{money(records.filter(r=>r.currency===currency).reduce((n,r)=>n+r.myPayout,0))}</strong> · Client Payout <strong>{money(records.filter(r=>r.currency===currency).reduce((n,r)=>n+r.clientPayout,0))}</strong></span>)}</div>}/></div>;
 };

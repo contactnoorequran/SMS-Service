@@ -30,8 +30,8 @@ const LiveUtcClock: React.FC = () => {
     return () => clearInterval(id);
   }, []);
   return (
-    <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[11px] font-mono text-[var(--text-secondary)] shadow-xs shrink-0">
-      <Clock className="w-3.5 h-3.5 text-[var(--accent-blue)] shrink-0" />
+    <div className="hidden 2xl:flex items-center gap-2 px-3 py-1.5 rounded-md bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[11px] font-mono text-[var(--text-secondary)] shadow-xs shrink-0">
+      <Clock className="w-3.5 h-3.5 text-[var(--brand-primary)] shrink-0" />
       <span>{utc}</span>
     </div>
   );
@@ -39,8 +39,11 @@ const LiveUtcClock: React.FC = () => {
 
 import { Badge } from '../ui/Badge';
 import { Breadcrumbs, BreadcrumbItem } from '../ui/Breadcrumbs';
+import { BrandLogo } from '../ui/BrandLogo';
 import { NotificationsMenu } from './NotificationsMenu';
 import { UserProfileMenu } from './UserProfileMenu';
+import { ColorModeToggle } from '../theme/ColorModeToggle';
+import { PaletteQuickDropdown } from '../theme/PaletteQuickDropdown';
 import { SystemHealthReport } from '../../types/api';
 import {
   ADMIN_NAV_ITEMS,
@@ -140,7 +143,7 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header
       id={id}
-      className="h-16 bg-[var(--glass-bg)] backdrop-blur-xl border-b border-[var(--glass-border)] px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-20"
+      className="h-12 bg-[var(--glass-bg)] backdrop-blur-xl border-b border-[var(--glass-border)] px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-20"
     >
       {/* Left Area: Mobile Hamburger + Breadcrumbs */}
       <div className="flex items-center gap-3 min-w-0">
@@ -153,7 +156,18 @@ export const Header: React.FC<HeaderProps> = ({
           <Menu className="w-5 h-5" />
         </button>
 
-        <div className="min-w-0">
+        <div className="md:hidden flex items-center">
+          <button
+            type="button"
+            onClick={() => onSelectTab('dashboard')}
+            className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] rounded-lg p-0.5 cursor-pointer"
+            aria-label="WORLD SMS SERVICE — Dashboard"
+          >
+            <BrandLogo variant="compact" size="sm" />
+          </button>
+        </div>
+
+        <div className="min-w-0 hidden sm:block md:block">
           <Breadcrumbs
             items={breadcrumbItems}
             onHomeClick={() => onSelectTab('dashboard')}
@@ -166,10 +180,10 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           type="button"
           onClick={onOpenGlobalSearch}
-          className="w-60 flex items-center justify-between px-3 py-1.5 rounded-xl bg-[rgba(0,0,0,0.25)] hover:bg-[rgba(0,0,0,0.4)] border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-all cursor-pointer shadow-xs"
+          className="w-60 flex items-center justify-between px-3 py-1.5 rounded-md bg-[rgba(0,0,0,0.25)] hover:bg-[rgba(0,0,0,0.4)] border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-all cursor-pointer shadow-xs"
         >
           <div className="flex items-center gap-2 truncate">
-            <Search className="w-3.5 h-3.5 text-[var(--accent-blue)] shrink-0" />
+            <Search className="w-3.5 h-3.5 text-[var(--brand-primary)] shrink-0" />
             <span className="truncate">Quick search...</span>
           </div>
           <kbd className="text-[10px] font-mono bg-[var(--glass-bg)] px-1.5 py-0.5 rounded border border-[var(--glass-border)] shrink-0">
@@ -209,6 +223,10 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
         </button>
+
+        {/* Palette Quick Switcher for Admins */}
+        <ColorModeToggle />
+        <PaletteQuickDropdown onOpenSettings={() => onSelectTab('settings')} />
 
         {/* Notifications Area Popover */}
         <NotificationsMenu onNavigateToTab={onSelectTab} />

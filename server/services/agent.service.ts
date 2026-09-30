@@ -1,3 +1,4 @@
+import { registerProfiles, persistProfileService } from './production-store';
 import crypto from 'crypto';
 import { env } from '../config/env';
 import { AuthTokenPayload, UserRole, UserStatus } from '../types/auth';
@@ -54,6 +55,7 @@ export class AgentService {
    * Initializes seed agents and links them with managers and clients.
    */
   static async initializeSeedAgents(): Promise<void> {
+    if (process.env.NODE_ENV === 'production') return;
     if (isInitialized) return;
 
     await UserRepository.initializeSeedUsers();
@@ -1265,3 +1267,6 @@ export class AgentService {
 AgentService.initializeSeedAgents().catch((err) => {
   logger.error('Failed to initialize seed agents', err);
 });
+
+registerProfiles('agents', agentRegistry);
+persistProfileService(AgentService);

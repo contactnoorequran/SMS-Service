@@ -12,6 +12,8 @@ export class CdrService {
     clientId?: string;
     agentId?: string;
     numberId?: string;
+    from?: string;
+    to?: string;
     page?: number;
     limit?: number;
   } = {}) {
@@ -26,6 +28,7 @@ export class CdrService {
     if (clientId) where.clientId = clientId;
     if (agentId) where.agentId = agentId;
     if (numberId) where.numberId = numberId;
+    if(query.from || query.to) where.createdAt = {...(query.from ? {gte:new Date(query.from)} : {}), ...(query.to ? {lte:new Date(query.to)} : {})};
 
     const [total, cdrs] = await Promise.all([
       prisma.cdr.count({ where }),
@@ -40,7 +43,7 @@ export class CdrService {
           agent: {
             include: { user: { select: { name: true } } },
           },
-          number: { select: { id: true, e164: true } },
+          number: { include: {range:true} },
           inboundMessage: {
             select: {
               id: true,
@@ -61,6 +64,9 @@ export class CdrService {
       providerName: c.provider.name,
       numberId: c.numberId,
       e164: c.number.e164,
+      rangeName: c.number.range ? c.number.range.startE164 + ' – ' + c.number.range.endE164 : null,
+      body: c.inboundMessage?.body || '',
+      receivedAt: c.inboundMessage?.receivedAt?.toISOString(),
       fromNumber: c.inboundMessage?.fromNumber || 'Unknown',
       clientId: c.clientId,
       clientName: c.client?.name || 'Platform/Direct',

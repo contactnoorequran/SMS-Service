@@ -1,9 +1,13 @@
+import { ingestCarrierMessage } from './carrier-ingestion';
+import { EventEmitter } from 'events';
 import { getPrismaClient } from '../db/prisma';
 import { Logger } from '../utils/logger';
 import { BillingService } from './billing.service';
 import { AuditService } from './audit.service';
 
 const logger = new Logger('MessagingService');
+export const messageEmitter = new EventEmitter();
+messageEmitter.setMaxListeners(200);
 
 export class MessagingService {
   /**
@@ -23,100 +27,9 @@ export class MessagingService {
     receivedAt?: Date;
     metadata?: Record<string, any>;
   }) {
-    const prisma = getPrismaClient();
-    if (!prisma) throw new Error('Database connection unavailable');
-
-    // 1. Idempotency check
-    if (payload.providerMessageId) {
-      const existing = await prisma.inboundMessage.findUnique({
-        where: {
-          providerId_providerMessageId: {
-            providerId: payload.providerId,
-            providerMessageId: payload.providerMessageId,
-          },
-        },
-        include: {
-          client: true,
-          provider: true,
-          number: true,
-          cdrs: true,
-        },
-      });
-      if (existing) {
-        logger.info(`Idempotent skip: Message ${payload.providerMessageId} already ingested.`);
-        return { message: existing, duplicate: true };
-      }
-    }
-
-    // 2. Identify destination Number in inventory
-    const cleanToNumber = payload.toNumber.trim();
-    let number = await prisma.number.findUnique({
-      where: { e164: cleanToNumber },
-      include: {
-        activeAssignment: true,
-      },
-    });
-
-    if (!number) {
-      // Try with leading plus or stripped plus
-      const altNumber = cleanToNumber.startsWith('+') ? cleanToNumber.slice(1) : `+${cleanToNumber}`;
-      number = await prisma.number.findUnique({
-        where: { e164: altNumber },
-        include: { activeAssignment: true },
-      });
-    }
-
-    if (!number) {
-      throw new Error(`Destination number '${payload.toNumber}' does not exist in platform inventory`);
-    }
-
-    const assignment = number.activeAssignment;
-    const clientId = assignment?.clientId || null;
-    const agentId = assignment?.agentId || null;
-    const assignmentId = assignment?.id || null;
-    const now = payload.receivedAt || new Date();
-
-    // 3. Persist InboundMessage
-    const message = await prisma.inboundMessage.create({
-      data: {
-        organizationId: '00000000-0000-0000-0000-000000000001',
-        providerId: payload.providerId,
-        providerMessageId: payload.providerMessageId,
-        numberId: number.id,
-        assignmentId,
-        clientId,
-        agentId,
-        fromNumber: payload.fromNumber,
-        toNumber: number.e164,
-        body: payload.body || '',
-        receivedAt: now,
-        status: assignment ? 'ROUTED' : 'UNROUTED',
-        billingStatus: 'PENDING',
-        metadata: payload.metadata || {},
-      },
-      include: {
-        provider: true,
-        client: true,
-        number: true,
-      },
-    });
-
-    // 4. Trigger Billing Cycle
-    const billingResult = await BillingService.processInboundBilling({
-      id: message.id,
-      organizationId: message.organizationId,
-      providerId: message.providerId,
-      numberId: message.numberId,
-      clientId,
-      agentId,
-    });
-
-    return {
-      message,
-      billingEvent: billingResult.billingEvent,
-      cdr: billingResult.cdr,
-      duplicate: false,
-    };
+    const result = await ingestCarrierMessage(payload);
+    if (!result.duplicate) messageEmitter.emit('new_message', result.message);
+    return result;
   }
 
   /**
@@ -128,6 +41,8 @@ export class MessagingService {
     billingStatus?: string;
     providerId?: string;
     clientId?: string;
+    agentId?: string;
+    managerId?: string;
     numberId?: string;
     fromNumber?: string;
     toNumber?: string;
@@ -156,6 +71,8 @@ export class MessagingService {
     if (billingStatus && billingStatus !== 'ALL') where.billingStatus = billingStatus;
     if (providerId) where.providerId = providerId;
     if (clientId) where.clientId = clientId;
+    if (query.agentId) where.agentId = query.agentId;
+    if (query.managerId) where.agent = { managerProfileId: query.managerId };
     if (numberId) where.numberId = numberId;
     if (fromNumber) where.fromNumber = { contains: fromNumber };
     if (toNumber) where.toNumber = { contains: toNumber };

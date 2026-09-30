@@ -113,7 +113,7 @@ export class AgentsService {
       permissions: a.permissions || [],
       lastLoginAt: a.lastLoginAt || null,
       createdAt: a.createdAt || new Date().toISOString(),
-      organization: a.organization || 'SMS Hub Global',
+      organization: a.organization || '',
     }));
 
     const kpis = this.calculateKpis(items);
@@ -150,7 +150,7 @@ export class AgentsService {
       permissions: agentData.permissions || [],
       lastLoginAt: agentData.lastLoginAt || null,
       createdAt: agentData.createdAt || new Date().toISOString(),
-      organization: agentData.organization || 'SMS Hub Global',
+      organization: agentData.organization || '',
       manager: agentData.manager || null,
       clients: (agentData.clients || []).map((c: any) => ({
         id: c.id,
@@ -220,7 +220,7 @@ export class AgentsService {
       permissions: a.permissions || ['clients.read', 'numbers.read', 'messages.read', 'cdr.read'],
       lastLoginAt: null,
       createdAt: a.createdAt || new Date().toISOString(),
-      organization: 'SMS Hub Global',
+      organization: a.organization || '',
     };
   }
 
@@ -248,7 +248,7 @@ export class AgentsService {
       permissions: agent.permissions || [],
       lastLoginAt: agent.lastLoginAt || null,
       createdAt: agent.createdAt,
-      organization: 'SMS Hub Global',
+      organization: agent.organization || '',
     };
   }
 
@@ -276,7 +276,7 @@ export class AgentsService {
       permissions: agent.permissions || [],
       lastLoginAt: agent.lastLoginAt || null,
       createdAt: agent.createdAt,
-      organization: 'SMS Hub Global',
+      organization: agent.organization || '',
     };
   }
 
@@ -318,7 +318,7 @@ export class AgentsService {
       permissions: agent.permissions || permissions,
       lastLoginAt: agent.lastLoginAt || null,
       createdAt: agent.createdAt,
-      organization: 'SMS Hub Global',
+      organization: agent.organization || '',
     };
   }
 
@@ -349,7 +349,7 @@ export class AgentsService {
       permissions: agent.permissions || [],
       lastLoginAt: agent.lastLoginAt || null,
       createdAt: agent.createdAt,
-      organization: 'SMS Hub Global',
+      organization: agent.organization || '',
     };
 
     return item;

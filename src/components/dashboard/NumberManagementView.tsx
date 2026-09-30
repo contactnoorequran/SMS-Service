@@ -705,7 +705,7 @@ export const NumberManagementView: React.FC = () => {
         <EmptyState
           title="No phone numbers found"
           message="No E.164 phone lines match your active search, operator, or status filter criteria."
-          icon={Hash}
+          iconName="did-number"
           actionLabel="Reset Filters"
           onAction={resetFilters}
         />

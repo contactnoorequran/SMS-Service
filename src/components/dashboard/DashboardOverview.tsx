@@ -56,7 +56,7 @@ const ClientWalletView = React.lazy(() =>
   import('./ClientWalletView').then((m) => ({ default: m.ClientWalletView }))
 );
 
-// ── Agent IMS SMS Portal — lazy-loaded ─────────────────────────────────
+// ── Agent WORLD SMS SERVICE Portal — lazy-loaded ─────────────────────────
 const SmsRangesView = React.lazy(() =>
   import('./SmsRangesView').then((m) => ({ default: m.SmsRangesView }))
 );
@@ -211,7 +211,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = memo(({
     if (currentTab === 'client-webhooks') return <ClientWebhookView />;
     if (currentTab === 'client-wallet') return <ClientWalletView />;
 
-    // ── Agent IMS SMS Portal Modules ──
+    // ── Agent WORLD SMS SERVICE Portal Modules ──
     if (currentTab === 'sms-ranges')      return <SmsRangesView />;
     if (currentTab === 'cli-search')      return <CliSearchView />;
     if (currentTab === 'my-numbers')      return <MyNumbersView />;

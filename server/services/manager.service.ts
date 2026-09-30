@@ -1,3 +1,4 @@
+import { registerProfiles, persistProfileService } from './production-store';
 import crypto from 'crypto';
 import { env } from '../config/env';
 import { AuthTokenPayload, UserRole, UserStatus } from '../types/auth';
@@ -49,6 +50,7 @@ export class ManagerService {
    * Initializes seed managers and links them with agents and clients.
    */
   static async initializeSeedManagers(): Promise<void> {
+    if (process.env.NODE_ENV === 'production') return;
     if (isInitialized) return;
     if (initPromise) return initPromise;
 
@@ -836,3 +838,6 @@ export class ManagerService {
 ManagerService.initializeSeedManagers().catch((err) => {
   logger.error('Failed to initialize seed managers', err);
 });
+
+registerProfiles('managers', managerRegistry);
+persistProfileService(ManagerService);

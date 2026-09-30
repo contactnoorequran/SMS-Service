@@ -1,3 +1,4 @@
+import { registerProfiles, persistProfileService } from './production-store';
 import crypto from 'crypto';
 import { env } from '../config/env';
 import { SafeUser, UserRole, UserStatus } from '../types/auth';
@@ -39,6 +40,7 @@ export class UserRepository {
    * Initializes seed users using environment-configurable credentials and bcrypt password hashes.
    */
   static async initializeSeedUsers(): Promise<void> {
+    if (process.env.NODE_ENV === 'production') return;
     if (isInitialized) return;
     if (initPromise) return initPromise;
 
@@ -159,8 +161,8 @@ export class UserRepository {
       const emailLower = seed.email.toLowerCase();
       let stored = memoryUsers.get(emailLower);
       if (!stored) {
-        let userId = crypto.randomUUID();
-        let roleId = crypto.randomUUID();
+        let userId: string = crypto.randomUUID();
+        let roleId: string = crypto.randomUUID();
         let passwordHash = await PasswordService.hash(seed.passwordRaw);
 
         const prisma = getPrismaClient();
@@ -285,12 +287,12 @@ export class UserRepository {
         name: roleName,
         displayName: roleName.replace('_', ' '),
       },
-      customPermissions: permissions,
-      lastLoginAt: null,
+      customPermissions: memoryUsers.get(dbUser.email.toLowerCase())?.customPermissions ?? permissions,
+      lastLoginAt: memoryUsers.get(dbUser.email.toLowerCase())?.lastLoginAt || null,
       createdAt: dbUser.createdAt instanceof Date ? dbUser.createdAt.toISOString() : String(dbUser.createdAt),
       updatedAt: dbUser.updatedAt instanceof Date ? dbUser.updatedAt.toISOString() : String(dbUser.updatedAt),
-      managerId: dbUser.agent?.managerProfileId || null,
-      agentId: null,
+      managerId: dbUser.managerProfile?.id || dbUser.agent?.managerProfileId || memoryUsers.get(dbUser.email.toLowerCase())?.managerId || null,
+      agentId: dbUser.agent?.id || memoryUsers.get(dbUser.email.toLowerCase())?.agentId || null,
       clientId: dbUser.clientMemberships?.[0]?.clientId || null,
     };
   }
@@ -720,9 +722,11 @@ export class UserRepository {
     if (actorRole === 'SUPER_ADMIN') {
       filtered = all;
     } else if (actorRole === 'MANAGER') {
-      filtered = all.filter((u) => u.role.name === 'AGENT' || u.role.name === 'CLIENT');
+      const managerId = all.find(u => u.id === actorId)?.managerId;
+      filtered = all.filter(u => !!managerId && u.managerId === managerId && (u.role.name === 'AGENT' || u.role.name === 'CLIENT'));
     } else if (actorRole === 'AGENT') {
-      filtered = all.filter((u) => u.role.name === 'CLIENT' && (u.agentId === actorId || !u.agentId));
+      const agentId = all.find(u => u.id === actorId)?.agentId;
+      filtered = all.filter(u => !!agentId && u.role.name === 'CLIENT' && u.agentId === agentId);
     } else {
       // CLIENT: only self
       filtered = all.filter((u) => u.id === actorId);
@@ -736,3 +740,6 @@ export class UserRepository {
 UserRepository.initializeSeedUsers().catch((err) => {
   userLogger.error('Failed to initialize seed users', err);
 });
+
+registerProfiles('users', memoryUsers);
+persistProfileService(UserRepository);

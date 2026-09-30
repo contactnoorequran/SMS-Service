@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '../../services/api';
 import { StatCard } from '../ui/Card';
+import { AppIcon } from '../ui/AppIcon';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Table, ColumnDef } from '../ui/Table';
@@ -360,28 +361,28 @@ export const MessagingManagementView: React.FC = () => {
               title="Total Ingested Messages"
               value={totalReceived.toLocaleString()}
               subtitle="All-time carrier ingest count"
-              icon={<MessageSquare className="w-5 h-5 text-[var(--accent-blue)]" />}
+              icon={<AppIcon name="sms-routing" size="md" className="text-[var(--accent-blue)]" />}
               variant="default"
             />
             <StatCard
               title="Successfully Routed"
               value={routedCount.toLocaleString()}
               subtitle={`${totalReceived > 0 ? Math.round((routedCount / totalReceived) * 100) : 100}% dispatch accuracy`}
-              icon={<CheckCircle2 className="w-5 h-5 text-[var(--accent-emerald)]" />}
+              icon={<AppIcon name="check-circle" size="md" className="text-[var(--accent-emerald)]" />}
               variant="success"
             />
             <StatCard
               title="Billed & Reconciled"
               value={billedCount.toLocaleString()}
               subtitle="Atomically cleared through ledger"
-              icon={<ShieldCheck className="w-5 h-5 text-[var(--accent-violet)]" />}
+              icon={<AppIcon name="cdr" size="md" className="text-[var(--accent-violet)]" />}
               variant="default"
             />
             <StatCard
               title="Stream Revenue (Page)"
               value={`$${totalClientCharges.toFixed(4)}`}
               subtitle="Client micro-unit charges"
-              icon={<DollarSign className="w-5 h-5 text-[var(--accent-emerald)]" />}
+              icon={<AppIcon name="client-revenue" size="md" className="text-[var(--accent-emerald)]" />}
               variant="default"
             />
           </>
@@ -445,7 +446,7 @@ export const MessagingManagementView: React.FC = () => {
         />
       ) : messages.length === 0 && !isLoading ? (
         <EmptyState
-          icon={<MessageSquare className="w-8 h-8 text-[var(--text-tertiary)]" />}
+          iconName="sms-routing"
           title="No Inbound Messages Found"
           description="There are currently no inbound messages matching your filter criteria. You can simulate an incoming webhook using the button above."
           action={

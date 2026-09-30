@@ -25,199 +25,8 @@ import {
 } from '../types/providers';
 import { apiClient } from './api';
 
-export const IN_MEMORY_CARRIERS_SEED: any[] = [
-  {
-    id: 'prv_sinch_tier1',
-    name: 'Sinch Tier-1 Global',
-    slug: 'sinch-tier1',
-    type: 'TIER_1_CARRIER',
-    status: 'ACTIVE',
-    description: 'Direct SS7 & SMPP carrier trunk for UK, US, and Europe',
-    connectionsCount: 4,
-    healthyConnectionsCount: 4,
-    healthState: 'HEALTHY',
-    countriesCovered: ['GB', 'US', 'DE', 'FR'],
-    assignedNumbersCount: 8500,
-    totalMessages: 640000,
-    deliveryRate: 99.8,
-    organization: 'Sinch AB',
-    technicalContact: 'NOC Stockholm',
-    nocEmail: 'noc@sinch.com',
-    connections: [
-      {
-        id: 'conn_sinch_1',
-        name: 'Stockholm Primary SS7/SMPP',
-        connectionType: 'SMPP_TRANSCEIVER',
-        environment: 'PRODUCTION',
-        status: 'CONNECTED',
-        priority: 1,
-        host: 'smpp.stockholm.sinch.com',
-        port: 2775,
-        tlsEnabled: true,
-        credentialRefId: 'kms_sinch_v1',
-        lastPingMs: 14,
-      },
-      {
-        id: 'conn_sinch_2',
-        name: 'London Secondary Fallback',
-        connectionType: 'SMPP_TRANSCEIVER',
-        environment: 'PRODUCTION',
-        status: 'CONNECTED',
-        priority: 2,
-        host: 'smpp.london.sinch.com',
-        port: 2775,
-        tlsEnabled: true,
-        credentialRefId: 'kms_sinch_v2',
-        lastPingMs: 19,
-      },
-    ],
-  },
-  {
-    id: 'prv_twilio_super',
-    name: 'Twilio Super Network',
-    slug: 'twilio-super',
-    type: 'CLOUD_GATEWAY',
-    status: 'ACTIVE',
-    description: 'Global programmable SMS API and elastic failover trunk',
-    connectionsCount: 3,
-    healthyConnectionsCount: 3,
-    healthState: 'HEALTHY',
-    countriesCovered: ['GLOBAL', 'US', 'CA', 'AU'],
-    assignedNumbersCount: 4200,
-    totalMessages: 420000,
-    deliveryRate: 99.4,
-    organization: 'Twilio Inc.',
-    technicalContact: 'Carrier Relations',
-    nocEmail: 'noc@twilio.com',
-    connections: [
-      {
-        id: 'conn_twilio_1',
-        name: 'Twilio Rest Gateway Virginia',
-        connectionType: 'HTTP',
-        environment: 'PRODUCTION',
-        status: 'CONNECTED',
-        priority: 1,
-        host: 'api.twilio.com',
-        port: 443,
-        tlsEnabled: true,
-        credentialRefId: 'kms_twilio_v1',
-        lastPingMs: 22,
-      },
-    ],
-  },
-  {
-    id: 'prv_bics_eu',
-    name: 'BICS International',
-    slug: 'bics-intl',
-    type: 'DIRECT_SMPP',
-    status: 'ACTIVE',
-    description: 'Belgacom International Carrier Services Direct SMPP',
-    connectionsCount: 2,
-    healthyConnectionsCount: 2,
-    healthState: 'HEALTHY',
-    countriesCovered: ['BE', 'DE', 'NL', 'FR'],
-    assignedNumbersCount: 3100,
-    totalMessages: 210000,
-    deliveryRate: 99.2,
-    organization: 'BICS SA',
-    technicalContact: 'Brussels NOC',
-    nocEmail: 'noc@bics.com',
-    connections: [
-      {
-        id: 'conn_bics_1',
-        name: 'BICS Brussels Primary',
-        connectionType: 'SMPP_TRANSCEIVER',
-        environment: 'PRODUCTION',
-        status: 'CONNECTED',
-        priority: 1,
-        host: 'smpp.bics.com',
-        port: 2775,
-        tlsEnabled: true,
-        credentialRefId: 'kms_bics_v1',
-        lastPingMs: 28,
-      },
-    ],
-  },
-  {
-    id: 'prv_telnyx_smpp',
-    name: 'Telnyx Direct SMPP',
-    slug: 'telnyx-smpp',
-    type: 'DIRECT_SMPP',
-    status: 'ACTIVE',
-    description: 'Private fiber backbone direct SMPP v3.4 sockets',
-    connectionsCount: 3,
-    healthyConnectionsCount: 2,
-    healthState: 'HEALTHY',
-    countriesCovered: ['US', 'CA', 'MX'],
-    assignedNumbersCount: 1800,
-    totalMessages: 110000,
-    deliveryRate: 98.9,
-    organization: 'Telnyx LLC',
-    technicalContact: 'Chicago NOC',
-    nocEmail: 'noc@telnyx.com',
-    connections: [
-      {
-        id: 'conn_telnyx_1',
-        name: 'Telnyx Chicago Backbone',
-        connectionType: 'SMPP_TRANSCEIVER',
-        environment: 'PRODUCTION',
-        status: 'CONNECTED',
-        priority: 1,
-        host: 'sms.telnyx.com',
-        port: 2775,
-        tlsEnabled: true,
-        credentialRefId: 'kms_telnyx_v1',
-        lastPingMs: 31,
-      },
-    ],
-  },
-  {
-    id: 'prv_infobip_hub',
-    name: 'Infobip Enterprise Hub',
-    slug: 'infobip-hub',
-    type: 'AGGREGATOR',
-    status: 'SUSPENDED',
-    description: 'Secondary wholesale aggregator backup route',
-    connectionsCount: 2,
-    healthyConnectionsCount: 1,
-    healthState: 'DEGRADED',
-    countriesCovered: ['IN', 'SG', 'BR'],
-    assignedNumbersCount: 900,
-    totalMessages: 40000,
-    deliveryRate: 95.0,
-    organization: 'Infobip Ltd',
-    technicalContact: 'London Ops',
-    nocEmail: 'noc@infobip.com',
-    connections: [
-      {
-        id: 'conn_infobip_1',
-        name: 'Infobip London HTTP Primary',
-        connectionType: 'HTTP',
-        environment: 'PRODUCTION',
-        status: 'CONNECTED',
-        priority: 1,
-        host: 'api.infobip.com',
-        port: 443,
-        tlsEnabled: true,
-        credentialRefId: 'kms_infobip_v1',
-        lastPingMs: 42,
-      },
-      {
-        id: 'conn_infobip_2',
-        name: 'Infobip Frankfurt Standby',
-        connectionType: 'HTTP',
-        environment: 'STAGING',
-        status: 'DISCONNECTED',
-        priority: 2,
-        host: 'staging-api.infobip.com',
-        port: 443,
-        tlsEnabled: true,
-        credentialRefId: 'kms_infobip_v2',
-        lastPingMs: null,
-      },
-    ],
-  },
-];
+
+
 
 export class ProvidersService {
   /**
@@ -265,17 +74,13 @@ export class ProvidersService {
       limit: filterState.limit,
     });
 
-    let rawList = response?.items && Array.isArray(response.items) ? response.items : [];
-
-    // Fallback seed data if backend has zero records
-    if (rawList.length === 0) {
-      rawList = IN_MEMORY_CARRIERS_SEED;
-    }
+    const rawList = response?.items && Array.isArray(response.items) ? response.items : [];
 
     let items: ProviderItem[] = rawList.map((p: any) => {
       const connections = p.connections || [];
       const healthyConns = connections.filter((c: any) => c.status === 'CONNECTED' || c.isConnected).length;
       return {
+        connections: connections.map((c: any) => ({...c, name: c.name || c.id})),
         id: p.id,
         name: p.name,
         slug: p.slug || p.id,
@@ -377,10 +182,11 @@ export class ProvidersService {
         status: 'ACTIVE',
       },
       connections: connections.map((c: any) => ({
+        ...c,
         id: c.id,
         providerId: p.id,
         name: c.name || `${p.name} Trunk`,
-        connectionType: c.connectionType || 'SMPP_TRANSCEIVER',
+        connectionType: c.connectionType === 'HTTP' ? 'HTTP_REST' : c.connectionType === 'SMPP' ? 'SMPP_TRANSCEIVER' : c.connectionType || 'HTTP_REST',
         environment: c.environment || 'PRODUCTION',
         status: (c.status as ProviderConnectionStatus) || (c.isConnected ? 'CONNECTED' : 'DISCONNECTED'),
         priority: c.priority || 1,
@@ -407,23 +213,13 @@ export class ProvidersService {
    * Fetch single provider details directly from API with seamless in-memory fallback
    */
   public async fetchProviderById(id: string): Promise<ProviderDetail> {
-    try {
-      const response = await apiClient.getProviderById(id);
-      if (response?.provider) {
-        return this.formatProviderDetail(response.provider);
-      }
-      if (response && response.id) {
-        return this.formatProviderDetail(response);
-      }
-    } catch {
-      // Backend returned 404 or connection error — fall back to in-memory carrier seed
+    const response = await apiClient.getProviderById(id);
+    if (response?.provider) {
+      return this.formatProviderDetail(response.provider);
     }
-
-    const fallback = IN_MEMORY_CARRIERS_SEED.find((p) => p.id === id);
-    if (fallback) {
-      return this.formatProviderDetail(fallback);
+    if (response && response.id) {
+      return this.formatProviderDetail(response);
     }
-
     throw new Error(`Provider with ID '${id}' not found`);
   }
 
@@ -450,7 +246,7 @@ export class ProvidersService {
       deliveryRate: 0,
       lastActivityAt: null,
       createdAt: p.createdAt || new Date().toISOString(),
-      organization: p.organization || 'SMS Hub Global',
+      organization: p.organization || '',
     };
   }
 
@@ -477,7 +273,7 @@ export class ProvidersService {
       deliveryRate: 0,
       lastActivityAt: new Date().toISOString(),
       createdAt: p.createdAt,
-      organization: p.organization || 'SMS Hub Global',
+      organization: p.organization || '',
     };
   }
 
@@ -514,21 +310,7 @@ export class ProvidersService {
     }
 
     const conn = data.data?.connection || data.data;
-    return {
-      id: conn?.id || `conn-${Date.now()}`,
-      providerId,
-      name: payload.name,
-      connectionType: payload.connectionType,
-      environment: payload.environment,
-      status: 'CONNECTED',
-      priority: payload.priority || 1,
-      host: payload.host,
-      port: payload.port,
-      tlsEnabled: payload.tlsEnabled,
-      credentialRefId: conn?.credentialRefId || null,
-      credential: conn?.credential || null,
-      createdAt: conn?.createdAt || new Date().toISOString(),
-    };
+    return conn as ProviderConnectionSummary;
   }
 
   /**
@@ -554,21 +336,7 @@ export class ProvidersService {
     }
 
     const conn = data.data?.connection || data.data;
-    return {
-      id: connectionId,
-      providerId,
-      name: payload.name || conn?.name || '',
-      connectionType: payload.connectionType || conn?.connectionType || 'SMPP_TRANSCEIVER',
-      environment: payload.environment || conn?.environment || 'PRODUCTION',
-      status: (payload.status as ProviderConnectionStatus) || conn?.status || 'CONNECTED',
-      priority: payload.priority || conn?.priority || 1,
-      host: payload.host || conn?.host || '',
-      port: payload.port || conn?.port || 0,
-      tlsEnabled: payload.tlsEnabled !== undefined ? payload.tlsEnabled : conn?.tlsEnabled,
-      credentialRefId: conn?.credentialRefId || null,
-      credential: conn?.credential || null,
-      createdAt: conn?.createdAt || new Date().toISOString(),
-    };
+    return conn as ProviderConnectionSummary;
   }
 
   /**
@@ -579,7 +347,7 @@ export class ProvidersService {
     connectionId: string,
     status: ProviderConnectionStatus
   ): Promise<ProviderConnectionSummary> {
-    return this.updateProviderConnection(providerId, connectionId, { status });
+    return this.updateProviderConnection(providerId, connectionId, { enabled: status === 'CONNECTED' } as any);
   }
 
   /**
@@ -589,7 +357,10 @@ export class ProvidersService {
     providerId: string,
     connectionId?: string
   ): Promise<{ success: boolean; latencyMs: number; message: string; timestamp: string }> {
-    const res = await apiClient.testProviderConnection(providerId);
+    const response = await fetch('/api/providers/' + encodeURIComponent(providerId) + '/test-connection' + (connectionId ? '?connectionId=' + encodeURIComponent(connectionId) : ''), {method: 'POST', headers: {Authorization: 'Bearer ' + apiClient.getToken()}});
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error?.message || 'Connection test failed');
+    const res = result.data;
     return {
       success: res.success,
       latencyMs: res.latencyMs || 0,

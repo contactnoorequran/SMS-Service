@@ -835,3 +835,24 @@ model AuditLog {
   @@index([entityName, entityId])
   @@index([createdAt])
 }
+
+// Durable submissions, receipts and multipart assembly; never used for demo billing.
+model CarrierEvent {
+  key          String   @id
+  providerId   String
+  connectionId String
+  kind         String
+  groupKey     String?
+  status       String
+  payload      Json
+  expiresAt    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  @@index([connectionId, kind])
+  @@index([groupKey, expiresAt])
+}
+
+model RuntimeRegistry {
+  name String @id
+  payload String
+}

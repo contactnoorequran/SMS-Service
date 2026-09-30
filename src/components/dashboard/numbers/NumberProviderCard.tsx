@@ -6,6 +6,7 @@
 import React from 'react';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
+import { CountryFlag } from '../../ui/CountryFlag';
 import {
   ProviderSummary,
   CountrySummary,
@@ -105,7 +106,7 @@ export const NumberProviderCard: React.FC<NumberProviderCardProps> = ({
               Jurisdiction & Operator
             </span>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-base">{country.flag || '🌐'}</span>
+              <CountryFlag flag={country.flag} countryName={country.name} size="sm" className="text-base" />
               <span className="font-semibold text-[var(--text-primary)]">
                 {country.name} ({country.dialCode})
               </span>

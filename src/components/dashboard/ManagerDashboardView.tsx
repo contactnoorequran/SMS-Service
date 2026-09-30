@@ -103,13 +103,13 @@ export const ManagerDashboardView: React.FC<ManagerDashboardViewProps> = ({ onNa
                 Manager Operations Portal
               </Badge>
               <span className="text-xs text-[var(--text-tertiary)] font-mono">
-                SMS Service Team Management
+                WORLD SMS SERVICE Team Management
               </span>
             </div>
-            <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">
+            <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight font-page-title">
               Manager Overview
             </h1>
-            <p className="text-xs text-[var(--text-secondary)] max-w-2xl leading-relaxed">
+            <p className="text-xs text-[var(--text-secondary)] max-w-2xl leading-relaxed font-body">
               Oversight of assigned agent rosters, client allocations, prefix quotas, and financial approval queues.
             </p>
           </div>

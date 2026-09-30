@@ -65,19 +65,19 @@ export const Modal: React.FC<ModalProps> = ({
         onClick={onClose}
       />
 
-      {/* Modal Dialog Card */}
+      {/* Modal Dialog Card (Level 3 Glass Surface) */}
       <div
-        className={`relative w-full ${maxWidthClass} bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden z-10 my-8 animate-scale-in backdrop-blur-xl`}
+        className={`relative w-full ${maxWidthClass} glass-modal overflow-hidden z-10 my-8 animate-scale-in`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="px-6 py-4 border-b border-[var(--glass-border)] flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h3 id="modal-title" className="text-base font-semibold text-[var(--text-primary)] tracking-tight">
+            <h3 id="modal-title" className="text-base font-semibold text-[var(--text-primary)] tracking-tight font-card-title">
               {title}
             </h3>
             {subtitle && (
-              <p className="text-xs text-[var(--text-secondary)] mt-0.5">{subtitle}</p>
+              <p className="text-xs text-[var(--text-secondary)] mt-0.5 font-caption">{subtitle}</p>
             )}
           </div>
           <button

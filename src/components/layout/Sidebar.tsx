@@ -5,36 +5,11 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  LayoutDashboard,
-  Users,
-  UserCheck,
-  UserCog,
-  Building2,
-  Radio,
-  Cable,
-  Globe,
-  Server,
-  Layers,
-  Hash,
-  MessageSquare,
-  Receipt,
-  Tag,
-  Wallet,
-  DollarSign,
-  CreditCard,
-  FileText,
-  Bell,
-  Code,
-  BarChart3,
-  ShieldCheck,
-  Settings,
-  Search,
-  Plus,
-  X,
   Shield,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  CheckCircle2,
+  X,
 } from 'lucide-react';
 import {
   getNavGroupsForRole,
@@ -43,6 +18,8 @@ import {
   NavGroup,
 } from '../../types/navigation';
 import { Badge } from '../ui/Badge';
+import { BrandLogo } from '../ui/BrandLogo';
+import { AppIcon, AppIconName } from '../ui/AppIcon';
 import { useAuth } from '../../context/AuthContext';
 
 interface SidebarProps {
@@ -65,7 +42,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { role, hasPermission } = useAuth();
   const [internalCollapsed, setInternalCollapsed] = useState(false);
 
-  const isCollapsed = externalCollapsed !== undefined ? externalCollapsed : internalCollapsed;
+  const isCollapsed = !isOpen && (externalCollapsed !== undefined ? externalCollapsed : internalCollapsed);
+  const [expandedGroups, setExpandedGroups] = useState<Partial<Record<NavGroup, boolean>>>({});
+
+  // Keep the current page discoverable when navigation happens outside the sidebar.
+  useEffect(() => {
+    const activeGroup = getNavItemsForRole(role).find(item =>
+      item.id === currentTab || item.targetTab === currentTab
+    )?.group;
+    if (activeGroup) setExpandedGroups(previous => ({ ...previous, [activeGroup]: true }));
+  }, [currentTab, role]);
+
+  const toggleGroup = (group: NavGroup) => {
+    setExpandedGroups(previous => ({ ...previous, [group]: !previous[group] }));
+  };
   const toggleCollapse = externalToggleCollapse || (() => setInternalCollapsed((prev) => !prev));
 
   // Dynamic notification/attention counts (only display when requiring attention)
@@ -89,64 +79,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [isOpen, onClose]);
 
-  const renderIcon = (name: string, className: string = 'w-4 h-4') => {
-    switch (name) {
-      case 'LayoutDashboard':
-        return <LayoutDashboard className={className} />;
-      case 'Users':
-        return <Users className={className} />;
-      case 'UserCheck':
-        return <UserCheck className={className} />;
-      case 'UserCog':
-        return <UserCog className={className} />;
-      case 'Building2':
-        return <Building2 className={className} />;
-      case 'Radio':
-        return <Radio className={className} />;
-      case 'Cable':
-        return <Cable className={className} />;
-      case 'Globe':
-        return <Globe className={className} />;
-      case 'Server':
-        return <Server className={className} />;
-      case 'Layers':
-        return <Layers className={className} />;
-      case 'Hash':
-        return <Hash className={className} />;
-      case 'MessageSquare':
-        return <MessageSquare className={className} />;
-      case 'Receipt':
-        return <Receipt className={className} />;
-      case 'Tag':
-        return <Tag className={className} />;
-      case 'Wallet':
-        return <Wallet className={className} />;
-      case 'DollarSign':
-        return <DollarSign className={className} />;
-      case 'CreditCard':
-        return <CreditCard className={className} />;
-      case 'FileText':
-        return <FileText className={className} />;
-      case 'Bell':
-        return <Bell className={className} />;
-      case 'Code':
-        return <Code className={className} />;
-      case 'BarChart3':
-        return <BarChart3 className={className} />;
-      case 'ShieldCheck':
-        return <ShieldCheck className={className} />;
-      case 'Settings':
-        return <Settings className={className} />;
-      case 'Search':
-        return <Search className={className} />;
-      case 'Plus':
-        return <Plus className={className} />;
-      case 'CheckCircle2':
-        return <CheckCircle2 className={className} />;
-      default:
-        return <Layers className={className} />;
-    }
-  };
+
 
   const navGroups = getNavGroupsForRole(role);
   const navItems = getNavItemsForRole(role);
@@ -174,23 +107,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const content = (
     <div className="flex flex-col h-full bg-[var(--bg-surface)] text-[var(--text-secondary)] select-none">
       {/* Brand Header */}
-      <div className="p-4 border-b border-[var(--glass-border)] flex items-center justify-between gap-3 shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 rounded-xl bg-[var(--accent-blue)] flex items-center justify-center text-white font-bold shadow-md shadow-[var(--accent-blue-dim)] shrink-0">
-            <Radio className="w-4 h-4" />
-          </div>
-          {!isCollapsed && (
-            <div className="min-w-0">
-              <h1 className="text-xs font-bold text-[var(--text-primary)] tracking-tight uppercase">
-                SMS Service
-              </h1>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-emerald)] animate-pulse-dot" />
-                <span className="text-[10px] text-[var(--text-tertiary)] font-mono">Online</span>
-              </div>
-            </div>
-          )}
-        </div>
+      <div className={`p-3 border-b border-[var(--glass-border)] flex items-center ${isCollapsed ? 'flex-col gap-2 justify-center' : 'justify-between gap-3'} shrink-0`}>
+        <button
+          type="button"
+          onClick={() => {
+            onSelectTab('dashboard');
+            onClose();
+          }}
+          className={`flex items-center min-w-0 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] rounded-lg p-0.5 cursor-pointer transition-opacity hover:opacity-90 ${
+            isCollapsed ? 'justify-center w-full' : 'gap-2'
+          }`}
+          aria-label="WORLD SMS SERVICE — Dashboard"
+        >
+          <BrandLogo
+            variant={isCollapsed ? 'symbol' : 'full'}
+            size="sm"
+            theme="dark"
+          />
+        </button>
 
         {/* Mobile Close Button */}
         <button
@@ -216,7 +150,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {!isCollapsed && (
         <div className="px-4 py-2 border-b border-[var(--glass-border)] bg-[rgba(0,0,0,0.15)] flex items-center justify-between text-[11px]">
           <div className="flex items-center gap-2 min-w-0">
-            <Shield className="w-3.5 h-3.5 text-[var(--accent-blue)] shrink-0" />
+            <Shield className="w-3.5 h-3.5 text-[var(--brand-primary)] shrink-0" />
             <span className="font-mono text-[var(--text-tertiary)]">Role:</span>
             <span className="font-semibold text-[var(--text-primary)] truncate">{role}</span>
           </div>
@@ -227,26 +161,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       {/* Navigation Sections */}
-      <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-4">
+      <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1">
         {navGroups.map((group) => {
           const groupItems = itemsByGroup[group];
           if (!groupItems || groupItems.length === 0) return null;
+          const isDropdown = groupItems.length > 1;
+          const isExpanded = Boolean(expandedGroups[group]);
+          const isActiveGroup = groupItems.some(item => item.id === currentTab || item.targetTab === currentTab);
 
           return (
             <div key={group} className="space-y-1">
-              {/* Clean Group Separator Header */}
-              {!isCollapsed ? (
-                <div className="px-2 py-1 flex items-center justify-between">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
-                    {group}
-                  </span>
-                </div>
-              ) : (
-                <div className="my-2 border-t border-[var(--glass-border)]" />
+              {!isCollapsed && isDropdown && (
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group)}
+                  aria-expanded={isExpanded}
+                  aria-label={group}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-md text-left cursor-pointer hover:bg-[var(--glass-bg-hover)] transition-colors ${isActiveGroup ? 'text-[var(--text-primary)] bg-[var(--brand-primary-soft)]' : 'text-[var(--text-secondary)]'}`}
+                >
+                  <AppIcon name={groupItems[0].iconName as AppIconName} size="sm" className="w-4 h-4 shrink-0" />
+                  <span className="flex-1">{group}</span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-0' : '-rotate-90'}`} />
+                </button>
               )}
 
-              {/* Items in this group */}
-              <nav className="space-y-0.5">
+              {/* Collapsed groups are removed from keyboard navigation as well. */}
+              <nav
+                aria-label={group + ' navigation'}
+                hidden={!isCollapsed && isDropdown && !isExpanded}
+                className={`space-y-0.5 ${!isCollapsed && isDropdown ? 'ml-5 pl-2 border-l border-[var(--glass-border)]' : ''}`}
+              >
                 {groupItems.map((item) => {
                   const targetTab = item.targetTab || item.id;
                   const isSelected = currentTab === item.id || currentTab === targetTab;
@@ -262,16 +206,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         onSelectTab(item.id);
                         onClose();
                       }}
-                      className={`w-full flex items-center gap-2.5 rounded-xl text-xs font-medium transition-all text-left cursor-pointer min-w-0 ${
+                      className={`w-full flex items-center gap-2.5 rounded-md text-xs font-medium transition-all text-left cursor-pointer min-w-0 ${
                         isCollapsed ? 'justify-center p-2.5' : 'px-3 py-2'
                       } ${
                         isSelected
-                          ? 'bg-[var(--accent-blue-dim)] text-[var(--accent-blue)] border border-[rgba(59,130,246,0.25)] shadow-xs font-semibold'
+                          ? 'bg-[var(--brand-primary-soft)] text-[var(--brand-primary)] border border-[var(--brand-border)] shadow-xs font-semibold'
                           : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg)] border border-transparent'
                       }`}
                     >
-                      <span className={`shrink-0 ${isSelected ? 'text-[var(--accent-blue)]' : 'text-[var(--text-tertiary)]'}`}>
-                        {renderIcon(item.iconName)}
+                      <span className={`shrink-0 ${isSelected ? 'text-[var(--brand-primary)]' : 'text-[var(--text-tertiary)]'}`}>
+                        <AppIcon name={item.iconName as AppIconName} size="sm" className="w-4 h-4" />
                       </span>
 
                       {!isCollapsed && (
@@ -301,8 +245,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Footer Specs (when expanded) */}
       {!isCollapsed && (
         <div className="p-3 border-t border-[var(--glass-border)] bg-[rgba(0,0,0,0.15)] text-[10px] text-[var(--text-tertiary)] font-mono flex items-center justify-between shrink-0">
-          <span>SMS Carrier Core</span>
-          <span>v1.4.0</span>
+          <span>WORLD SMS SERVICE</span>
+          <span>v1.7.0</span>
         </div>
       )}
     </div>
@@ -313,7 +257,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Desktop Sidebar (Collapsible width) */}
       <aside
         className={`hidden md:flex flex-col shrink-0 min-h-screen border-r border-[var(--glass-border)] transition-all duration-200 ${
-          isCollapsed ? 'w-16' : 'w-60'
+          isCollapsed ? 'w-16' : 'w-56'
         }`}
       >
         {content}

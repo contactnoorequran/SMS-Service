@@ -194,6 +194,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const switchUserRole = useCallback(async (newRole: UserRole) => {
+    if (import.meta.env.PROD) throw new Error('Sign out and use your own account credentials.');
     setIsLoading(true);
     try {
       try {

@@ -117,7 +117,7 @@ apiRouter.get('/', (_req, res) => {
 apiRouter.use('/health', healthRouter);
 apiRouter.use('/dashboard', dashboardRouter);
 apiRouter.use('/notifications', notificationsRouter);
-apiRouter.use('/database', databaseRouter);
+if (process.env.NODE_ENV !== 'production') apiRouter.use('/database', databaseRouter);
 apiRouter.use('/auth', authRouter);
 apiRouter.use('/providers', providerRouter);
 apiRouter.use('/numbers', numberRouter);
@@ -131,7 +131,7 @@ apiRouter.use('/agents', agentRouter);
 apiRouter.use('/clients', clientRouter);
 apiRouter.use('/users', usersRouter);
 apiRouter.use('/audit-logs', auditRouter);
-apiRouter.use('/demo', demoRouter);
+if (process.env.NODE_ENV !== 'production') apiRouter.use('/demo', demoRouter);
 
 // Catch-all 404 for unknown API routes
 apiRouter.use(notFoundHandler);

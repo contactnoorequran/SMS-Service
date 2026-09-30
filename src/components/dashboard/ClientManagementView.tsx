@@ -627,7 +627,7 @@ export const ClientManagementView: React.FC = () => {
         <EmptyState
           title="No clients found"
           message="No client enterprise accounts match your active search and filter criteria."
-          icon={Building2}
+          iconName="client"
           actionLabel="Reset Filters"
           onAction={resetFilters}
         />

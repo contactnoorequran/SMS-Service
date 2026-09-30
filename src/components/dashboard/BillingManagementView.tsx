@@ -547,13 +547,13 @@ export const BillingManagementView: React.FC = () => {
 
             {!selectedWallet ? (
               <EmptyState
-                icon={<Wallet className="w-8 h-8 text-[var(--text-tertiary)]" />}
+                iconName="wallet"
                 title="Select a Wallet"
                 description="Click on any wallet on the left to inspect its append-only ledger transaction journal."
               />
             ) : ledgerEntries.length === 0 && !isLoadingLedger ? (
               <EmptyState
-                icon={<Clock className="w-8 h-8 text-[var(--text-tertiary)]" />}
+                iconName="billing"
                 title="No Ledger Entries Yet"
                 description="This wallet does not have any recorded transactions yet. Use the Adjust button to credit or debit funds."
                 action={
@@ -624,7 +624,7 @@ export const BillingManagementView: React.FC = () => {
 
           {rates.length === 0 ? (
             <EmptyState
-              icon={<Tag className="w-8 h-8 text-[var(--text-tertiary)]" />}
+              iconName="billing"
               title="No Rates Configured"
               description="Wholesale carrier destination costs and customer pricing rate cards have not been configured yet."
             />
@@ -684,7 +684,7 @@ export const BillingManagementView: React.FC = () => {
 
           {paymentRequests.length === 0 ? (
             <EmptyState
-              icon={<CreditCard className="w-8 h-8 text-[var(--text-tertiary)]" />}
+              iconName="wallet"
               title="No Payment Requests"
               description="No client deposit invoices or wire transfer settlement requests have been submitted."
             />
@@ -749,7 +749,7 @@ export const BillingManagementView: React.FC = () => {
 
           {creditNotes.length === 0 ? (
             <EmptyState
-              icon={<FileText className="w-8 h-8 text-[var(--text-tertiary)]" />}
+              iconName="cdr"
               title="No Credit Notes"
               description="No customer SLA credits or billing adjustments have been issued."
             />

@@ -8,6 +8,7 @@ import { Breadcrumbs } from '../../ui/Breadcrumbs';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
 import { Button } from '../../ui/Button';
+import { CountryFlag } from '../../ui/CountryFlag';
 import { NumberDetail, NumberStatus } from '../../../types/numbers';
 import { formatDate, formatRelativeTime } from '../../../utils/formatters';
 import { NumberProviderCard } from './NumberProviderCard';
@@ -89,7 +90,7 @@ export const NumberDetailsView: React.FC<NumberDetailsViewProps> = ({
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-2.5 flex-wrap min-w-0">
-              <span className="text-xl shrink-0">{number?.country?.flag || '🌐'}</span>
+              <CountryFlag flag={number?.country?.flag} countryName={number?.country?.name} size="md" className="text-xl" />
               <h1 className="text-xl font-bold font-mono text-[var(--text-primary)] tracking-tight truncate max-w-sm sm:max-w-md">
                 {number.e164}
               </h1>

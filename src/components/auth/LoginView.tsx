@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import { UserRole } from '../../types/auth';
 import { useAuth, SEED_ACCOUNTS } from '../../context/AuthContext';
+import { BrandLogo } from '../ui/BrandLogo';
+import { WorldNetworkIcon } from '../icons/WorldNetworkIcon';
 
 interface LoginViewProps {
   onLoginSuccess?: (role: UserRole) => void;
@@ -40,12 +42,12 @@ const ROLE_CARDS: Array<{
   {
     role: 'AGENT',
     title: 'Business Agent',
-    tagline: 'SMS Service — Ranges, CLI Search & Rates',
+    tagline: 'WORLD SMS SERVICE — Ranges, CLI Search & Rates',
     icon: Users,
     accentColor: 'text-[var(--accent-emerald)]',
     glowColor: 'bg-[var(--accent-emerald-dim)]',
     borderColor: 'hover:border-[var(--accent-emerald)]',
-    defaultTabDesc: 'Opens SMS Service Agent Dashboard, Ranges & Test Panel',
+    defaultTabDesc: 'Opens WORLD SMS SERVICE Agent Dashboard, Ranges & Test Panel',
   },
   {
     role: 'SUPER_ADMIN',
@@ -83,8 +85,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const { login, isLoading: authLoading } = useAuth();
 
   const [selectedRole, setSelectedRole] = useState<UserRole>('AGENT');
-  const [email, setEmail] = useState<string>(SEED_ACCOUNTS.AGENT.email);
-  const [password, setPassword] = useState<string>(SEED_ACCOUNTS.AGENT.pass);
+  const [email, setEmail] = useState<string>(import.meta.env.PROD ? '' : SEED_ACCOUNTS.AGENT.email);
+  const [password, setPassword] = useState<string>(import.meta.env.PROD ? '' : SEED_ACCOUNTS.AGENT.pass);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -131,24 +133,24 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   return (
     <div className="min-h-screen w-screen bg-[var(--bg-deep)] text-[var(--text-primary)] flex flex-col justify-between relative overflow-hidden font-sans select-none">
       {/* Ambient background glows */}
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-[var(--accent-blue-dim)] blur-[140px] pointer-events-none" />
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-[var(--brand-primary-glow)] blur-[140px] pointer-events-none opacity-40" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-[var(--accent-emerald-dim)] blur-[140px] pointer-events-none" />
+
+      {/* Subtle telecom global network watermark */}
+      <div className="absolute right-[-12%] top-[12%] w-[560px] h-[560px] opacity-[0.035] pointer-events-none text-[var(--brand-primary)]">
+        <WorldNetworkIcon size={560} />
+      </div>
 
       {/* Top Navbar */}
       <header className="h-16 border-b border-[var(--glass-border)] bg-[rgba(10,14,23,0.7)] backdrop-blur-xl px-6 flex items-center justify-between z-20">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[var(--accent-blue)] flex items-center justify-center text-white shadow-lg shadow-[var(--accent-blue-glow)]">
-            <Radio className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-sm tracking-tight text-[var(--text-primary)] uppercase">SMS Service</span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--accent-blue-dim)] text-[var(--accent-blue)] border border-[rgba(59,130,246,0.3)]">
-                v1.7
-              </span>
-            </div>
-            <div className="text-[11px] text-[var(--text-tertiary)]">Portal Operations & Number Management</div>
-          </div>
+          <BrandLogo
+            variant="full"
+            size="md"
+            theme="accent"
+            showBadge
+            badgeText="v1.7"
+          />
         </div>
 
         <div className="flex items-center gap-3">
@@ -165,23 +167,23 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           {/* Left Hero & Role Selector Column */}
           <div className="lg:col-span-6 space-y-6">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent-blue-dim)] border border-[rgba(59,130,246,0.3)] text-xs text-[var(--accent-blue)] font-medium mb-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--brand-primary-soft)] border border-[var(--brand-border)] text-xs text-[var(--brand-primary)] font-medium mb-3">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Unified Role-Based Telecom Gateway</span>
+                <span>Global SMS Infrastructure & Messaging Operations</span>
               </div>
               <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--text-primary)]">
-                Sign in to your <br />
+                Sign in to <br />
                 <span className="bg-gradient-to-r from-[var(--accent-blue)] via-[var(--accent-cyan)] to-[var(--accent-emerald)] bg-clip-text text-transparent">
-                  SMS Operations Portal
+                  WORLD SMS SERVICE
                 </span>
               </h1>
               <p className="mt-2 text-sm text-[var(--text-secondary)] leading-relaxed">
-                Log in with your assigned identity. The portal automatically detects your role permissions and configures your dedicated workspace.
+                Log in with your enterprise credentials. Enterprise telecom infrastructure, carrier interconnect, and real-time SMS routing.
               </p>
             </div>
 
             {/* Quick 1-Click Role Switcher */}
-            <div className="space-y-2.5">
+            {!import.meta.env.PROD && <div className="space-y-2.5">
               <label className="text-xs font-semibold uppercase tracking-wider text-[var(--text-tertiary)] flex items-center justify-between">
                 <span>Select Account Role</span>
                 <span className="text-[10px] text-[var(--accent-blue)] font-mono">1-Click Fast Fill</span>
@@ -221,7 +223,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   );
                 })}
               </div>
-            </div>
+            </div>}
           </div>
 
           {/* Right Login Card Column */}
@@ -263,7 +265,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                         setErrorMessage(null);
                       }}
                       placeholder="e.g. agent@smshub.local"
-                      className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] focus:border-[var(--accent-blue)] text-xs text-[var(--text-primary)] rounded-xl pl-9 pr-4 py-2.5 outline-none transition-all placeholder:text-[var(--text-disabled)]"
+                      className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] focus:border-[var(--brand-primary)] text-xs text-[var(--text-primary)] rounded-xl pl-9 pr-4 py-2.5 outline-none transition-all placeholder:text-[var(--text-disabled)]"
                     />
                   </div>
                 </div>
@@ -288,7 +290,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                         setErrorMessage(null);
                       }}
                       placeholder="••••••••••••"
-                      className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] focus:border-[var(--accent-blue)] text-xs text-[var(--text-primary)] rounded-xl pl-9 pr-10 py-2.5 outline-none transition-all placeholder:text-[var(--text-disabled)] font-mono"
+                      className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] focus:border-[var(--brand-primary)] text-xs text-[var(--text-primary)] rounded-xl pl-9 pr-10 py-2.5 outline-none transition-all placeholder:text-[var(--text-disabled)] font-mono"
                     />
                     <button
                       type="button"
@@ -314,7 +316,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   id="btn-login-submit"
                   type="submit"
                   disabled={isSubmitting || authLoading}
-                  className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-[var(--accent-blue)] to-[#2563eb] hover:from-[#2563eb] hover:to-[#1d4ed8] text-white font-semibold text-xs tracking-wide shadow-lg shadow-[var(--accent-blue-glow)] hover:shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)] hover:from-[var(--brand-secondary)] hover:to-[#1d4ed8] text-white font-semibold text-xs tracking-wide shadow-lg shadow-[var(--brand-primary-glow)] hover:shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting || authLoading ? (
                     <>
@@ -336,7 +338,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
       {/* Footer */}
       <footer className="h-12 border-t border-[var(--glass-border)] bg-[rgba(10,14,23,0.5)] px-6 flex items-center justify-between text-[11px] text-[var(--text-tertiary)] z-10">
-        <div>&copy; 2026 SMS Service. All rights reserved.</div>
+        <div>&copy; 2026 WORLD SMS SERVICE. All rights reserved.</div>
         <div className="flex items-center gap-4">
           <span>Security: TLS 1.3 + JWT</span>
           <span>Status: Protected</span>

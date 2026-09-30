@@ -1,3 +1,4 @@
+import { captureRawBody } from './controllers/carrier.controller';
 import express, { Express } from 'express';
 import { apiRouter } from './routes';
 import { requestLogger } from './middlewares/request-logger';
@@ -14,8 +15,8 @@ export function createExpressApp(): Express {
   const app = express();
 
   // Middleware pipeline
-  app.use(express.json({ limit: '2mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+  app.use(express.json({ limit: '2mb', verify: captureRawBody }));
+  app.use(express.urlencoded({ extended: true, limit: '2mb', verify: captureRawBody }));
   app.use(requestLogger);
 
   // Mount API Router

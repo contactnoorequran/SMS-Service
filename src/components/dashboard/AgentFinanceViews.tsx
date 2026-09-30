@@ -1,111 +1,10 @@
-import React, { useState, useMemo } from 'react';
-import { FileText, ChevronRight, CreditCard, Plus, Code, Settings, User, Lock, Bell } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { FileText, ChevronRight, CreditCard, Plus, Code, Settings, User, Lock, Bell, RefreshCw, AlertCircle } from 'lucide-react';
 import { DataTableToolbar, ColumnVisibility } from '../ui/DataTableToolbar';
+import { apiClient } from '../../services/api';
 
-/* ─── Credit Notes View ─── */
-interface CreditNote {
-  id: string;
-  date: string;
-  reference: string;
-  amount: string;
-  reason: string;
-  status: 'approved' | 'pending' | 'rejected';
-}
-
-const MOCK_CREDITS: CreditNote[] = [
-  { id: 'CN001', date: '2026-09-20 UTC', reference: 'REF-20260920-001', amount: '$12.50', reason: 'Billing adjustment – double charge', status: 'approved' },
-  { id: 'CN002', date: '2026-09-15 UTC', reference: 'REF-20260915-002', amount: '$5.00', reason: 'Range quality credit', status: 'pending' },
-  { id: 'CN003', date: '2026-09-01 UTC', reference: 'REF-20260901-003', amount: '$30.00', reason: 'Contract goodwill', status: 'approved' },
-];
-
-const CREDIT_COLS: ColumnVisibility[] = [
-  { key: 'date', label: 'Date', visible: true },
-  { key: 'reference', label: 'Reference', visible: true },
-  { key: 'amount', label: 'Amount', visible: true },
-  { key: 'reason', label: 'Reason', visible: true },
-  { key: 'status', label: 'Status', visible: true },
-];
-
-const statusStyles: Record<string, string> = {
-  approved: 'bg-[var(--accent-emerald-dim)] text-[var(--accent-emerald)] border-[rgba(16,185,129,0.25)]',
-  pending: 'bg-[var(--accent-amber-dim)] text-[var(--accent-amber)] border-[rgba(245,158,11,0.25)]',
-  rejected: 'bg-[var(--accent-rose-dim)] text-[var(--accent-rose)] border-[rgba(244,63,94,0.25)]',
-};
-
-export const CreditNotesView: React.FC = () => {
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [colDefs, setColDefs] = useState<ColumnVisibility[]>(CREDIT_COLS);
-
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    return MOCK_CREDITS.filter((c) => c.reference.toLowerCase().includes(q) || c.reason.toLowerCase().includes(q) || c.status.includes(q));
-  }, [search]);
-
-  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
-  const handleColChange = (key: string, v: boolean) => setColDefs((prev) => prev.map((c) => (c.key === key ? { ...c, visible: v } : c)));
-  const exportData = filtered.map((c) => ({ date: c.date, reference: c.reference, amount: c.amount, reason: c.reason, status: c.status }));
-
-  return (
-    <div className="space-y-5">
-      <div className="glass-card p-5 border-[rgba(16,185,129,0.15)] relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-[rgba(16,185,129,0.05)] to-transparent pointer-events-none" />
-        <div className="relative flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[var(--accent-emerald-dim)] border border-[rgba(16,185,129,0.25)] flex items-center justify-center">
-            <FileText className="w-4 h-4 text-[var(--accent-emerald)]" />
-          </div>
-          <div>
-            <nav className="text-[10px] text-[var(--text-tertiary)] flex items-center gap-1 mb-0.5">
-              <span>Stats & Finance</span><ChevronRight className="w-3 h-3" /><span className="text-[var(--text-primary)]">Credit Notes</span>
-            </nav>
-            <h1 className="text-xl font-bold text-[var(--text-primary)]">Credit Notes</h1>
-          </div>
-        </div>
-      </div>
-      <div className="glass-card overflow-hidden">
-        <div className="p-4 border-b border-[var(--glass-border)]">
-          <DataTableToolbar exportData={exportData} columnDefs={colDefs} onColumnVisibilityChange={handleColChange}
-            currentPage={page} totalItems={filtered.length} pageSize={pageSize} onPageChange={setPage}
-            onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} searchValue={search} onSearchChange={(v) => { setSearch(v); setPage(1); }} />
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs border-collapse">
-            <thead>
-              <tr className="bg-[rgba(255,255,255,0.03)] border-b border-[var(--glass-border)] text-[var(--text-secondary)] uppercase tracking-wider font-semibold text-[11px]">
-                {colDefs.find(c => c.key === 'date')?.visible && <th className="px-4 py-3.5 text-left">Date</th>}
-                {colDefs.find(c => c.key === 'reference')?.visible && <th className="px-4 py-3.5 text-left">Reference</th>}
-                {colDefs.find(c => c.key === 'amount')?.visible && <th className="px-4 py-3.5 text-left">Amount</th>}
-                {colDefs.find(c => c.key === 'reason')?.visible && <th className="px-4 py-3.5 text-left">Reason</th>}
-                {colDefs.find(c => c.key === 'status')?.visible && <th className="px-4 py-3.5 text-left">Status</th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--glass-border)]">
-              {paginated.length === 0 ? (
-                <tr><td colSpan={5} className="px-6 py-10 text-center text-[11px] text-[var(--text-tertiary)]">No credit notes.</td></tr>
-              ) : paginated.map((c) => (
-                <tr key={c.id} className="hover:bg-[var(--glass-bg-hover)] transition-colors">
-                  {colDefs.find(col => col.key === 'date')?.visible && <td className="px-4 py-3.5 font-mono text-[10px] text-[var(--text-tertiary)]">{c.date}</td>}
-                  {colDefs.find(col => col.key === 'reference')?.visible && <td className="px-4 py-3.5 font-mono text-[var(--accent-blue)] text-[11px]">{c.reference}</td>}
-                  {colDefs.find(col => col.key === 'amount')?.visible && <td className="px-4 py-3.5 font-mono text-[var(--accent-emerald)] font-semibold">{c.amount}</td>}
-                  {colDefs.find(col => col.key === 'reason')?.visible && <td className="px-4 py-3.5 text-[var(--text-secondary)]">{c.reason}</td>}
-                  {colDefs.find(col => col.key === 'status')?.visible && <td className="px-4 py-3.5">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border capitalize ${statusStyles[c.status]}`}>{c.status}</span>
-                  </td>}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="p-4 border-t border-[var(--glass-border)]">
-          <DataTableToolbar exportData={exportData} columnDefs={colDefs} onColumnVisibilityChange={handleColChange}
-            currentPage={page} totalItems={filtered.length} pageSize={pageSize} onPageChange={setPage}
-            onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} searchValue={search} onSearchChange={(v) => { setSearch(v); setPage(1); }} />
-        </div>
-      </div>
-    </div>
-  );
-};
+export {CreditNotesView} from './CreditNotesView';
+const statusStyles: Record<string,string> = {approved:'text-[var(--text-primary)]',pending:'text-[var(--text-secondary)]',rejected:'text-[var(--text-tertiary)]'};
 
 /* ─── Payment Requests View ─── */
 interface PaymentRequest {
@@ -117,12 +16,6 @@ interface PaymentRequest {
   status: 'approved' | 'pending' | 'rejected';
 }
 
-const MOCK_PR: PaymentRequest[] = [
-  { id: 'PR001', date: '2026-09-22 UTC', reference: 'PR-20260922-001', amount: '$500.00', method: 'Wire Transfer', status: 'pending' },
-  { id: 'PR002', date: '2026-09-10 UTC', reference: 'PR-20260910-002', amount: '$200.00', method: 'Bank Transfer', status: 'approved' },
-  { id: 'PR003', date: '2026-08-28 UTC', reference: 'PR-20260828-003', amount: '$1,000.00', method: 'Wire Transfer', status: 'approved' },
-];
-
 const PR_COLS: ColumnVisibility[] = [
   { key: 'date', label: 'Date', visible: true },
   { key: 'reference', label: 'Reference', visible: true },
@@ -132,17 +25,78 @@ const PR_COLS: ColumnVisibility[] = [
 ];
 
 export const PaymentRequestsView: React.FC = () => {
+  const [requests, setRequests] = useState<PaymentRequest[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [colDefs, setColDefs] = useState<ColumnVisibility[]>(PR_COLS);
   const [showNew, setShowNew] = useState(false);
   const [amount, setAmount] = useState('');
+  const [method, setMethod] = useState('Wire Transfer');
+  const [wallets, setWallets] = useState<any[]>([]);
+  const [selectedWalletId, setSelectedWalletId] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const fetchPaymentRequests = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await apiClient.getPaymentRequests();
+      const list = Array.isArray(res?.requests) ? res.requests : Array.isArray(res?.items) ? res.items : [];
+      const mapped: PaymentRequest[] = list.map((p: any) => ({
+        id: p.id,
+        date: new Date(p.createdAt).toISOString().replace('T', ' ').slice(0, 16),
+        reference: p.reference || `PR-${p.id.slice(-6)}`,
+        amount: `$${Number(p.amountDecimal || p.amount || 0).toFixed(2)}`,
+        method: p.method || 'Wire Transfer',
+        status: (p.status?.toLowerCase() || 'pending') as any,
+      }));
+      setRequests(mapped);
+    } catch {
+      setRequests([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPaymentRequests();
+    apiClient.getWallets().then((res) => {
+      if (Array.isArray(res) && res.length > 0) {
+        setWallets(res);
+        setSelectedWalletId(res[0].id);
+      }
+    }).catch(() => {});
+  }, [fetchPaymentRequests]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!amount || parseFloat(amount) <= 0) return;
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      const wId = selectedWalletId || wallets[0]?.id || 'wlt_default';
+      await apiClient.createPaymentRequest({
+        walletId: wId,
+        amountDecimal: parseFloat(amount),
+        reason: `${method} payment request`,
+        reference: `PR-${Date.now().toString().slice(-6)}`,
+      });
+      setShowNew(false);
+      setAmount('');
+      fetchPaymentRequests();
+    } catch (err: any) {
+      setSubmitError(err.message || 'Failed to submit payment request');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return MOCK_PR.filter((p) => p.reference.toLowerCase().includes(q) || p.method.toLowerCase().includes(q) || p.status.includes(q));
-  }, [search]);
+    return requests.filter((p) => p.reference.toLowerCase().includes(q) || p.method.toLowerCase().includes(q) || p.status.includes(q));
+  }, [requests, search]);
 
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
   const handleColChange = (key: string, v: boolean) => setColDefs((prev) => prev.map((c) => (c.key === key ? { ...c, visible: v } : c)));
@@ -176,27 +130,80 @@ export const PaymentRequestsView: React.FC = () => {
 
       {showNew && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowNew(false)} />
-          <div className="relative glass-card p-6 w-full max-w-sm mx-4 space-y-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !isSubmitting && setShowNew(false)} />
+          <form onSubmit={handleSubmit} className="relative glass-card p-6 w-full max-w-sm mx-4 space-y-4">
             <h3 className="text-base font-semibold text-[var(--text-primary)]">New Payment Request</h3>
+            {submitError && (
+              <div className="p-2.5 rounded-lg border border-[rgba(244,63,94,0.3)] bg-[rgba(244,63,94,0.08)] text-[var(--accent-rose)] text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{submitError}</span>
+              </div>
+            )}
             <div className="space-y-3">
+              {wallets.length > 1 && (
+                <div className="space-y-1">
+                  <label className="text-[11px] uppercase tracking-wider text-[var(--text-tertiary)]">Target Wallet</label>
+                  <select
+                    value={selectedWalletId}
+                    onChange={(e) => setSelectedWalletId(e.target.value)}
+                    className="glass-input px-3 py-2 text-xs rounded-lg border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-primary)] w-full cursor-pointer"
+                  >
+                    {wallets.map((w) => (
+                      <option key={w.id} value={w.id}>{w.currency || 'USD'} Wallet ({w.id.slice(-6)})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="space-y-1">
                 <label className="text-[11px] uppercase tracking-wider text-[var(--text-tertiary)]">Amount (USD)</label>
-                <input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)}
-                  className="glass-input px-3 py-2 text-xs rounded-lg border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-primary)] w-full" />
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  placeholder="0.00"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="glass-input px-3 py-2 text-xs rounded-lg border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-primary)] w-full"
+                />
               </div>
               <div className="space-y-1">
                 <label className="text-[11px] uppercase tracking-wider text-[var(--text-tertiary)]">Method</label>
-                <select className="glass-input px-3 py-2 text-xs rounded-lg border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-primary)] w-full cursor-pointer">
-                  <option>Wire Transfer</option><option>Bank Transfer</option><option>Crypto</option>
+                <select
+                  value={method}
+                  onChange={(e) => setMethod(e.target.value)}
+                  className="glass-input px-3 py-2 text-xs rounded-lg border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-primary)] w-full cursor-pointer"
+                >
+                  <option>Wire Transfer</option>
+                  <option>Bank Transfer</option>
+                  <option>Crypto</option>
                 </select>
               </div>
             </div>
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setShowNew(false)} className="px-4 py-2 rounded-lg text-xs border border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-bg-hover)] cursor-pointer">Cancel</button>
-              <button onClick={() => setShowNew(false)} className="px-4 py-2 rounded-lg text-xs font-semibold bg-[var(--accent-blue)] text-white hover:opacity-90 cursor-pointer">Submit</button>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => setShowNew(false)}
+                className="px-4 py-2 rounded-lg text-xs border border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-bg-hover)] cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-4 py-2 rounded-lg text-xs font-semibold bg-[var(--accent-blue)] text-white hover:opacity-90 cursor-pointer flex items-center gap-1.5"
+              >
+                {isSubmitting ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Submitting...</span>
+                  </>
+                ) : (
+                  <span>Submit</span>
+                )}
+              </button>
             </div>
-          </div>
+          </form>
         </div>
       )}
 
@@ -218,8 +225,17 @@ export const PaymentRequestsView: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--glass-border)]">
-              {paginated.length === 0 ? (
-                <tr><td colSpan={5} className="px-6 py-10 text-center text-[11px] text-[var(--text-tertiary)]">No payment requests.</td></tr>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-xs text-[var(--text-tertiary)]">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <RefreshCw className="w-5 h-5 animate-spin text-[var(--accent-blue)]" />
+                      <span>Loading payment requests...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : paginated.length === 0 ? (
+                <tr><td colSpan={5} className="px-6 py-10 text-center text-[11px] text-[var(--text-tertiary)]">No payment requests found.</td></tr>
               ) : paginated.map((p) => (
                 <tr key={p.id} className="hover:bg-[var(--glass-bg-hover)] transition-colors">
                   {colDefs.find(c => c.key === 'date')?.visible && <td className="px-4 py-3.5 font-mono text-[10px] text-[var(--text-tertiary)]">{p.date}</td>}
@@ -244,10 +260,11 @@ export const PaymentRequestsView: React.FC = () => {
   );
 };
 
+
 /* ─── REST API View ─── */
 export const RestApiView: React.FC = () => {
   const [copied, setCopied] = useState(false);
-  const apiKey = 'sk-agent-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx';
+  const apiKey = 'sk-agent-••••••••••••••••••••••••••••••••';
   const webhookUrl = 'https://your-server.com/webhook/sms';
   const copy = (txt: string) => {
     navigator.clipboard.writeText(txt);

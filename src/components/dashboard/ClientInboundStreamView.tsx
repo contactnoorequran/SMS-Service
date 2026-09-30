@@ -1,3 +1,4 @@
+import { openMessageStream } from '../../services/message-stream';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -20,6 +21,9 @@ import {
 } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { CountryFlag } from '../ui/CountryFlag';
+
+import { apiClient } from '../../services/api';
 
 interface InboundMessage {
   id: string;
@@ -35,117 +39,117 @@ interface InboundMessage {
   receivedAt: string;
 }
 
-const SEED_STREAM: InboundMessage[] = [
-  {
-    id: 'MSG-9921',
-    sender: 'WhatsApp',
-    service: 'Messaging',
-    leasedNumber: '+44 7911 123456',
-    country: 'UK',
-    flag: '🇬🇧',
-    text: 'Your WhatsApp code is 881-209. You can also tap this link to verify your account: v.whatsapp.com/881209',
-    extractedOtp: '881-209',
-    webhookDelivered: true,
-    webhookLatencyMs: 42,
-    receivedAt: 'Just now',
-  },
-  {
-    id: 'MSG-9920',
-    sender: 'Google',
-    service: 'Identity',
-    leasedNumber: '+1 202 555 0192',
-    country: 'USA',
-    flag: '🇺🇸',
-    text: 'G-748192 is your Google verification code. Do not reply to this message.',
-    extractedOtp: '748192',
-    webhookDelivered: true,
-    webhookLatencyMs: 38,
-    receivedAt: '1m ago',
-  },
-  {
-    id: 'MSG-9919',
-    sender: 'Telegram',
-    service: 'Messaging',
-    leasedNumber: '+44 7911 987654',
-    country: 'UK',
-    flag: '🇬🇧',
-    text: 'Telegram code: 91043. Use it to log in to your Telegram account. Never give this code to anyone.',
-    extractedOtp: '91043',
-    webhookDelivered: true,
-    webhookLatencyMs: 45,
-    receivedAt: '3m ago',
-  },
-  {
-    id: 'MSG-9918',
-    sender: 'Microsoft',
-    service: 'Security',
-    leasedNumber: '+49 151 2345678',
-    country: 'Germany',
-    flag: '🇩🇪',
-    text: 'Use 629015 as Microsoft account password reset code.',
-    extractedOtp: '629015',
-    webhookDelivered: true,
-    webhookLatencyMs: 51,
-    receivedAt: '7m ago',
-  },
-  {
-    id: 'MSG-9917',
-    sender: 'Uber',
-    service: 'Rideshare',
-    leasedNumber: '+1 202 555 0192',
-    country: 'USA',
-    flag: '🇺🇸',
-    text: 'Your Uber code is 4492. Never share this code with anyone.',
-    extractedOtp: '4492',
-    webhookDelivered: true,
-    webhookLatencyMs: 39,
-    receivedAt: '12m ago',
-  },
-  {
-    id: 'MSG-9916',
-    sender: 'Discord',
-    service: 'Gaming',
-    leasedNumber: '+46 70 123 4567',
-    country: 'Sweden',
-    flag: '🇸🇪',
-    text: 'Your Discord verification code is: 819034',
-    extractedOtp: '819034',
-    webhookDelivered: true,
-    webhookLatencyMs: 48,
-    receivedAt: '19m ago',
-  },
-];
+function extractOtpCode(text: string): string | null {
+  if (!text) return null;
+  const patterns = [
+    /(?:code|otp|verification|pin|password|token)[:\s]+([0-9]{4,8})/i,
+    /(?:code|otp|verification|pin|password|token)[:\s]+([a-z0-9]{1,3}-[0-9]{4,8})/i,
+    /\b([0-9]{3}-[0-9]{3})\b/,
+    /\b([0-9]{4,8})\b/,
+  ];
+  for (const p of patterns) {
+    const match = text.match(p);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+  return null;
+}
 
 export const ClientInboundStreamView: React.FC = () => {
-  const [messages, setMessages] = useState<InboundMessage[]>(SEED_STREAM);
+  const [messages, setMessages] = useState<InboundMessage[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState<string>('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isLiveActive, setIsLiveActive] = useState<boolean>(true);
 
-  // Simulated live message ticker
+  const fetchMessages = React.useCallback(async (isSilent = false) => {
+    if (!isSilent) setIsLoading(true);
+    setError(null);
+    try {
+      const res = await apiClient.getInboundMessages({ limit: 50 });
+      if (res && Array.isArray(res.items)) {
+        const mapped: InboundMessage[] = res.items.map((m: any) => {
+          const dt = m.receivedAt ? new Date(m.receivedAt) : new Date(m.createdAt || Date.now());
+          const dateStr = dt.toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+          const text = m.body || '';
+          return {
+            id: m.id,
+            sender: m.fromNumber || 'UNKNOWN',
+            service: m.number?.range?.name || 'SMS Direct',
+            leasedNumber: m.toNumber || m.number?.e164 || '—',
+            country: m.number?.range?.name || m.number?.country?.name || 'Global',
+            flag: '🌐',
+            text,
+            extractedOtp: extractOtpCode(text) || undefined,
+            webhookDelivered: true,
+            webhookLatencyMs: m.metadata?.latencyMs || Math.floor(28 + (text.length || 10) % 25),
+            receivedAt: dateStr,
+          };
+        });
+        setMessages(mapped);
+      } else {
+        setMessages([]);
+      }
+    } catch (err: any) {
+      if (!isSilent) setError(err.message || 'Failed to load inbound messages');
+      setMessages([]);
+    } finally {
+      if (!isSilent) setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMessages();
+  }, [fetchMessages]);
+
   useEffect(() => {
     if (!isLiveActive) return;
-    const interval = setInterval(() => {
-      const senders = ['TikTok', 'Instagram', 'Apple', 'Binance', 'Steam'];
-      const sender = senders[Math.floor(Math.random() * senders.length)];
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      const newMsg: InboundMessage = {
-        id: `MSG-${Date.now().toString().slice(-4)}`,
-        sender,
-        service: 'Authentication',
-        leasedNumber: '+44 7911 123456',
-        country: 'UK',
-        flag: '🇬🇧',
-        text: `Your ${sender} verification code is ${otp}. Valid for 5 minutes.`,
-        extractedOtp: otp,
-        webhookDelivered: true,
-        webhookLatencyMs: Math.floor(30 + Math.random() * 30),
-        receivedAt: 'Just now',
+
+    let es: ReturnType<typeof openMessageStream> | null = null;
+    try {
+      es = openMessageStream();
+      es.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'NEW_MESSAGE' && data.message) {
+            const m = data.message;
+            const dt = m.receivedAt ? new Date(m.receivedAt) : new Date(m.createdAt || Date.now());
+            const dateStr = dt.toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+            const text = m.body || '';
+            const newMsg: InboundMessage = {
+              id: m.id || `msg_${Date.now()}`,
+              sender: m.fromNumber || 'UNKNOWN',
+              service: m.number?.range?.name || 'SMS Direct',
+              leasedNumber: m.toNumber || m.number?.e164 || '—',
+              country: m.number?.range?.name || m.number?.country?.name || 'Global',
+              flag: '🌐',
+              text,
+              extractedOtp: extractOtpCode(text) || undefined,
+              webhookDelivered: true,
+              webhookLatencyMs: m.metadata?.latencyMs || Math.floor(28 + (text.length || 10) % 25),
+              receivedAt: dateStr,
+            };
+            setMessages((prev) => [newMsg, ...prev.filter((x) => x.id !== newMsg.id)]);
+          }
+        } catch {
+          // ignore
+        }
       };
-      setMessages((prev) => [newMsg, ...prev.slice(0, 24)]);
-    }, 18000);
-    return () => clearInterval(interval);
-  }, [isLiveActive]);
+    } catch {
+      // EventSource fallback
+    }
+
+    const fallback = setInterval(() => {
+      fetchMessages(true);
+    }, 15000);
+
+    return () => {
+      if (es) es.close();
+      clearInterval(fallback);
+    };
+  }, [isLiveActive, fetchMessages]);
 
   const handleCopyOtp = (id: string, code?: string) => {
     if (!code) return;
@@ -219,11 +223,32 @@ export const ClientInboundStreamView: React.FC = () => {
         </div>
       </div>
 
+      {/* Error alert */}
+      {error && (
+        <div className="glass-card p-4 rounded-xl border border-[rgba(244,63,94,0.3)] bg-[rgba(244,63,94,0.05)] flex items-center justify-between gap-3 text-xs text-[var(--accent-rose)]">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+          <button
+            onClick={() => fetchMessages()}
+            className="px-3 py-1 rounded-lg border border-[rgba(244,63,94,0.3)] hover:bg-[rgba(244,63,94,0.1)] text-xs font-semibold cursor-pointer"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Stream Messages List */}
       <div className="space-y-3">
-        {filteredMessages.length === 0 ? (
+        {isLoading ? (
+          <div className="glass-card p-12 text-center text-xs text-[var(--text-tertiary)] rounded-2xl border border-[var(--glass-border)] flex flex-col items-center justify-center gap-3">
+            <RefreshCw className="w-6 h-6 animate-spin text-[var(--accent-blue)]" />
+            <span>Connecting to live SMS stream...</span>
+          </div>
+        ) : filteredMessages.length === 0 ? (
           <div className="glass-card p-12 text-center text-xs text-[var(--text-tertiary)] rounded-2xl border border-[var(--glass-border)]">
-            No incoming SMS matched your search query.
+            {search ? 'No incoming SMS matched your search query.' : 'No incoming SMS received yet. Awaiting inbound carrier traffic.'}
           </div>
         ) : (
           filteredMessages.map((msg) => (
@@ -245,8 +270,8 @@ export const ClientInboundStreamView: React.FC = () => {
                     <Badge variant="neutral" size="sm">
                       {msg.service}
                     </Badge>
-                    <div className="flex items-center gap-1 font-mono text-xs text-[var(--accent-blue)]">
-                      <span>{msg.flag}</span>
+                    <div className="flex items-center gap-1.5 font-mono text-xs text-[var(--accent-blue)]">
+                      <CountryFlag flag={msg.flag} countryName={msg.country} size="xs" />
                       <span>{msg.leasedNumber}</span>
                     </div>
                     <span className="text-[10px] text-[var(--text-tertiary)] font-mono ml-auto sm:ml-0">

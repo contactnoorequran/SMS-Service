@@ -1,6 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { Bell, ChevronRight, Filter, Inbox, Send, ChevronDown, ChevronUp } from 'lucide-react';
+import { Bell, ChevronRight, Filter, Inbox, Send, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { DataTableToolbar, ColumnVisibility } from '../ui/DataTableToolbar';
+
+import { apiClient } from '../../services/api';
+import { AppNotification } from '../../types/dashboard';
 
 /* ─── Types ─── */
 type Tab = 'inbox' | 'sent';
@@ -13,19 +16,6 @@ interface Notification {
   read: boolean;
   type: 'info' | 'warning' | 'success';
 }
-
-/* ─── Mock data ─── */
-const MOCK_INBOX: Notification[] = [
-  { id: 'N001', date: '2026-09-24 07:30:00 UTC', title: 'Range approved', message: 'Your request for range +44 7911 UK Premium has been approved. You can now find it in SMS Ranges.', read: false, type: 'success' },
-  { id: 'N002', date: '2026-09-23 15:22:00 UTC', title: 'Balance low alert', message: 'Your available balance has dropped below $100. Please submit a payment request to continue operations.', read: false, type: 'warning' },
-  { id: 'N003', date: '2026-09-22 09:11:00 UTC', title: 'Monthly statement ready', message: 'Your September 2026 statement is now available in CDR & Statistics.', read: true, type: 'info' },
-  { id: 'N004', date: '2026-09-20 18:00:00 UTC', title: 'New client assigned', message: 'Client "DataStream Inc" has been assigned to your portfolio by your manager.', read: true, type: 'info' },
-];
-
-const MOCK_SENT: Notification[] = [
-  { id: 'S001', date: '2026-09-23 12:00:00 UTC', title: 'Support request: +49 151', message: 'Hi support team, I would like to request access to the +49 151 Germany Mobile range for a new client.', read: true, type: 'info' },
-  { id: 'S002', date: '2026-09-21 10:30:00 UTC', title: 'Payment request #PR-2024', message: 'Payment request for $500 submitted to management for approval.', read: true, type: 'info' },
-];
 
 const INIT_COLS: ColumnVisibility[] = [
   { key: 'date', label: 'Date', visible: true },
@@ -70,8 +60,11 @@ const FilterModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 /* ─── Main Component ─── */
 export const AgentNotificationsView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('inbox');
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [readIds, setReadIds] = useState<Set<string>>(new Set(MOCK_INBOX.filter((n) => n.read).map((n) => n.id)));
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [showFilter, setShowFilter] = useState(false);
 
   const [search, setSearch] = useState('');
@@ -79,7 +72,38 @@ export const AgentNotificationsView: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [colDefs, setColDefs] = useState<ColumnVisibility[]>(INIT_COLS);
 
-  const rawData = activeTab === 'inbox' ? MOCK_INBOX : MOCK_SENT;
+  const fetchNotifications = React.useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await apiClient.getNotifications();
+      if (res && Array.isArray(res.items)) {
+        const mapped: Notification[] = res.items.map((n: AppNotification) => ({
+          id: n.id,
+          date: new Date(n.createdAt).toISOString().replace('T', ' ').slice(0, 16),
+          title: n.title,
+          message: n.message,
+          read: n.isRead,
+          type: n.type === 'SUCCESS' ? 'success' : n.type === 'WARNING' ? 'warning' : 'info',
+        }));
+        setNotifications(mapped);
+        setReadIds(new Set(mapped.filter((x) => x.read).map((x) => x.id)));
+      } else {
+        setNotifications([]);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to load notifications');
+      setNotifications([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  const rawData = activeTab === 'inbox' ? notifications : [];
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -88,12 +112,28 @@ export const AgentNotificationsView: React.FC = () => {
 
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  const handleRowClick = (n: Notification) => {
+  const handleRowClick = async (n: Notification) => {
     setExpandedId((prev) => (prev === n.id ? null : n.id));
-    setReadIds((prev) => new Set(prev).add(n.id));
+    if (!readIds.has(n.id)) {
+      setReadIds((prev) => new Set(prev).add(n.id));
+      try {
+        await apiClient.markNotificationRead(n.id);
+      } catch {
+        // ignore
+      }
+    }
   };
 
-  const unreadCount = MOCK_INBOX.filter((n) => !readIds.has(n.id)).length;
+  const handleMarkAllRead = async () => {
+    try {
+      await apiClient.markAllNotificationsRead();
+      setReadIds(new Set(notifications.map((n) => n.id)));
+    } catch {
+      // ignore
+    }
+  };
+
+  const unreadCount = notifications.filter((n) => !readIds.has(n.id)).length;
 
   const handleColChange = (key: string, v: boolean) =>
     setColDefs((prev) => prev.map((c) => (c.key === key ? { ...c, visible: v } : c)));
@@ -167,6 +207,15 @@ export const AgentNotificationsView: React.FC = () => {
         >
           <Filter className="w-3.5 h-3.5" /> Filter
         </button>
+
+        {unreadCount > 0 && activeTab === 'inbox' && (
+          <button
+            onClick={handleMarkAllRead}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[rgba(16,185,129,0.3)] bg-[var(--accent-emerald-dim)] text-[var(--accent-emerald)] hover:opacity-90 cursor-pointer transition-all ml-auto"
+          >
+            Mark all read
+          </button>
+        )}
       </div>
 
       {/* Table */}
@@ -197,8 +246,23 @@ export const AgentNotificationsView: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {paginated.length === 0 ? (
-                <tr><td colSpan={3} className="px-6 py-10 text-center text-[11px] text-[var(--text-tertiary)]">No notifications found.</td></tr>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={3} className="px-6 py-12 text-center text-xs text-[var(--text-tertiary)]">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <RefreshCw className="w-5 h-5 animate-spin text-[var(--accent-amber)]" />
+                      <span>Loading notifications...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={3} className="px-6 py-10 text-center text-xs text-[var(--accent-rose)]">
+                    {error}
+                  </td>
+                </tr>
+              ) : paginated.length === 0 ? (
+                <tr><td colSpan={3} className="px-6 py-10 text-center text-[11px] text-[var(--text-tertiary)]">{activeTab === 'inbox' ? 'No notifications in your inbox.' : 'No sent notifications.'}</td></tr>
               ) : (
                 paginated.map((n) => {
                   const isRead = readIds.has(n.id);

@@ -1,3 +1,4 @@
+import { productionDatabase } from '../services/production-store';
 import { PrismaClient } from '@prisma/client';
 import dns from 'dns';
 import { env } from '../config/env';
@@ -47,6 +48,7 @@ export function recordDbSuccess() {
 }
 
 export function getPrismaClient(): PrismaClient | null {
+  if (env.NODE_ENV === 'production') return productionDatabase();
   if (!env.DATABASE_URL || isDbCircuitOpen()) {
     return null;
   }

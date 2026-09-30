@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import { MessagingController } from '../controllers/messaging.controller';
-import { authenticate, requirePermission } from '../middlewares/auth.middleware';
-
+import { CarrierController } from '../controllers/carrier.controller';
+import { authenticate, requirePermission, requireRole } from '../middlewares/auth.middleware';
 export const messagingRouter = Router();
-
-// Inbound webhook ingestion can be called with valid API authentication or bearer token
-messagingRouter.post('/inbound', MessagingController.ingest);
-
-// Protected browsing endpoints
+messagingRouter.post('/callbacks/:connectionId', CarrierController.callback);
+messagingRouter.post('/webhooks/twilio/:providerId', CarrierController.callback);
+messagingRouter.post('/webhooks/telnyx/:providerId', CarrierController.callback);
+messagingRouter.post('/webhooks/sinch/:providerId', CarrierController.callback);
 messagingRouter.use(authenticate);
+messagingRouter.get('/stream', requirePermission('sms.view'), MessagingController.stream);
+messagingRouter.post('/inbound', requireRole('SUPER_ADMIN'), MessagingController.ingest);
 messagingRouter.get('/', requirePermission('sms.view'), MessagingController.list);
 messagingRouter.get('/:id', requirePermission('sms.view'), MessagingController.getById);

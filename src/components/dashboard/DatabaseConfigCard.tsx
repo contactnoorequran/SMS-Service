@@ -12,8 +12,8 @@ export const DatabaseConfigCard: React.FC = () => {
     setTimeout(() => setCopiedSection(null), 2000);
   };
 
-  const dockerCommand = `docker run --name sms-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=sms_platform -p 5432:5432 -d postgres:16-alpine`;
-  const envConfig = `DATABASE_URL="postgresql://postgres:postgres@localhost:5432/sms_platform?schema=public"`;
+  const dockerCommand = `docker run --name sms-postgres -e POSTGRES_PASSWORD=•••••••• -e POSTGRES_DB=sms_platform -p 5432:5432 -d postgres:16-alpine`;
+  const envConfig = `DATABASE_URL="postgresql://postgres:••••••••@localhost:5432/sms_platform?schema=public"`;
   const prismaCommands = `# 1. Generate Prisma Client
 npx prisma generate
 

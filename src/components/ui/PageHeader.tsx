@@ -53,12 +53,12 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5 min-w-0 flex-1">
             <div className="flex items-center gap-2.5 flex-wrap min-w-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] tracking-tight truncate">
+              <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] tracking-tight truncate font-page-title">
                 {title}
               </h1>
               {badge && <div className="shrink-0">{badge}</div>}
             </div>
-            <p className="text-xs text-[var(--text-secondary)] max-w-2xl leading-relaxed">
+            <p className="text-xs text-[var(--text-secondary)] max-w-2xl leading-relaxed font-body">
               {description}
             </p>
           </div>

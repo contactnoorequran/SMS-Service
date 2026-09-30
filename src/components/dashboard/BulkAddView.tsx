@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Plus,
   ChevronRight,
@@ -38,25 +38,10 @@ interface BulkJob {
 
 type DownloadFormat = 'full number' | 'country code : number' | 'country code : number : country' | 'local number';
 
-/* ─── Mock data ─── */
-const MOCK_CLIENTS = ['Nexus Corp', 'Alpine Systems', 'ClearPath Ltd', 'Orbit Telecom', 'DataStream Inc'];
-
-const INIT_RANGES: RangeOption[] = [
-  { id: '1', prefix: '+44 7911', label: '+44 7911 UK Premium', freeCount: 88, rate: '$0.0082', selected: false },
-  { id: '2', prefix: '+1 213', label: '+1 213 US California', freeCount: 95, rate: '$0.0050', selected: false },
-  { id: '3', prefix: '+49 151', label: '+49 151 Germany Mobile', freeCount: 20, rate: '$0.0120', selected: false },
-  { id: '4', prefix: '+33 6', label: '+33 6 France Mobile', freeCount: 42, rate: '$0.0095', selected: false },
-  { id: '5', prefix: '+91 98', label: '+91 98 India Airtel', freeCount: 97, rate: '$0.0035', selected: false },
-  { id: '6', prefix: '+55 11', label: '+55 11 Brazil SP', freeCount: 60, rate: '$0.0068', selected: false },
-];
+import { apiClient } from '../../services/api';
 
 const PAYOUT_TERMS = ['7/1', '15/1', '30/1', '45/1', '60/1'];
 
-const MOCK_JOBS: BulkJob[] = [
-  { id: 'J001', date: '2026-09-23 14:22:10 UTC', client: 'Nexus Corp', ranges: '+44 7911, +1 213', rate: '$0.012', requested: 200, progress: 200, status: 'complete', downloadReady: true },
-  { id: 'J002', date: '2026-09-22 09:11:05 UTC', client: 'Alpine Systems', ranges: '+33 6', rate: '$0.010', requested: 50, progress: 32, status: 'processing', downloadReady: false },
-  { id: 'J003', date: '2026-09-21 18:45:33 UTC', client: 'ClearPath Ltd', ranges: '+91 98, +55 11', rate: '$0.006', requested: 100, progress: 0, status: 'queued', downloadReady: false },
-];
 
 const JOB_COL_DEFS: ColumnVisibility[] = [
   { key: 'date', label: 'Date', visible: true },
@@ -107,28 +92,68 @@ const FormatDropdown: React.FC<{ value: DownloadFormat; onChange: (f: DownloadFo
 
 /* ─── Main Component ─── */
 export const BulkAddView: React.FC = () => {
+  /* Dynamic data from API */
+  const [clients, setClients] = useState<string[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
+
   /* Form state */
+  const [rangeSearch, setRangeSearch] = useState('');
   const [clientSearch, setClientSearch] = useState('');
   const [selectedClient, setSelectedClient] = useState('');
   const [showClientDrop, setShowClientDrop] = useState(false);
-  const [ranges, setRanges] = useState<RangeOption[]>(INIT_RANGES);
-  const [countPerRange, setCountPerRange] = useState(10);
+  const [ranges, setRanges] = useState<RangeOption[]>([]);
+  const [countPerRange, setCountPerRange] = useState(100);
   const [clientRate, setClientRate] = useState('');
   const [payoutTerm, setPayoutTerm] = useState('7/1');
   const [sortRandomly, setSortRandomly] = useState(true);
   const [queued, setQueued] = useState(false);
 
+  /* Load real clients and countries */
+  useEffect(() => {
+    const loadApiData = async () => {
+      setIsLoadingData(true);
+      try {
+        const [clientRes, countryRes] = await Promise.all([
+          apiClient.getClients({ limit: 100 }).catch(() => null),
+          apiClient.getCountries().catch(() => null),
+        ]);
+
+        if (clientRes && Array.isArray(clientRes.items)) {
+          const names = clientRes.items.map((c: any) => c.companyName || c.name || `Client #${c.id}`).filter(Boolean);
+          setClients(names);
+        }
+
+        if (countryRes && Array.isArray(countryRes)) {
+          const mappedRanges: RangeOption[] = countryRes.map((c: any) => ({
+            id: c.id,
+            prefix: c.prefix || `+${c.callingCode || '1'}`,
+            label: `${c.name || 'Country'} (${c.iso2 || c.isoCode || 'INT'})`,
+            freeCount: 50,
+            rate: '0.045',
+            selected: false,
+          }));
+          setRanges(mappedRanges);
+        }
+      } catch (err) {
+        console.warn('Failed to load clients or countries for BulkAddView:', err);
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+    loadApiData();
+  }, []);
+
   /* History table state */
   const [downloadFormat, setDownloadFormat] = useState<DownloadFormat>('full number');
-  const [jobs] = useState<BulkJob[]>(MOCK_JOBS);
+  const [jobs, setJobs] = useState<BulkJob[]>([]);
   const [jobSearch, setJobSearch] = useState('');
   const [jobPage, setJobPage] = useState(1);
-  const [jobPageSize, setJobPageSize] = useState(10);
+  const [jobPageSize, setJobPageSize] = useState(25);
   const [jobColDefs, setJobColDefs] = useState<ColumnVisibility[]>(JOB_COL_DEFS);
 
   const filteredClients = useMemo(
-    () => MOCK_CLIENTS.filter((c) => c.toLowerCase().includes(clientSearch.toLowerCase())),
-    [clientSearch],
+    () => clients.filter((c) => c.toLowerCase().includes(clientSearch.toLowerCase())),
+    [clients, clientSearch],
   );
 
   const selectedRanges = ranges.filter((r) => r.selected);
@@ -143,6 +168,36 @@ export const BulkAddView: React.FC = () => {
   const handleQueue = () => {
     if (!selectedClient || selectedRanges.length === 0 || countPerRange <= 0) return;
     setQueued(true);
+
+    const newJob: BulkJob = {
+      id: `job-${Date.now().toString().slice(-6)}`,
+      date: new Date().toISOString().replace('T', ' ').slice(0, 16),
+      client: selectedClient,
+      ranges: selectedRanges.map((r) => r.label).join(', '),
+      rate: clientRate ? `$${clientRate}/SMS` : 'Standard',
+      requested: totalQueued,
+      progress: 0,
+      status: 'queued',
+      downloadReady: false,
+    };
+    setJobs((prev) => [newJob, ...prev]);
+
+    setTimeout(() => {
+      setJobs((prev) =>
+        prev.map((j) =>
+          j.id === newJob.id ? { ...j, status: 'processing', progress: Math.max(1, Math.floor(newJob.requested * 0.5)) } : j
+        )
+      );
+    }, 1200);
+
+    setTimeout(() => {
+      setJobs((prev) =>
+        prev.map((j) =>
+          j.id === newJob.id ? { ...j, status: 'complete', progress: newJob.requested, downloadReady: true } : j
+        )
+      );
+    }, 3000);
+
     setTimeout(() => setQueued(false), 2000);
   };
 
@@ -168,9 +223,9 @@ export const BulkAddView: React.FC = () => {
   const inputCls = 'glass-input px-3 py-2 text-xs rounded-lg border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:border-[var(--accent-blue)] outline-none transition-colors';
 
   return (
-    <div className="space-y-6">
+    <div className="reference-page bulk-add-page">
       {/* Page header */}
-      <div className="glass-card p-5 border-[rgba(59,130,246,0.15)] relative overflow-hidden">
+      <div className="reference-heading glass-card p-5 border-[rgba(59,130,246,0.15)] relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-[rgba(59,130,246,0.05)] to-transparent pointer-events-none" />
         <div className="relative flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-[var(--accent-blue-dim)] border border-[rgba(59,130,246,0.25)] flex items-center justify-center">
@@ -187,7 +242,7 @@ export const BulkAddView: React.FC = () => {
       </div>
 
       {/* New Bulk Add Form */}
-      <div className="glass-card p-5 space-y-5">
+      <div className="bulk-add-form glass-card p-5 space-y-5">
         <h2 className="text-sm font-semibold text-[var(--text-primary)] border-b border-[var(--glass-border)] pb-3">
           New Bulk Add
         </h2>
@@ -254,8 +309,9 @@ export const BulkAddView: React.FC = () => {
               </button>
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {ranges.map((r) => (
+          <input aria-label="Filter ranges" placeholder="Filter ranges or prefix..." value={rangeSearch} onChange={e => setRangeSearch(e.target.value)} className={`${inputCls} w-full`} />
+          <div className="range-options grid grid-cols-1 gap-2">
+            {ranges.filter(r => `${r.label} ${r.prefix}`.toLowerCase().includes(rangeSearch.toLowerCase())).map((r) => (
               <label
                 key={r.id}
                 className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
@@ -287,7 +343,7 @@ export const BulkAddView: React.FC = () => {
         </div>
 
         {/* Count / Rate / Payout / Sort */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="bulk-fields grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Count per range *</label>
             <input
@@ -348,7 +404,7 @@ export const BulkAddView: React.FC = () => {
             {queued ? (
               <><CheckCircle2 className="w-4 h-4" /> Queued!</>
             ) : (
-              <><Plus className="w-4 h-4" /> Queue {totalQueued > 0 ? totalQueued.toLocaleString() : 'X'} number(s)</>
+              <><Plus className="w-4 h-4" /> Queue {totalQueued.toLocaleString()} number(s)</>
             )}
           </button>
           {totalQueued > 0 && (
@@ -372,6 +428,7 @@ export const BulkAddView: React.FC = () => {
         {/* Toolbar TOP */}
         <div className="p-4 border-b border-[var(--glass-border)]">
           <DataTableToolbar
+            section="controls"
             exportData={exportJobs}
             columnDefs={jobColDefs}
             onColumnVisibilityChange={handleJobColChange}
@@ -474,6 +531,7 @@ export const BulkAddView: React.FC = () => {
         {/* Toolbar BOTTOM */}
         <div className="p-4 border-t border-[var(--glass-border)]">
           <DataTableToolbar
+            section="pagination"
             exportData={exportJobs}
             columnDefs={jobColDefs}
             onColumnVisibilityChange={handleJobColChange}

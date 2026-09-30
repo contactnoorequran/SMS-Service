@@ -1,3 +1,4 @@
+import { registerProfiles, persistProfileService } from './production-store';
 import crypto from 'crypto';
 import { env } from '../config/env';
 import {
@@ -36,6 +37,7 @@ interface StoredClientRecord {
   firstName: string;
   lastName: string;
   email: string;
+  teams?: string;
   companyName: string;
   contact: string;
   billingType: BillingType;
@@ -67,6 +69,7 @@ export class ClientService {
    * Initializes seed clients matching platform managers, agents, and number inventory.
    */
   static async initializeSeedClients(): Promise<void> {
+    if (process.env.NODE_ENV === 'production') return;
     if (isInitialized) return;
     if (initPromise) return initPromise;
 
@@ -868,6 +871,7 @@ export class ClientService {
       lastName: c.lastName,
       name: `${c.firstName} ${c.lastName}`.trim(),
       email: c.email,
+      teams: c.teams || '',
       companyName: c.companyName,
       contact: c.contact,
       billingType: c.billingType,
@@ -1218,6 +1222,7 @@ export class ClientService {
       firstName: data.firstName.trim(),
       lastName: data.lastName.trim(),
       email: normalizedEmail,
+      teams: data.teams?.trim() || '',
       companyName: data.companyName.trim(),
       contact: data.contact.trim(),
       billingType: data.billingType || 'PREPAID',
@@ -1319,10 +1324,11 @@ export class ClientService {
       client.agentId = data.agentId || null;
     }
 
-    if (data.firstName) client.firstName = data.firstName.trim();
-    if (data.lastName) client.lastName = data.lastName.trim();
+    if (data.firstName !== undefined) client.firstName = data.firstName.trim();
+    if (data.lastName !== undefined) client.lastName = data.lastName.trim();
     if (data.companyName) client.companyName = data.companyName.trim();
-    if (data.contact) client.contact = data.contact.trim();
+    if (data.contact !== undefined) client.contact = data.contact.trim();
+    if (data.teams !== undefined) client.teams = data.teams.trim();
     if (data.billingType) client.billingType = data.billingType;
     if (data.status) client.status = data.status;
 
@@ -1649,3 +1655,6 @@ export class ClientService {
     };
   }
 }
+
+registerProfiles('clients', clientRegistry);
+persistProfileService(ClientService);

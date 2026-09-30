@@ -22,6 +22,7 @@ export interface ColumnVisibility {
 }
 
 export interface DataTableToolbarProps {
+  section?: 'all' | 'controls' | 'pagination';
   /** Raw data rows (for export) */
   exportData: Record<string, unknown>[];
   /** Column definitions for export header + show/hide */
@@ -85,7 +86,7 @@ const ExportBtn: React.FC<{
     className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium border transition-all cursor-pointer ${
       success
         ? 'bg-[var(--accent-emerald-dim)] border-[rgba(16,185,129,0.3)] text-[var(--accent-emerald)]'
-        : 'bg-[var(--glass-bg)] border-[var(--glass-border)] text-[var(--text-secondary)] hover:bg-[var(--glass-bg-hover)] hover:text-[var(--text-primary)] hover:border-[var(--glass-border-hover)]'
+        : 'bg-[var(--brand-primary)] border-[var(--brand-primary)] text-white hover:opacity-80'
     }`}
   >
     {success ? <Check className="w-3 h-3" /> : icon}
@@ -95,6 +96,7 @@ const ExportBtn: React.FC<{
 
 /* ─── Main Component ─── */
 export const DataTableToolbar: React.FC<DataTableToolbarProps> = ({
+  section = 'all',
   exportData,
   columnDefs,
   onColumnVisibilityChange,
@@ -167,7 +169,7 @@ export const DataTableToolbar: React.FC<DataTableToolbarProps> = ({
     'min-w-[28px] h-7 px-1.5 rounded-md font-mono text-[11px] font-medium transition-all border cursor-pointer';
 
   return (
-    <div id={id} className={`space-y-2.5 ${className}`}>
+    <div id={id} className={`data-toolbar toolbar-${section} space-y-2.5 ${className}`}>
       {/* ── TOP ROW: Records selector + Export buttons + Search ── */}
       <div className="flex flex-wrap items-center gap-2">
         {/* Records per page */}

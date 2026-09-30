@@ -91,3 +91,7 @@ if (!parsedEnv.success) {
 }
 
 export const env = parsedEnv.success ? parsedEnv.data : envSchema.parse({});
+
+if (process.env.NODE_ENV === 'production' && (!parsedEnv.success || !process.env.DATABASE_URL || !process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32 || process.env.JWT_SECRET.startsWith('default-') || Buffer.from(process.env.CARRIER_ENCRYPTION_KEY || '', 'base64').length !== 32)) {
+  throw new Error('Production requires valid database, JWT secret and carrier encryption key');
+}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
 import { Badge } from './Badge';
+import { AppIcon, AppIconName } from './AppIcon';
 
 export interface CardProps {
   children: React.ReactNode;
@@ -111,6 +112,7 @@ export interface StatCardProps {
     label?: string;
   };
   icon?: React.ReactNode | React.ComponentType<{ className?: string }>;
+  iconName?: AppIconName;
   iconBgColor?: string;
   badge?: React.ReactNode;
   badgeText?: string;
@@ -127,7 +129,8 @@ export const StatCard: React.FC<StatCardProps> = ({
   subtext,
   change,
   icon,
-  iconBgColor = 'bg-[var(--accent-blue-dim)] text-[var(--accent-blue)]',
+  iconName,
+  iconBgColor = 'bg-[var(--brand-primary-soft)] text-[var(--brand-primary)] border border-[var(--brand-border)]',
   badge,
   badgeText,
   badgeVariant,
@@ -143,6 +146,9 @@ export const StatCard: React.FC<StatCardProps> = ({
   };
 
   const renderStatIcon = () => {
+    if (iconName) {
+      return <AppIcon name={iconName} size={20} className="text-current" />;
+    }
     if (!icon) return null;
     if (React.isValidElement(icon)) return icon;
     if (typeof icon === 'function' || (typeof icon === 'object' && icon !== null && ('render' in icon || '$$typeof' in icon))) {
@@ -167,7 +173,7 @@ export const StatCard: React.FC<StatCardProps> = ({
       onKeyDown={handleKeyDown}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
-      className={`glass-card p-5 h-full flex flex-col justify-between transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-blue)] ${
+      className={`glass-card p-5 h-full flex flex-col justify-between transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] ${
         onClick
           ? 'cursor-pointer hover:-translate-y-0.5 hover:border-[var(--glass-border-hover)] hover:shadow-lg'
           : ''
@@ -185,7 +191,7 @@ export const StatCard: React.FC<StatCardProps> = ({
             </div>
           </div>
           {renderedIcon && (
-            <div className={`p-2.5 rounded-xl shrink-0 ${iconBgColor}`}>
+            <div className={`icon-box-kpi ${iconBgColor}`}>
               {renderedIcon}
             </div>
           )}

@@ -49,7 +49,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
       <div className="flex flex-1 flex-wrap items-center gap-2.5 min-w-[240px]">
         {/* Search Field */}
         <div className="relative flex-1 min-w-[180px] max-w-sm">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]" />
+          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--brand-primary)]" />
           <input
             type="text"
             value={searchValue}
@@ -111,7 +111,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           <div className="text-[11px] text-[var(--text-tertiary)] font-mono">
             {totalFiltered !== undefined && totalFiltered !== totalCount ? (
               <span>
-                <strong className="text-[var(--accent-blue)]">{totalFiltered}</strong> of {totalCount}
+                <strong className="text-[var(--brand-primary)]">{totalFiltered}</strong> of {totalCount}
               </span>
             ) : (
               <span>{totalCount} total</span>

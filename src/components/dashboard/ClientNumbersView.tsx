@@ -21,6 +21,7 @@ import {
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
+import { CountryFlag } from '../ui/CountryFlag';
 
 interface LeasedNumber {
   id: string;
@@ -198,7 +199,7 @@ export const ClientNumbersView: React.FC = () => {
                 Active Leased Portfolio
               </Badge>
               <span className="text-xs text-[var(--text-tertiary)] font-mono">
-                SMS Service Number Management
+                WORLD SMS SERVICE Number Management
               </span>
             </div>
             <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">
@@ -279,6 +280,7 @@ export const ClientNumbersView: React.FC = () => {
                         onClick={() => handleCopy(n.id, n.number)}
                         className="p-1 rounded-md text-[var(--text-tertiary)] hover:text-[var(--accent-blue)] hover:bg-[var(--glass-bg)] transition-colors cursor-pointer"
                         title="Copy number"
+                        aria-label={`Copy phone number ${n.number}`}
                       >
                         {copiedId === n.id ? (
                           <Check className="w-3.5 h-3.5 text-[var(--accent-emerald)]" />
@@ -291,7 +293,7 @@ export const ClientNumbersView: React.FC = () => {
 
                   <td className="p-3.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-base">{n.flag}</span>
+                      <CountryFlag flag={n.flag} countryName={n.country} size="sm" className="text-base" />
                       <div>
                         <div className="font-semibold text-[var(--text-primary)]">{n.country}</div>
                         <div className="text-[10px] text-[var(--text-tertiary)] font-mono">{n.prefix}</div>

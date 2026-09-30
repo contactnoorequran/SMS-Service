@@ -585,7 +585,7 @@ export const ManagerManagementView: React.FC = () => {
         <EmptyState
           title="No managers found"
           message="No manager profiles match your active search and status filter criteria."
-          icon={Users}
+          iconName="user-cog"
           actionLabel="Reset Filters"
           onAction={resetFilters}
         />

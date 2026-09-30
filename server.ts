@@ -1,3 +1,6 @@
+import { loadProductionProfiles } from './server/services/production-store';
+import { startCarrierRuntime, stopCarrierRuntime } from './server/services/carrier-runtime';
+import { captureRawBody } from './server/controllers/carrier.controller';
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
@@ -9,14 +12,18 @@ import { disconnectDb } from './server/db/prisma';
 import { env } from './server/config/env';
 import { UserRepository } from './server/services/user.repository';
 import { ClientService } from './server/services/client.service';
+import { smppManager } from './server/services/smpp.service';
 
 async function startServer() {
+  await loadProductionProfiles();
   const app = express();
-  const PORT = 3000;
+  app.disable('x-powered-by');
+  if (env.NODE_ENV === 'production') app.set('trust proxy', 'loopback');
+  const PORT = env.PORT;
 
   // Middleware pipeline for API requests
-  app.use(express.json({ limit: '2mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+  app.use(express.json({ limit: '2mb', verify: captureRawBody }));
+  app.use(express.urlencoded({ extended: true, limit: '2mb', verify: captureRawBody }));
   app.use(requestLogger);
 
   // Mount API routes BEFORE Vite middleware
@@ -42,7 +49,8 @@ async function startServer() {
     logger.info('Production static file serving configured');
   }
 
-  const server = app.listen(PORT, '0.0.0.0', () => {
+  startCarrierRuntime();
+  const server = app.listen(PORT, process.env.BIND_HOST || (env.NODE_ENV === 'production' ? '127.0.0.1' : '0.0.0.0'), () => {
     logger.info(`🚀 SMS Service server listening on port ${PORT} [${env.NODE_ENV}]`);
     logger.info(`👉 API Health Endpoint: http://localhost:${PORT}/api/health`);
   });
@@ -50,7 +58,13 @@ async function startServer() {
   // Graceful shutdown handling
   const shutdown = async (signal: string) => {
     logger.info(`Received ${signal}. Gracefully shutting down...`);
+    stopCarrierRuntime();
     server.close(async () => {
+      try {
+        smppManager.shutdown();
+      } catch (e) {
+        logger.error('Error shutting down SMPP sessions:', e);
+      }
       await disconnectDb();
       logger.info('HTTP server and database connections closed. Exiting process.');
       process.exit(0);

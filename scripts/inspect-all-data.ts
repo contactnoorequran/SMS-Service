@@ -86,14 +86,17 @@ async function main() {
   console.log(agents.map((a) => ({ id: a.id, name: a.user?.name })));
   console.log('\n--- CLIENTS ---');
   console.log(clients.map((c) => ({ id: c.id, name: c.name })));
-  console.log('\n--- WALLETS ---');
-  console.log(
-    wallets.map((w) => ({
-      id: w.id,
-      type: w.isPlatform ? 'PLATFORM' : w.clientId ? 'CLIENT' : w.agentId ? 'AGENT' : 'OTHER',
-      balance: `${Number(w.balanceMicrounits) / 1_000_000} ${w.currency}`,
-    }))
-  );
+  console.log('\n--- INBOUND MESSAGES ---');
+  const msgs = await p.inboundMessage.findMany({ select: { id: true, toNumber: true, fromNumber: true, body: true } });
+  console.log(msgs);
+
+  console.log('\n--- LEDGER ENTRIES ---');
+  const ledgers = await p.ledgerEntry.findMany({ select: { id: true, amountMicrounits: true, type: true, sourceType: true } });
+  console.log(ledgers.map(l => ({ ...l, amountMicrounits: l.amountMicrounits.toString() })));
+
+  console.log('\n--- RATES ---');
+  const rates = await p.rate.findMany();
+  console.log(rates);
 
   await p.$disconnect();
 }

@@ -79,12 +79,18 @@ export class ProvidersService {
     let items: ProviderItem[] = rawList.map((p: any) => {
       const connections = p.connections || [];
       const healthyConns = connections.filter((c: any) => c.status === 'CONNECTED' || c.isConnected).length;
+      const isSmpp =
+        p.type === 'DIRECT_SMPP' ||
+        p.name?.toLowerCase().includes('smpp') ||
+        connections.some((c: any) => c.connectionType?.includes('SMPP'));
+      const calculatedType: ProviderType = (p.type as ProviderType) || (isSmpp ? 'DIRECT_SMPP' : 'CLOUD_GATEWAY');
+
       return {
         connections: connections.map((c: any) => ({...c, name: c.name || c.id})),
         id: p.id,
         name: p.name,
         slug: p.slug || p.id,
-        type: (p.type as ProviderType) || 'TIER_1_CARRIER',
+        type: calculatedType,
         status: (p.status as ProviderStatus) || 'ACTIVE',
         description: p.description || '',
         connectionsCount: p.connectionsCount ?? connections.length,
@@ -103,7 +109,15 @@ export class ProvidersService {
       items = items.filter((p) => p.status === filterState.status);
     }
     if (filterState.type && filterState.type !== 'ALL') {
-      items = items.filter((p) => p.type === filterState.type);
+      items = items.filter((p) => {
+        if (filterState.type === 'DIRECT_SMPP') {
+          return p.type === 'DIRECT_SMPP' || p.name.toLowerCase().includes('smpp') || (p.connections || []).some((c: any) => c.connectionType?.includes('SMPP'));
+        }
+        if (filterState.type === 'CLOUD_GATEWAY') {
+          return p.type === 'CLOUD_GATEWAY' || p.name.toLowerCase().includes('http') || (p.connections || []).some((c: any) => c.connectionType?.includes('HTTP'));
+        }
+        return p.type === filterState.type;
+      });
     }
     if (filterState.search) {
       const q = filterState.search.toLowerCase();

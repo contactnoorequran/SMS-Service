@@ -552,7 +552,7 @@ export const ProviderManagementView: React.FC = () => {
               HTTP PROVIDERS
             </div>
             <div className="text-2xl font-bold font-mono text-[var(--text-primary)] mt-1">
-              {providers.filter((p) => p.type === 'CLOUD_GATEWAY' || p.name.toLowerCase().includes('http')).length}
+              {providers.filter((p) => p.type === 'CLOUD_GATEWAY' || p.name.toLowerCase().includes('http') || (p.connections || []).some((c) => c.connectionType?.includes('HTTP'))).length}
             </div>
             <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">
               API / webhook integrations

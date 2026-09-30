@@ -4,24 +4,21 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Modal } from '../../ui/Modal';
-import { Button } from '../../ui/Button';
 import {
   ProviderItem,
   ProviderDetail,
   UpdateProviderPayload,
-  ProviderType,
   ProviderStatus,
 } from '../../../types/providers';
 import {
-  Radio,
-  Globe,
-  Mail,
-  User,
+  Server,
+  Eye,
+  EyeOff,
+  X,
   AlertCircle,
-  FileText,
-  Lock,
+  Layers,
 } from 'lucide-react';
+import { Button } from '../../ui/Button';
 
 interface EditProviderModalProps {
   isOpen: boolean;
@@ -36,265 +33,385 @@ export const EditProviderModal: React.FC<EditProviderModalProps> = ({
   provider,
   onSubmit,
 }) => {
-  const [formData, setFormData] = useState<{
-    name: string;
-    type: ProviderType;
-    description: string;
-    status: ProviderStatus;
-    countriesCovered: string;
-    technicalContact: string;
-    nocEmail: string;
-  }>({
-    name: '',
-    type: 'TIER_1_CARRIER',
-    description: '',
-    status: 'ACTIVE',
-    countriesCovered: '',
-    technicalContact: '',
-    nocEmail: '',
-  });
+  const [providerName, setProviderName] = useState('');
+  const [protocol, setProtocol] = useState<'SMPP' | 'HTTP API'>('SMPP');
+  const [isActive, setIsActive] = useState(true);
+
+  // SMPP Fields
+  const [smppRole, setSmppRole] = useState<'Server' | 'Client'>('Server');
+  const [listenPort, setListenPort] = useState('2775');
+  const [sendOutboundMoDlr, setSendOutboundMoDlr] = useState(true);
+  const [systemId, setSystemId] = useState('s30030');
+  const [smppPassword, setSmppPassword] = useState('Wss2026!');
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Client mode fields
+  const [smppHost, setSmppHost] = useState('76.13.217.198');
+  const [clientPort, setClientPort] = useState('2227');
+  const [systemType, setSystemType] = useState('');
+  const [bindMode, setBindMode] = useState('TRX — Transceiver (recommended)');
+
+  // HTTP API Fields
+  const [outboundUrl, setOutboundUrl] = useState('');
+  const [outboundApiKey, setOutboundApiKey] = useState('');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (provider) {
-      const detail = provider as ProviderDetail;
-      setFormData({
-        name: provider.name || '',
-        type: provider.type || 'TIER_1_CARRIER',
-        description: provider.description || '',
-        status: provider.status || 'ACTIVE',
-        countriesCovered: provider.countriesCovered?.join(', ') || 'GLOBAL',
-        technicalContact: detail.technicalContact || '',
-        nocEmail: detail.nocEmail || '',
-      });
+      setProviderName(provider.name || '');
+      setProtocol(provider.type === 'CLOUD_GATEWAY' ? 'HTTP API' : 'SMPP');
+      setIsActive(provider.status === 'ACTIVE');
+      setSystemId(provider.slug || 's30030');
       setErrors({});
     }
   }, [provider]);
 
-  const validate = (): boolean => {
-    const errs: Record<string, string> = {};
-
-    if (!formData.name.trim()) {
-      errs.name = 'Provider carrier name is required.';
-    }
-
-    if (!formData.countriesCovered.trim()) {
-      errs.countriesCovered = 'Specify at least one ISO-2 country code.';
-    }
-
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
+  if (!isOpen || !provider) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!provider) return;
-    if (!validate()) return;
+    if (!providerName.trim()) {
+      setErrors({ name: 'Provider Name is required' });
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      const countriesList = formData.countriesCovered
-        .split(',')
-        .map((c) => c.trim().toUpperCase())
-        .filter(Boolean);
-
       await onSubmit(provider.id, {
-        name: formData.name.trim(),
-        type: formData.type,
-        description: formData.description.trim() || undefined,
-        status: formData.status,
-        countriesCovered: countriesList.length > 0 ? countriesList : ['GLOBAL'],
-        technicalContact: formData.technicalContact.trim() || undefined,
-        nocEmail: formData.nocEmail.trim() || undefined,
+        name: providerName.trim(),
+        type: protocol === 'HTTP API' ? 'CLOUD_GATEWAY' : 'DIRECT_SMPP',
+        status: (isActive ? 'ACTIVE' : 'INACTIVE') as ProviderStatus,
+        description: protocol === 'SMPP'
+          ? `SMPP ${smppRole}: Port ${smppRole === 'Server' ? listenPort : clientPort}, ID: ${systemId}`
+          : `HTTP API: ${outboundUrl}`,
       });
       onClose();
     } catch {
-      // Error handled by parent
+      // Handled by parent
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (!provider) return null;
-
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={`Edit Provider Gateway: ${provider.name}`}
-      size="lg"
-    >
-      <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-        {/* Read-Only Identifier Callout */}
-        <div className="p-3 bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2">
-            <Lock className="w-4 h-4 text-[var(--text-muted)] shrink-0" />
-            <div>
-              <span className="text-[var(--text-secondary)]">Provider Trunk ID: </span>
-              <span className="font-mono text-[var(--text-primary)] font-semibold">{provider.id}</span>
-              <span className="text-[10px] text-[var(--text-muted)] font-mono ml-2">({provider.slug})</span>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+      <div className="bg-[var(--card-bg,#1e293b)] text-[var(--text-primary,#f8fafc)] border border-[var(--glass-border,#334155)] rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden animate-scale-in">
+        {/* Modal Header matching Screenshot 3 */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border,#334155)]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/30 text-teal-400 flex items-center justify-center">
+              <Server className="w-4 h-4" />
             </div>
+            <h2 className="text-base font-bold text-[var(--text-primary,#f8fafc)]">
+              Edit Provider
+            </h2>
           </div>
-          <span className="text-[10px] font-mono text-[var(--accent-blue)] bg-[var(--accent-blue-dim)] px-2 py-0.5 rounded border border-[var(--accent-blue)]/20">
-            {provider.type}
-          </span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-[var(--text-tertiary,#94a3b8)] hover:text-[var(--text-primary,#f8fafc)] p-1 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
-        {/* Name & Type Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-              Provider Carrier Name <span className="text-[var(--accent-rose)]">*</span>
-            </label>
-            <div className="relative">
-              <Radio className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className={`w-full pl-9 pr-3 py-2 text-xs bg-[var(--bg-glass-card)] border rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)] transition-all ${
-                  errors.name ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
-                }`}
-              />
-            </div>
-            {errors.name && (
-              <p className="text-[11px] text-[var(--accent-rose)] mt-1 flex items-center gap-1">
-                <AlertCircle className="w-3 h-3" /> {errors.name}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-              Carrier Architecture Type
-            </label>
-            <select
-              value={formData.type}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value as ProviderType })}
-              className="w-full px-3 py-2 text-xs bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)]"
-            >
-              <option value="TIER_1_CARRIER">TIER_1_CARRIER (Direct MNO / CLEC)</option>
-              <option value="DIRECT_SMPP">DIRECT_SMPP (Direct Socket Trunk)</option>
-              <option value="AGGREGATOR">AGGREGATOR (Wholesale Aggregator)</option>
-              <option value="CLOUD_GATEWAY">CLOUD_GATEWAY (Programmable API)</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Description */}
-        <div>
-          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-            Operational Description
-          </label>
-          <div className="relative">
-            <FileText className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
-            <input
-              type="text"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full pl-9 pr-3 py-2 text-xs bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)]"
-            />
-          </div>
-        </div>
-
-        {/* Country Coverage & Operational Status */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-              Countries Covered (ISO-2 Codes) <span className="text-[var(--accent-rose)]">*</span>
-            </label>
-            <div className="relative">
-              <Globe className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
-              <input
-                type="text"
-                value={formData.countriesCovered}
-                onChange={(e) => setFormData({ ...formData, countriesCovered: e.target.value })}
-                className={`w-full pl-9 pr-3 py-2 text-xs bg-[var(--bg-glass-card)] border rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)] ${
-                  errors.countriesCovered ? 'border-[var(--accent-rose)]' : 'border-[var(--border-subtle)]'
-                }`}
-              />
-            </div>
-            {errors.countriesCovered && (
-              <p className="text-[11px] text-[var(--accent-rose)] mt-1 flex items-center gap-1">
-                <AlertCircle className="w-3 h-3" /> {errors.countriesCovered}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-              Operational Status
-            </label>
-            <select
-              value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value as ProviderStatus })}
-              className="w-full px-3 py-2 text-xs bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)]"
-            >
-              <option value="ACTIVE">ACTIVE (Operational)</option>
-              <option value="INACTIVE">INACTIVE (Dormant)</option>
-              <option value="SUSPENDED">SUSPENDED (Maintenance / Hold)</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Technical Support Grid */}
-        <div className="p-3.5 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs text-[var(--text-secondary)] mb-1 font-medium">
-                Technical Contact / NOC Team
+        {/* Modal Body */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-5 text-xs">
+          {/* Top row: Provider Name, Protocol, Active Toggle */}
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-end">
+            <div className="sm:col-span-6">
+              <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                Provider Name <span className="text-rose-400">*</span>
               </label>
-              <div className="relative">
-                <User className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
+              <input
+                type="text"
+                value={providerName}
+                onChange={(e) => setProviderName(e.target.value)}
+                className={`w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 transition-all ${
+                  errors.name ? 'border-rose-500' : 'border-[var(--glass-border,#334155)]'
+                }`}
+              />
+              {errors.name && (
+                <p className="text-[10px] text-rose-400 mt-1">{errors.name}</p>
+              )}
+            </div>
+
+            <div className="sm:col-span-4">
+              <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                Protocol
+              </label>
+              <select
+                value={protocol}
+                onChange={(e) => setProtocol(e.target.value as 'SMPP' | 'HTTP API')}
+                className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer"
+              >
+                <option value="SMPP">SMPP</option>
+                <option value="HTTP API">HTTP API</option>
+              </select>
+            </div>
+
+            <div className="sm:col-span-2 flex items-center justify-end gap-2 pb-2">
+              <button
+                type="button"
+                onClick={() => setIsActive(!isActive)}
+                className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  isActive ? 'bg-teal-500' : 'bg-slate-700'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                    isActive ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+              <span className="text-xs font-semibold text-[var(--text-primary,#f8fafc)]">
+                Active
+              </span>
+            </div>
+          </div>
+
+          {protocol === 'SMPP' ? (
+            <div className="space-y-4 pt-1">
+              <h3 className="text-xs font-bold text-[var(--text-primary,#f8fafc)] uppercase tracking-wider">
+                SMPP Settings
+              </h3>
+
+              {/* SMPP Role Dropdown */}
+              <div>
+                <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  SMPP Role
+                </label>
+                <select
+                  value={smppRole === 'Server' ? 'Server — provider connects to our SMSC' : 'Client — we connect to provider SMSC'}
+                  onChange={(e) => {
+                    if (e.target.value.includes('Server')) {
+                      setSmppRole('Server');
+                    } else {
+                      setSmppRole('Client');
+                    }
+                  }}
+                  className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer"
+                >
+                  <option value="Server — provider connects to our SMSC">
+                    Server — provider connects to our SMSC
+                  </option>
+                  <option value="Client — we connect to provider SMSC">
+                    Client — we connect to provider SMSC
+                  </option>
+                </select>
+              </div>
+
+              {smppRole === 'Server' ? (
+                <>
+                  {/* Server Mode (Screenshot 3) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                    <div className="sm:col-span-6">
+                      <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                        Your listen port
+                      </label>
+                      <input
+                        type="text"
+                        value={listenPort}
+                        onChange={(e) => setListenPort(e.target.value)}
+                        className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
+                      />
+                      <p className="text-[10px] text-[var(--text-tertiary,#64748b)] mt-1">
+                        Open this TCP port in the firewall. Default: 2775
+                      </p>
+                    </div>
+
+                    <div className="sm:col-span-6 flex items-center gap-2.5 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setSendOutboundMoDlr(!sendOutboundMoDlr)}
+                        className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                          sendOutboundMoDlr ? 'bg-teal-500' : 'bg-slate-700'
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                            sendOutboundMoDlr ? 'translate-x-5' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                      <span className="text-xs font-semibold text-[var(--text-primary,#f8fafc)]">
+                        Send outbound MO DLR
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                        System ID
+                      </label>
+                      <input
+                        type="text"
+                        value={systemId}
+                        onChange={(e) => setSystemId(e.target.value)}
+                        className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
+                      />
+                      <p className="text-[10px] text-[var(--text-tertiary,#64748b)] mt-1">
+                        Provider uses this ID when binding to your server.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                        SMPP Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={smppPassword}
+                          onChange={(e) => setSmppPassword(e.target.value)}
+                          className="w-full pl-3 pr-9 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-tertiary,#94a3b8)] hover:text-[var(--text-primary,#f8fafc)]"
+                        >
+                          {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5 text-teal-400" />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Client Mode */}
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                    <div className="sm:col-span-9">
+                      <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                        Provider SMPP Host / IP
+                      </label>
+                      <input
+                        type="text"
+                        value={smppHost}
+                        onChange={(e) => setSmppHost(e.target.value)}
+                        className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
+                      />
+                    </div>
+                    <div className="sm:col-span-3">
+                      <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                        Port
+                      </label>
+                      <input
+                        type="text"
+                        value={clientPort}
+                        onChange={(e) => setClientPort(e.target.value)}
+                        className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                        System ID
+                      </label>
+                      <input
+                        type="text"
+                        value={systemId}
+                        onChange={(e) => setSystemId(e.target.value)}
+                        className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                        SMPP Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={smppPassword}
+                          onChange={(e) => setSmppPassword(e.target.value)}
+                          className="w-full pl-3 pr-9 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-tertiary,#94a3b8)] hover:text-[var(--text-primary,#f8fafc)]"
+                        >
+                          {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5 text-teal-400" />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                        System Type
+                      </label>
+                      <input
+                        type="text"
+                        value={systemType}
+                        onChange={(e) => setSystemType(e.target.value)}
+                        placeholder="Optional"
+                        className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                        Bind Mode
+                      </label>
+                      <select
+                        value={bindMode}
+                        onChange={(e) => setBindMode(e.target.value)}
+                        className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500"
+                      >
+                        <option value="TRX — Transceiver (recommended)">TRX — Transceiver (recommended)</option>
+                        <option value="TX — Transmitter only">TX — Transmitter only</option>
+                        <option value="RX — Receiver only">RX — Receiver only</option>
+                      </select>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3.5 pt-1">
+              <div>
+                <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  Provider Outbound API URL
+                </label>
                 <input
                   type="text"
-                  value={formData.technicalContact}
-                  onChange={(e) => setFormData({ ...formData, technicalContact: e.target.value })}
-                  className="w-full pl-9 pr-3 py-1.5 text-xs bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)]"
+                  value={outboundUrl}
+                  onChange={(e) => setOutboundUrl(e.target.value)}
+                  className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500"
                 />
               </div>
             </div>
+          )}
 
-            <div>
-              <label className="block text-xs text-[var(--text-secondary)] mb-1 font-medium">
-                NOC Operations Email
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
-                <input
-                  type="email"
-                  value={formData.nocEmail}
-                  onChange={(e) => setFormData({ ...formData, nocEmail: e.target.value })}
-                  className="w-full pl-9 pr-3 py-1.5 text-xs bg-[var(--bg-glass-card)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-hidden focus:ring-1 focus:ring-[var(--accent-blue)]"
-                />
-              </div>
-            </div>
+          {/* Footer Actions */}
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-[var(--glass-border,#334155)]">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={onClose}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              isLoading={isSubmitting}
+              className="bg-teal-600 hover:bg-teal-500 text-white"
+            >
+              Save Changes
+            </Button>
           </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-2 pt-3 border-t border-[var(--border-subtle)]">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={onClose}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            size="sm"
-            isLoading={isSubmitting}
-          >
-            Save Changes
-          </Button>
-        </div>
-      </form>
-    </Modal>
+        </form>
+      </div>
+    </div>
   );
 };

@@ -49,6 +49,7 @@ export const AppShell: React.FC<AppShellProps> = ({ initialTab }) => {
     if (cleanPath.startsWith('/client-wallet')) return 'client-wallet';
 
     // Super Admin routes
+    if (cleanPath.startsWith('/allocate-numbers')) return 'allocate-numbers';
     if (cleanPath.startsWith('/providers')) return 'providers';
     if (cleanPath.startsWith('/connections')) return 'connections';
     if (cleanPath.startsWith('/field-sms')) return 'field-sms';

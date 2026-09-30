@@ -80,9 +80,29 @@ export const RangesManagementView: React.FC = () => {
   const [isActiveForMembers, setIsActiveForMembers] = useState(true);
   const [internalNotes, setInternalNotes] = useState('');
 
+  // Edit Range Modal State (Screenshot 4)
+  const [editingRange, setEditingRange] = useState<RangeItem | null>(null);
+  const [editProvider, setEditProvider] = useState('Alaa0');
+  const [editRangeName, setEditRangeName] = useState('test-for-test');
+  const [editPrefix, setEditPrefix] = useState('44556322');
+  const [editProviderPayout, setEditProviderPayout] = useState('0.03');
+  const [editMemberPayout, setEditMemberPayout] = useState('0.012');
+  const [editPayoutCycle, setEditPayoutCycle] = useState('Weekly');
+  const [editDailySmsLimit, setEditDailySmsLimit] = useState('10');
+  const [editIsActive, setEditIsActive] = useState(true);
+  const [editNotes, setEditNotes] = useState('hour limit 2k/h');
+
+  // Import Ranges Modal State (Screenshot 5)
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+
   const providerPayoutNum = parseFloat(providerPayout) || 0;
   const memberPayoutNum = parseFloat(memberPayout) || 0;
   const platformNetProfit = Math.max(0, providerPayoutNum - memberPayoutNum);
+
+  const editProvNum = parseFloat(editProviderPayout) || 0;
+  const editMemNum = parseFloat(editMemberPayout) || 0;
+  const editNetProfit = Math.max(0, editProvNum - editMemNum).toFixed(4);
 
   const handleCreateRange = (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,8 +181,8 @@ export const RangesManagementView: React.FC = () => {
             <span>Add Range Lite</span>
           </button>
           <button
-            onClick={() => showToast('Import Ranges modal')}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600/90 hover:bg-blue-500 text-white flex items-center gap-1.5 transition-colors shadow-sm"
+            onClick={() => setIsImportOpen(true)}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600/90 hover:bg-blue-500 text-white flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
           >
             <Upload className="w-3.5 h-3.5" />
             <span>Import Ranges</span>
@@ -359,8 +379,19 @@ export const RangesManagementView: React.FC = () => {
                   <td className="py-3.5 px-4 text-right">
                     <div className="flex items-center justify-end gap-1.5">
                       <button
-                        onClick={() => showToast(`Edit ${r.name}`)}
-                        className="p-1 rounded hover:bg-[rgba(255,255,255,0.08)] text-[var(--text-secondary,#94a3b8)] hover:text-teal-400 transition-colors"
+                        onClick={() => {
+                          setEditingRange(r);
+                          setEditProvider(r.provider === '—' ? 'Alaa0' : r.provider);
+                          setEditRangeName(r.name);
+                          setEditPrefix(r.name === 'test-for-test' ? '44556322' : '97777');
+                          setEditProviderPayout(r.name === 'test-for-test' ? '0.03' : '0.0000');
+                          setEditMemberPayout(r.name === 'test-for-test' ? '0.012' : '0.0000');
+                          setEditPayoutCycle('Weekly');
+                          setEditDailySmsLimit(String(r.dailyLimit || 10));
+                          setEditIsActive(r.status === 'Active');
+                          setEditNotes(r.name === 'test-for-test' ? 'hour limit 2k/h' : '');
+                        }}
+                        className="p-1 rounded hover:bg-[rgba(255,255,255,0.08)] text-[var(--text-secondary,#94a3b8)] hover:text-teal-400 transition-colors cursor-pointer"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
@@ -587,10 +618,318 @@ export const RangesManagementView: React.FC = () => {
                   type="submit"
                   className="px-5 py-2 text-xs font-semibold bg-teal-600 hover:bg-teal-500 text-white rounded-xl shadow-lg shadow-teal-500/20 transition-all cursor-pointer"
                 >
-                  Create Range
+                  Save Range
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 6. Edit Range Modal matching Screenshot 4 */}
+      {editingRange && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-[var(--card-bg,#1e293b)] text-[var(--text-primary,#f8fafc)] border border-[var(--glass-border,#334155)] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden animate-scale-in">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border,#334155)]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/30 text-teal-400 flex items-center justify-center">
+                  <Layers className="w-4 h-4" />
+                </div>
+                <h2 className="text-base font-bold text-[var(--text-primary,#f8fafc)]">
+                  Edit Range
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingRange(null)}
+                className="text-[var(--text-tertiary,#94a3b8)] hover:text-[var(--text-primary,#f8fafc)] p-1 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                setRanges(ranges.map((rg) => rg.id === editingRange.id ? {
+                  ...rg,
+                  name: editRangeName,
+                  provider: editProvider,
+                  dailyLimit: parseInt(editDailySmsLimit, 10) || rg.dailyLimit,
+                  status: editIsActive ? 'Active' : 'Inactive',
+                } : rg));
+                showToast(`Range "${editRangeName}" updated successfully`);
+                setEditingRange(null);
+              }}
+              className="p-6 space-y-4 text-xs"
+            >
+              <p className="text-[11px] text-[var(--text-tertiary,#64748b)] pb-1">
+                Configure identity, provider payout, member payout, and daily caps.
+              </p>
+
+              {/* Row 1: Provider, Range Name, Prefix */}
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
+                <div className="sm:col-span-4">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                    Provider <span className="text-rose-400">*</span>
+                  </label>
+                  <select
+                    value={editProvider}
+                    onChange={(e) => setEditProvider(e.target.value)}
+                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer"
+                  >
+                    <option value="Alaa0">Alaa0</option>
+                    <option value="worldsms">worldsms</option>
+                  </select>
+                </div>
+
+                <div className="sm:col-span-5">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                    Range Name <span className="text-rose-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={editRangeName}
+                    onChange={(e) => setEditRangeName(e.target.value)}
+                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+
+                <div className="sm:col-span-3">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                    Prefix <span className="text-rose-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={editPrefix}
+                    onChange={(e) => setEditPrefix(e.target.value)}
+                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] font-mono focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: Provider Payout, Member Payout, Live Platform Profit */}
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-center">
+                <div className="sm:col-span-4">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                    Provider Payout <span className="text-rose-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-[var(--text-tertiary,#64748b)] font-mono">$</span>
+                    <input
+                      type="text"
+                      value={editProviderPayout}
+                      onChange={(e) => setEditProviderPayout(e.target.value)}
+                      className="w-full pl-7 pr-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs font-mono text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500"
+                    />
+                  </div>
+                  <p className="text-[10px] text-[var(--text-tertiary,#64748b)] mt-1">
+                    Gross rate from provider per SMS
+                  </p>
+                </div>
+
+                <div className="sm:col-span-4">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                    Member Payout <span className="text-rose-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-[var(--text-tertiary,#64748b)] font-mono">$</span>
+                    <input
+                      type="text"
+                      value={editMemberPayout}
+                      onChange={(e) => setEditMemberPayout(e.target.value)}
+                      className="w-full pl-7 pr-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs font-mono text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500"
+                    />
+                  </div>
+                  <p className="text-[10px] text-[var(--text-tertiary,#64748b)] mt-1">
+                    Net rate paid to member per SMS
+                  </p>
+                </div>
+
+                <div className="sm:col-span-4">
+                  <div className="p-3 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sky-400 flex items-center gap-2 font-mono text-xs">
+                    <Info className="w-4 h-4 shrink-0" />
+                    <span>Platform net profit: ${editNetProfit}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 3: Payout Cycle, Daily SMS Limit, Active for Members */}
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-center">
+                <div className="sm:col-span-4">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                    Payout Cycle <span className="text-rose-400">*</span>
+                  </label>
+                  <select
+                    value={editPayoutCycle}
+                    onChange={(e) => setEditPayoutCycle(e.target.value)}
+                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer"
+                  >
+                    <option value="Weekly">Weekly</option>
+                    <option value="Daily">Daily</option>
+                    <option value="Monthly">Monthly</option>
+                  </select>
+                </div>
+
+                <div className="sm:col-span-4">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                    Daily SMS Limit <span className="text-rose-400">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={editDailySmsLimit}
+                    onChange={(e) => setEditDailySmsLimit(e.target.value)}
+                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs font-mono text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500"
+                  />
+                  <p className="text-[10px] text-[var(--text-tertiary,#64748b)] mt-1">
+                    Max messages per number per day
+                  </p>
+                </div>
+
+                <div className="sm:col-span-4 flex items-center gap-2.5 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditIsActive(!editIsActive)}
+                    className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      editIsActive ? 'bg-teal-500' : 'bg-slate-700'
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                        editIsActive ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                  <span className="text-xs font-semibold text-[var(--text-primary,#f8fafc)]">
+                    Active for Members
+                  </span>
+                </div>
+              </div>
+
+              {/* Row 4: Internal Notes */}
+              <div>
+                <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  Internal Notes
+                </label>
+                <input
+                  type="text"
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              {/* Row 5: Callout Notice */}
+              <div className="p-3 rounded-xl bg-teal-500/5 border border-teal-500/20 text-teal-300 flex items-center gap-2.5 text-[11px]">
+                <Info className="w-4 h-4 shrink-0 text-teal-400" />
+                <span>Assign one test number from the Numbers page after importing numbers into this range.</span>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--glass-border,#334155)]">
+                <button
+                  type="button"
+                  onClick={() => setEditingRange(null)}
+                  className="px-4 py-2 text-xs font-semibold text-[var(--text-secondary,#94a3b8)] hover:text-[var(--text-primary,#f8fafc)] hover:bg-[rgba(255,255,255,0.05)] rounded-xl transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 text-xs font-semibold bg-teal-600 hover:bg-teal-500 text-white rounded-xl shadow-lg shadow-teal-500/20 transition-all cursor-pointer"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 7. Import Ranges Modal matching Screenshot 5 */}
+      {isImportOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-[var(--card-bg,#1e293b)] text-[var(--text-primary,#f8fafc)] border border-[var(--glass-border,#334155)] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-scale-in">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border,#334155)]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/30 text-teal-400 flex items-center justify-center">
+                  <Upload className="w-4 h-4" />
+                </div>
+                <h2 className="text-base font-bold text-[var(--text-primary,#f8fafc)]">
+                  Import Ranges
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsImportOpen(false)}
+                className="text-[var(--text-tertiary,#94a3b8)] hover:text-[var(--text-primary,#f8fafc)] p-1 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-4 text-xs">
+              <p className="text-xs text-[var(--text-secondary,#94a3b8)] leading-relaxed">
+                Upload a CSV matching the official template (max 500 rows). Provider names must already exist.
+              </p>
+
+              <div>
+                <button
+                  type="button"
+                  onClick={() => showToast('CSV Template downloaded')}
+                  className="px-3.5 py-2 rounded-xl border border-[var(--glass-border,#334155)] text-teal-400 hover:bg-teal-500/10 text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download CSV Template</span>
+                </button>
+              </div>
+
+              <div className="pt-2">
+                <input
+                  type="file"
+                  accept=".csv"
+                  id="csv-file-input"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0] || null;
+                    setImportFile(f);
+                    if (f) showToast(`Selected file: ${f.name}`);
+                  }}
+                />
+                <label
+                  htmlFor="csv-file-input"
+                  className="w-full py-2.5 px-4 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-teal-500/20 transition-all"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>{importFile ? importFile.name : 'Choose CSV File'}</span>
+                </label>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--glass-border,#334155)]">
+                <button
+                  type="button"
+                  onClick={() => setIsImportOpen(false)}
+                  className="px-4 py-2 text-xs font-semibold text-[var(--text-secondary,#94a3b8)] hover:text-[var(--text-primary,#f8fafc)] hover:bg-[rgba(255,255,255,0.05)] rounded-xl transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    showToast('Ranges imported successfully');
+                    setIsImportOpen(false);
+                  }}
+                  className="px-5 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20 transition-all cursor-pointer"
+                >
+                  Import Ranges
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -43,7 +43,9 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
   const [bypassInboundToken, setBypassInboundToken] = useState(false);
 
   // SMPP Settings
-  const [smppHost, setSmppHost] = useState('76.13.217.198');
+  const [smppRole, setSmppRole] = useState<'Client' | 'Server'>('Client');
+  const [listenPort, setListenPort] = useState('2775');
+  const [sendOutboundMoDlr, setSendOutboundMoDlr] = useState(true);
   const [smppPort, setSmppPort] = useState('2775');
   const [smppSystemId, setSmppSystemId] = useState('worldsms');
   const [smppPassword, setSmppPassword] = useState('');
@@ -295,8 +297,14 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
                   SMPP Role
                 </label>
                 <select
-                  value="Client — we connect to provider SMSC"
-                  disabled
+                  value={smppRole === 'Server' ? 'Server — provider connects to our SMSC' : 'Client — we connect to provider SMSC'}
+                  onChange={(e) => {
+                    if (e.target.value.includes('Server')) {
+                      setSmppRole('Server');
+                    } else {
+                      setSmppRole('Client');
+                    }
+                  }}
                   className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer"
                 >
                   <option value="Client — we connect to provider SMSC">
@@ -308,33 +316,69 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
                 </select>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                <div className="sm:col-span-9">
-                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
-                    Provider SMPP Host / IP
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 76.13.217.198"
-                    value={smppHost}
-                    onChange={(e) => setSmppHost(e.target.value)}
-                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
-                  />
+              {smppRole === 'Server' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                  <div className="sm:col-span-6">
+                    <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                      Your listen port
+                    </label>
+                    <input
+                      type="text"
+                      value={listenPort}
+                      onChange={(e) => setListenPort(e.target.value)}
+                      className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
+                    />
+                    <p className="text-[10px] text-[var(--text-tertiary,#64748b)] mt-1">
+                      Open this TCP port in the firewall. Default: 2775
+                    </p>
+                  </div>
+                  <div className="sm:col-span-6 flex items-center gap-2.5 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setSendOutboundMoDlr(!sendOutboundMoDlr)}
+                      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        sendOutboundMoDlr ? 'bg-teal-500' : 'bg-slate-700'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                          sendOutboundMoDlr ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                    <span className="text-xs font-semibold text-[var(--text-primary,#f8fafc)]">
+                      Send outbound MO DLR
+                    </span>
+                  </div>
                 </div>
-
-                <div className="sm:col-span-3">
-                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
-                    Port
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="2227"
-                    value={smppPort}
-                    onChange={(e) => setSmppPort(e.target.value)}
-                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
-                  />
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                  <div className="sm:col-span-9">
+                    <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                      Provider SMPP Host / IP
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 76.13.217.198"
+                      value={smppHost}
+                      onChange={(e) => setSmppHost(e.target.value)}
+                      className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
+                    />
+                  </div>
+                  <div className="sm:col-span-3">
+                    <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                      Port
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="2227"
+                      value={smppPort}
+                      onChange={(e) => setSmppPort(e.target.value)}
+                      className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>

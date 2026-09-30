@@ -152,6 +152,9 @@ const DatabaseConfigCard = React.lazy(() =>
 const ArchitectureOverviewCard = React.lazy(() =>
   import('./ArchitectureOverviewCard').then((m) => ({ default: m.ArchitectureOverviewCard }))
 );
+const AllocateNumbersView = React.lazy(() =>
+  import('./AllocateNumbersView').then((m) => ({ default: m.AllocateNumbersView }))
+);
 import { NotFoundState } from '../system/NotFoundState';
 
 // ── Known tabs set — used for 404 fallback ─────────────────────────────
@@ -167,7 +170,7 @@ const KNOWN_TABS = new Set([
   // Client tabs
   'client-numbers', 'client-inbound', 'client-webhooks', 'client-wallet',
   // Super Admin tabs
-  'numbers', 'countries', 'operators', 'ranges', 'assignments',
+  'numbers', 'allocate-numbers', 'countries', 'operators', 'ranges', 'assignments',
   'managers', 'agents', 'clients', 'providers', 'connections',
   'traffic', 'messages', 'cdr', 'reports', 'field-sms', 'financial-reports',
   'financials', 'billing', 'wallets', 'transactions', 'rates',
@@ -224,7 +227,15 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = memo(({
     if (currentTab === 'sms-ranges')      return <SmsRangesView />;
     if (currentTab === 'cli-search')      return <CliSearchView />;
     if (currentTab === 'my-numbers')      return <MyNumbersView />;
-    if (currentTab === 'bulk-add')        return <BulkAddView />;
+    if (currentTab === 'bulk-add') {
+      if (role === 'SUPER_ADMIN') {
+        return <AllocateNumbersView onBackToNumbers={() => onSelectTab('numbers')} />;
+      }
+      return <BulkAddView />;
+    }
+    if (currentTab === 'allocate-numbers') {
+      return <AllocateNumbersView onBackToNumbers={() => onSelectTab('numbers')} />;
+    }
     if (currentTab === 'sms-test-panel')  return <SmsTestPanelView />;
     if (currentTab === 'my-clients')      return <MyClientsView />;
     if (currentTab === 'notifications')   return <AgentNotificationsView />;
@@ -253,7 +264,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = memo(({
       return <RangesManagementView />;
 
     if (['numbers', 'countries', 'operators', 'assignments'].includes(currentTab))
-      return <NumberManagementView />;
+      return <NumberManagementView onNavigateToTab={onSelectTab} />;
 
     if (currentTab === 'traffic' || currentTab === 'messages')
       return <MessagingManagementView />;

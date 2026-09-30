@@ -34,6 +34,7 @@ import { ReassignNumberModal } from './numbers/ReassignNumberModal';
 import { ReleaseNumberModal } from './numbers/ReleaseNumberModal';
 import { NumberStatusModal } from './numbers/NumberStatusModal';
 import { CreateNumberModal } from './numbers/CreateNumberModal';
+import { BulkImportNumbersModal } from './numbers/BulkImportNumbersModal';
 import { NumberDetailsView } from './numbers/NumberDetailsView';
 
 import {
@@ -71,7 +72,11 @@ import {
   Search,
 } from 'lucide-react';
 
-export const NumberManagementView: React.FC = () => {
+interface NumberManagementViewProps {
+  onNavigateToTab?: (tab: string) => void;
+}
+
+export const NumberManagementView: React.FC<NumberManagementViewProps> = ({ onNavigateToTab }) => {
   const {
     numbers,
     totalCount,
@@ -104,6 +109,7 @@ export const NumberManagementView: React.FC = () => {
 
   // Modals state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
   const [assignTarget, setAssignTarget] = useState<NumberItem | NumberDetail | null>(null);
   const [reassignTarget, setReassignTarget] = useState<NumberItem | NumberDetail | null>(null);
   const [releaseTarget, setReleaseTarget] = useState<NumberItem | NumberDetail | null>(null);
@@ -498,7 +504,14 @@ export const NumberManagementView: React.FC = () => {
             variant="primary"
             size="sm"
             className="bg-blue-600 hover:bg-blue-500 text-white"
-            onClick={() => showToast('Opening member allocation modal...')}
+            onClick={() => {
+              if (onNavigateToTab) {
+                onNavigateToTab('allocate-numbers');
+              } else {
+                window.history.pushState({}, '', '/allocate-numbers');
+                window.dispatchEvent(new PopStateEvent('popstate'));
+              }
+            }}
             leftIcon={<Users className="w-3.5 h-3.5" />}
           >
             Member Allocation
@@ -525,7 +538,7 @@ export const NumberManagementView: React.FC = () => {
             variant="primary"
             size="sm"
             className="bg-teal-600 hover:bg-teal-500 text-white"
-            onClick={() => showToast('Bulk Import wizard ready')}
+            onClick={() => setIsBulkImportOpen(true)}
             leftIcon={<Upload className="w-3.5 h-3.5" />}
           >
             Bulk Import
@@ -757,6 +770,16 @@ export const NumberManagementView: React.FC = () => {
         providers={providers}
         ranges={ranges}
         onSubmit={handleCreateSubmit}
+      />
+
+      {/* Bulk Import / Generate Numbers Modal (Screenshot 2) */}
+      <BulkImportNumbersModal
+        isOpen={isBulkImportOpen}
+        onClose={() => setIsBulkImportOpen(false)}
+        ranges={ranges}
+        onImport={async (payload) => {
+          showToast(`Successfully queued bulk import for ${payload.quantity || 1000} numbers!`);
+        }}
       />
 
       {/* Assign Modal */}

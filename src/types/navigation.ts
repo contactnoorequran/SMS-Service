@@ -345,7 +345,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     iconName: 'Plus',
     status: 'active',
     description: 'Bulk allocate number pools to wholesale clients',
-    targetTab: 'bulk-add',
+    targetTab: 'allocate-numbers',
     allowedRoles: ['SUPER_ADMIN'],
   },
 

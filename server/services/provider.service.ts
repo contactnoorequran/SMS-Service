@@ -86,20 +86,26 @@ export class ProviderService {
     actorId?: string;
   }): Promise<ProviderDetail> {
     const prisma = getPrismaClient();
-    if (!prisma) throw new Error('Database connection unavailable');
+    let org = await prisma.organization.findUnique({
+      where: { id: '00000000-0000-0000-0000-000000000001' },
+    });
+    if (!org) {
+      org = await prisma.organization.findFirst();
+    }
+    const orgId = org ? org.id : '00000000-0000-0000-0000-000000000001';
 
     const provider = await prisma.provider.create({
       data: {
         name: data.name,
         status: (data.status || 'ACTIVE') as any,
-        organizationId: '00000000-0000-0000-0000-000000000001',
+        organizationId: orgId,
         connections: {
           create: {
             connectionType: (data.connectionType || 'HTTP') as any,
             environment: 'PRODUCTION',
             status: 'ACTIVE',
             priority: 1,
-            protocolConfig: {},
+            protocolConfig: data.protocolConfig || {},
           },
         },
       },

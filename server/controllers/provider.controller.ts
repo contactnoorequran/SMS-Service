@@ -5,15 +5,18 @@ import { ProviderService } from '../services/provider.service';
 import { sendSuccess, sendError } from '../utils/api-response';
 
 const createProviderSchema = z.object({
-  name: z.string().min(2, 'Provider name must be at least 2 characters'),
-  status: z.enum(['ACTIVE', 'SUSPENDED', 'DISABLED']).optional(),
+  name: z.string().min(1, 'Provider name is required'),
+  status: z.enum(['ACTIVE', 'SUSPENDED', 'DISABLED', 'INACTIVE']).optional(),
+  type: z.string().optional(),
+  description: z.string().optional(),
+  countriesCovered: z.array(z.string()).optional(),
   connectionType: z.enum(['HTTP', 'SMPP']).optional(),
   protocolConfig: z.record(z.string(), z.any()).optional(),
 });
 
 const updateProviderSchema = z.object({
-  name: z.string().min(2, 'Provider name must be at least 2 characters').optional(),
-  status: z.enum(['ACTIVE', 'SUSPENDED', 'DISABLED']).optional(),
+  name: z.string().min(1, 'Provider name is required').optional(),
+  status: z.enum(['ACTIVE', 'SUSPENDED', 'DISABLED', 'INACTIVE']).optional(),
 });
 
 export class ProviderController {
@@ -54,8 +57,11 @@ export class ProviderController {
         return;
       }
 
+      const mappedStatus = parsed.data.status === 'INACTIVE' ? 'DISABLED' : (parsed.data.status || 'ACTIVE');
+
       const provider = await ProviderService.createProvider({
         ...parsed.data,
+        status: mappedStatus as any,
         actorEmail: req.user?.email,
         actorId: req.user?.id,
       });

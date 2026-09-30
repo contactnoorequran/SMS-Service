@@ -44,6 +44,7 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
 
   // SMPP Settings
   const [smppRole, setSmppRole] = useState<'Client' | 'Server'>('Client');
+  const [smppHost, setSmppHost] = useState('76.13.217.198');
   const [listenPort, setListenPort] = useState('2775');
   const [sendOutboundMoDlr, setSendOutboundMoDlr] = useState(true);
   const [smppPort, setSmppPort] = useState('2775');
@@ -52,6 +53,7 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
   const [showSmppPassword, setShowSmppPassword] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [modalError, setModalError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
@@ -71,6 +73,7 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
     setSmppPassword('');
     setShowSmppPassword(false);
     setErrors({});
+    setModalError(null);
     setIsSubmitting(false);
   };
 
@@ -83,6 +86,7 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
     const errs: Record<string, string> = {};
     if (!providerName.trim()) {
       errs.name = 'Provider name is required';
+      setModalError('Please enter a Provider Name.');
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -90,6 +94,7 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setModalError(null);
     if (!validate()) return;
 
     setIsSubmitting(true);
@@ -101,14 +106,29 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
         name: providerName.trim(),
         type,
         status,
+        connectionType: protocol === 'HTTP API' ? 'HTTP' : 'SMPP',
+        protocolConfig: protocol === 'HTTP API' ? {
+          httpDirection,
+          outboundUrl,
+          outboundApiKey,
+          bypassInboundToken,
+        } : {
+          smppRole,
+          host: smppHost,
+          port: parseInt(smppPort, 10) || 2775,
+          systemId: smppSystemId,
+          password: smppPassword,
+          listenPort: parseInt(listenPort, 10) || 2775,
+          sendOutboundMoDlr,
+        },
         description: protocol === 'HTTP API'
           ? `HTTP API Trunk (${httpDirection}) - Outbound: ${outboundUrl}`
           : `SMPP Trunk (${smppHost}:${smppPort} / ID: ${smppSystemId})`,
         countriesCovered: ['GLOBAL'],
       });
       handleClose();
-    } catch {
-      // Handled by parent
+    } catch (err: any) {
+      setModalError(err?.message || 'Failed to create provider. Please check required fields.');
     } finally {
       setIsSubmitting(false);
     }
@@ -138,6 +158,13 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
 
         {/* Modal Body Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5 text-xs">
+          {modalError && (
+            <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 flex items-center gap-2.5 text-xs font-semibold animate-fade-in">
+              <Info className="w-4 h-4 text-rose-400 shrink-0" />
+              <span>{modalError}</span>
+            </div>
+          )}
+
           {/* Top row: Provider Name, Protocol, Active Toggle */}
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-end">
             <div className="sm:col-span-6">
@@ -146,12 +173,19 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
               </label>
               <input
                 type="text"
-                placeholder="Provider Name *"
+                placeholder="e.g. MyTelecom / WorldSMS"
                 value={providerName}
-                onChange={(e) => setProviderName(e.target.value)}
+                onChange={(e) => {
+                  setProviderName(e.target.value);
+                  if (errors.name) {
+                    setErrors({});
+                    setModalError(null);
+                  }
+                }}
                 className={`w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border rounded-xl text-xs text-[var(--text-primary,#f8fafc)] placeholder:text-[var(--text-tertiary,#64748b)] focus:outline-none focus:border-teal-500 transition-all ${
-                  errors.name ? 'border-rose-500' : 'border-[var(--glass-border,#334155)]'
+                  errors.name ? 'border-rose-500 ring-1 ring-rose-500' : 'border-[var(--glass-border,#334155)]'
                 }`}
+                autoFocus
               />
               {errors.name && (
                 <p className="text-[10px] text-rose-400 mt-1">{errors.name}</p>

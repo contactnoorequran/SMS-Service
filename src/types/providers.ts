@@ -191,6 +191,8 @@ export interface CreateProviderPayload {
   description?: string;
   status: ProviderStatus;
   countriesCovered: string[];
+  connectionType?: 'HTTP' | 'SMPP';
+  protocolConfig?: Record<string, any>;
   technicalContact?: string;
   nocEmail?: string;
 }

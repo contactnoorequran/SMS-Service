@@ -122,7 +122,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <BrandLogo
             variant={isCollapsed ? 'symbol' : 'full'}
             size="sm"
-            theme="dark"
+            theme="accent"
           />
         </button>
 

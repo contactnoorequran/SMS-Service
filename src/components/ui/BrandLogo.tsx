@@ -38,7 +38,7 @@ export const BrandSymbol: React.FC<{
   theme?: BrandLogoTheme;
   className?: string;
   idPrefix?: string;
-}> = ({ sizePx = 32, theme = 'dark', className = '', idPrefix = 'wss' }) => {
+}> = ({ sizePx = 32, theme = 'accent', className = '', idPrefix = 'wss' }) => {
   const globeGradId = `${idPrefix}-globe-grad`;
   const trunkGradId = `${idPrefix}-trunk-grad`;
 
@@ -159,7 +159,7 @@ export const BrandSymbol: React.FC<{
 export const BrandLogo: React.FC<BrandLogoProps> = ({
   variant = 'full',
   size = 'md',
-  theme = 'dark',
+  theme = 'accent',
   showBadge = false,
   badgeText = 'TELECOM GATEWAY',
   className = '',
@@ -196,10 +196,10 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
 
   const currentSize = sizeMap[size];
 
-  // Theme text styling
-  const textColor = theme === 'dark' ? 'text-[#07090f]' : 'text-white';
-  const accentColor = theme === 'dark' ? 'text-[#18181b]' : theme === 'light' ? 'text-white' : 'text-[var(--accent-blue)]';
-  const subColor = theme === 'dark' ? 'text-[rgba(7,9,15,0.6)]' : 'text-[var(--text-tertiary)]';
+  // Theme text styling: adapt dynamically to theme and light/dark modes
+  const textColor = theme === 'light' ? 'text-white' : 'text-[var(--text-primary)]';
+  const accentColor = theme === 'light' ? 'text-white' : 'text-[var(--brand-primary)]';
+  const subColor = theme === 'light' ? 'text-white/70' : 'text-[var(--text-tertiary)]';
 
   const logoContent = (
     <div

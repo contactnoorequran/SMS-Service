@@ -62,8 +62,7 @@ export const PaletteQuickDropdown: React.FC<PaletteQuickDropdownProps> = ({ onOp
 
       {isOpen && (
         <div
-          className="absolute right-0 top-full mt-2 w-80 rounded-xl bg-[var(--glass-bg)] backdrop-blur-2xl border border-[var(--glass-border)] shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 duration-150"
-          style={{ background: 'rgba(255, 255, 255, 0.98)' }}
+          className="absolute right-0 top-full mt-2 w-80 rounded-xl bg-[var(--bg-surface)] backdrop-blur-2xl border border-[var(--glass-border)] shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 duration-150"
         >
           {/* Header */}
           <div className="flex items-center justify-between pb-2 mb-2 border-b border-[var(--glass-border)]">

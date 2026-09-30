@@ -435,9 +435,9 @@ body {
 
 /* ─── Global Form Select & Option Styling Across All Panels ─── */
 select {
-  background-color: #ffffff !important;
-  color: #18181b !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  background-color: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--glass-border) !important;
   border-radius: 8px !important;
   padding-right: 2rem !important;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
@@ -452,14 +452,14 @@ select {
 
 select:focus {
   outline: none !important;
-  border-color: #18181b !important;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
+  border-color: var(--brand-primary) !important;
+  box-shadow: 0 0 0 2px var(--brand-primary-soft) !important;
 }
 
 select option,
 select optgroup {
-  background-color: #ffffff !important;
-  color: #18181b !important;
+  background-color: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
   font-size: 12px !important;
   padding: 8px 12px !important;
 }
@@ -467,8 +467,8 @@ select optgroup {
 select option:hover,
 select option:focus,
 select option:checked {
-  background-color: #ededee !important;
-  color: #18181b !important;
+  background-color: var(--glass-bg-hover) !important;
+  color: var(--brand-primary) !important;
 }
 
 /* ─── Accent Glow Utilities ─── */
@@ -593,21 +593,24 @@ select option:checked {
   outline-offset: 2px;
 }
 
-/* ─── Input / Select / Textarea Dark Overrides ─── */
-input,
-select,
-textarea {
+/* ─── Input / Select / Textarea Adaptive Overrides ─── */
+:root {
   color-scheme: light;
 }
 
-/* Chrome autofill dark override */
+:root[data-color-mode="dark"],
+:root.dark {
+  color-scheme: dark;
+}
+
+/* Chrome autofill adaptive override */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 textarea:-webkit-autofill,
 select:-webkit-autofill {
-  -webkit-text-fill-color: var(--text-primary);
-  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  -webkit-box-shadow: 0 0 0px 1000px var(--bg-surface) inset !important;
   transition: background-color 5000s ease-in-out 0s;
 }
 
@@ -1020,26 +1023,94 @@ tbody tr:hover { background: #fafafa; }
 @media (max-width: 639px) { header > div:last-child { gap: 4px; } header > div:last-child > div:has(> span) { display: none; } }
 
 /* Shared appearance mode, available to every signed-in role. */
-:root[data-color-mode="dark"] {
- --bg-deep:#101114; --bg-surface:#181a1f; --bg-elevated:#21242b;
- --glass-bg:#181a1f; --glass-bg-hover:#242730; --glass-bg-active:#2c303a;
- --glass-border:#343842; --glass-border-hover:#555c6c; --glass-border-active:#8d96aa;
- --text-primary:#f2f3f5; --text-secondary:#c2c6cf; --text-tertiary:#a0a7b6; --text-muted:#a0a7b6; --text-disabled:#757d8d;
- --bg-card:#181a1f; --bg-card-hover:#242730; --brand-surface:#181a1f; --brand-text:#f2f3f5; --brand-text-muted:#c2c6cf;
- --accent-emerald:#b9cfbf; --accent-amber:#d4c4a1; --accent-rose:#d7aeb5; --accent-violet:#bbb8d0; --accent-cyan:#aec8ce;
- --accent-emerald-dim:#253129; --accent-amber-dim:#332e23; --accent-rose-dim:#33272b; --accent-violet-dim:#2d2a37; --accent-cyan-dim:#243238;
- --brand-primary:#aab6cf !important; --brand-primary-hover:#c4cee1 !important; --brand-primary-soft:#2b3242 !important; --brand-border:#454f64 !important; --accent-blue:#b8c5e0 !important; --accent-blue-dim:#2b3242 !important;
- color-scheme:dark;
+:root[data-color-mode="dark"],
+:root.dark,
+html[data-color-mode="dark"],
+html.dark {
+  --bg-deep: #0b0d14;
+  --bg-surface: #121622;
+  --bg-elevated: #1a2030;
+  --glass-bg: #121622;
+  --glass-bg-hover: #1c2233;
+  --glass-bg-active: #242c42;
+  --glass-border: #262e42;
+  --glass-border-hover: #3d4968;
+  --glass-border-active: #5c6ea0;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --text-muted: #94a3b8;
+  --text-disabled: #64748b;
+  --bg-card: #121622;
+  --bg-card-hover: #1c2233;
+  --brand-surface: #121622;
+  --brand-text: #f8fafc;
+  --brand-text-muted: #cbd5e1;
+  --accent-emerald: #34d399;
+  --accent-amber: #fbbf24;
+  --accent-rose: #fb7185;
+  --accent-violet: #a78bfa;
+  --accent-cyan: #38bdf8;
+  --accent-emerald-dim: rgba(52, 211, 153, 0.15);
+  --accent-amber-dim: rgba(251, 191, 36, 0.15);
+  --accent-rose-dim: rgba(251, 113, 133, 0.15);
+  --accent-violet-dim: rgba(167, 139, 250, 0.15);
+  --accent-cyan-dim: rgba(56, 189, 248, 0.15);
+  --brand-primary: #38bdf8;
+  --brand-primary-hover: #7dd3fc;
+  --brand-primary-soft: rgba(56, 189, 248, 0.15);
+  --brand-primary-glow: rgba(56, 189, 248, 0.35);
+  --brand-secondary: #60a5fa;
+  --brand-secondary-soft: rgba(96, 165, 250, 0.15);
+  --brand-border: rgba(56, 189, 248, 0.3);
+  --brand-accent: #34d399;
+  --accent-blue: #38bdf8;
+  --accent-blue-dim: rgba(56, 189, 248, 0.15);
+  color-scheme: dark;
 }
-html[data-color-mode="dark"] .glass-card, html[data-color-mode="dark"] .glass-input,
-html[data-color-mode="dark"] select,html[data-color-mode="dark"] select option,html[data-color-mode="dark"] textarea,
-html[data-color-mode="dark"] [class*="bg-[rgba(10,14,23,"],html[data-color-mode="dark"] [class*="bg-[rgba(13,19,33,"] {background:var(--glass-bg)!important;color:var(--text-primary)!important;border-color:var(--glass-border)!important;}
-html[data-color-mode="dark"] th {background:#20232a!important;color:var(--text-secondary)!important;}
-html[data-color-mode="dark"] tbody tr:hover,html[data-color-mode="dark"] [class*="bg-[rgba(0,0,0,"] {background:#242730;}
-html[data-color-mode="dark"] .recharts-default-tooltip {background:#21242b!important;color:#f2f3f5!important;}
-html[data-color-mode="dark"] .recharts-cartesian-grid-horizontal line,html[data-color-mode="dark"] .recharts-cartesian-grid-vertical line {stroke:#343842!important;}
-html[data-color-mode="dark"] input[type=checkbox],html[data-color-mode="dark"] input[type=radio] {accent-color:#aab6cf;}
-html[data-color-mode="dark"] button[class*="bg-[var(--brand-primary)]"],html[data-color-mode="dark"] button[class*="bg-[var(--accent-blue)]"] {color:#101114!important;}
+
+html[data-color-mode="dark"] .glass-card,
+html.dark .glass-card,
+html[data-color-mode="dark"] .glass-panel,
+html.dark .glass-panel,
+html[data-color-mode="dark"] .glass-input,
+html.dark .glass-input {
+  background: var(--glass-bg) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--glass-border) !important;
+}
+
+html[data-color-mode="dark"] th,
+html.dark th {
+  background: #161b2a !important;
+  color: var(--text-secondary) !important;
+}
+
+html[data-color-mode="dark"] tbody tr:hover,
+html.dark tbody tr:hover {
+  background: #1a2032 !important;
+}
+
+html[data-color-mode="dark"] .recharts-default-tooltip,
+html.dark .recharts-default-tooltip {
+  background: #1a2030 !important;
+  color: #f8fafc !important;
+  border: 1px solid #3d4968 !important;
+}
+
+html[data-color-mode="dark"] .recharts-cartesian-grid-horizontal line,
+html[data-color-mode="dark"] .recharts-cartesian-grid-vertical line,
+html.dark .recharts-cartesian-grid-horizontal line,
+html.dark .recharts-cartesian-grid-vertical line {
+  stroke: #262e42 !important;
+}
+
+html[data-color-mode="dark"] input[type=checkbox],
+html[data-color-mode="dark"] input[type=radio],
+html.dark input[type=checkbox],
+html.dark input[type=radio] {
+  accent-color: #38bdf8;
+}
 .agent-workspace {font-size:12px;}
 .agent-workspace main {padding:28px!important;}
 .agent-workspace .reference-heading,.agent-workspace main>div>div:first-child:has(h1) {box-shadow:none;}
@@ -1078,11 +1149,15 @@ html[data-color-mode="dark"] button[class*="bg-[var(--brand-primary)]"],html[dat
 .agent-form-footer {display:flex;justify-content:flex-end;gap:6px;padding-top:14px;border-top:1px solid var(--glass-border);margin-top:8px;}
 .agent-form-footer button {padding:8px 12px;font-size:12px;border:1px solid var(--glass-border);}
 .agent-totals {display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;padding:12px 4px;font-size:11px;border-bottom:1px solid var(--glass-border);}
-html[data-color-mode="dark"] .agent-primary,html[data-color-mode="dark"] .agent-actions button {background:#e4e7ed;color:#18181b;}
+html[data-color-mode="dark"] .agent-primary,
+html.dark .agent-primary,
+html[data-color-mode="dark"] .agent-actions button,
+html.dark .agent-actions button {
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary);
+  border: 1px solid var(--brand-border);
+}
 @media(max-width:800px){.agent-workspace main{padding:16px!important;}.agent-credit-filters{grid-template-columns:1fr 1fr;}.agent-table{min-width:800px;}.agent-panel{padding:12px;}}
-html[data-color-mode="dark"] { --brand-secondary:#bec5d3 !important; --brand-secondary-soft:#292e39 !important; --brand-accent:#b7c1d3 !important; --brand-muted:#a0a7b6; --color-text-primary:#f2f3f5; --color-text-secondary:#c2c6cf; --color-text-tertiary:#a0a7b6; --color-bg-deep:#101114; --color-bg-surface:#181a1f; --color-glass-bg:#181a1f; --color-glass-border:#343842; }
-html[data-color-mode="dark"] input:not([type=checkbox]):not([type=radio]) {background:var(--bg-surface);color:var(--text-primary);border-color:var(--glass-border);}
-html[data-color-mode="dark"] select option:checked {background:#343842!important;color:#f2f3f5!important;}
 .agent-workspace .glass-card {border-radius:4px;}
 .agent-workspace table th {font-size:9px!important;}
 .agent-workspace header {height:46px;min-height:46px;}

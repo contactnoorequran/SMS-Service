@@ -20,8 +20,8 @@ export const WorldSmsMark: React.FC<WorldSmsMarkProps> = ({
   'aria-hidden': ariaHidden,
   ...props
 }) => {
-  const textColor = theme === 'dark' ? 'text-[#07090f]' : 'text-white';
-  const accentColor = theme === 'dark' ? 'text-[#0284c7]' : theme === 'light' ? 'text-white' : 'text-[var(--brand-primary)]';
+  const textColor = theme === 'light' ? 'text-white' : 'text-[var(--text-primary)]';
+  const accentColor = theme === 'light' ? 'text-white' : 'text-[var(--brand-primary)]';
 
   return (
     <div

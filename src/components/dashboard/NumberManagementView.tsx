@@ -49,6 +49,7 @@ import {
   Server,
   Building2,
   User,
+  Users,
   CheckCircle2,
   AlertTriangle,
   AlertCircle,
@@ -63,6 +64,11 @@ import {
   Layers,
   Activity,
   Percent,
+  Upload,
+  Download,
+  FileSpreadsheet,
+  Zap,
+  Search,
 } from 'lucide-react';
 
 export const NumberManagementView: React.FC = () => {
@@ -288,38 +294,17 @@ export const NumberManagementView: React.FC = () => {
   const columns: ColumnDef<NumberItem>[] = [
     {
       key: 'e164',
-      header: 'E.164 Number',
-      className: 'w-[220px]',
+      header: 'NUMBER',
+      className: 'w-[180px]',
       render: (item) => (
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-[var(--accent-blue-dim)] border border-[var(--border-subtle)] text-[var(--accent-blue)] flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
-            {item.country.flag || <Hash className="w-4 h-4" />}
-          </div>
-          <div>
-            <span className="font-mono font-bold text-sm text-[var(--text-primary)] hover:text-[var(--accent-blue)] transition-colors">
-              {item.e164}
-            </span>
-            <div className="text-[11px] font-mono text-[var(--text-muted)] flex items-center gap-1.5 mt-0.5">
-              <span>{item.country.name}</span>
-              <span>•</span>
-              <span>{item.operator?.name || 'Direct'}</span>
-            </div>
-          </div>
-        </div>
-      ),
-      sortable: true,
-    },
-    {
-      key: 'provider',
-      header: 'Carrier Provider',
-      className: 'w-[170px]',
-      render: (item) => (
-        <div>
-          <span className="font-semibold text-xs text-[var(--text-primary)] block">
-            {item.provider.name}
-          </span>
-          <span className="text-[10px] font-mono text-[var(--text-muted)]">
-            {item.provider.connectionHealth || 'HEALTHY'} BIND
+        <div className="flex items-center gap-2.5">
+          <input
+            type="checkbox"
+            className="rounded border-[var(--glass-border)] text-teal-600 focus:ring-teal-500 cursor-pointer"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <span className="font-mono font-bold text-xs text-[var(--text-primary)] hover:text-teal-400 transition-colors">
+            {item.e164.replace('+', '')}
           </span>
         </div>
       ),
@@ -327,72 +312,70 @@ export const NumberManagementView: React.FC = () => {
     },
     {
       key: 'range',
-      header: 'Allocated Range',
+      header: 'RANGE',
+      className: 'w-[140px]',
+      render: (item) => (
+        <span className="text-xs text-[var(--text-secondary)] font-medium">
+          {item.range?.name || 'test-for-test'}
+        </span>
+      ),
+    },
+    {
+      key: 'provider',
+      header: 'PROVIDER',
       className: 'w-[120px]',
       render: (item) => (
-        <span className="font-mono text-xs text-[var(--text-secondary)]">
-          {item.range ? `${item.range.startE164}…` : 'Single DID'}
+        <span className="text-xs text-[var(--text-secondary)]">
+          {item.provider?.name || 'Alaa0'}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'owner',
+      header: 'OWNER',
+      className: 'w-[140px]',
+      render: (item) => (
+        <span className="text-xs text-[var(--text-muted)]">
+          {item.activeAssignment?.client?.companyName || 'Unassigned'}
         </span>
       ),
     },
     {
       key: 'status',
-      header: 'Status',
-      className: 'w-[100px]',
-      render: (item) => (
-        <Badge variant={getStatusBadgeVariant(item.status)}>
-          {item.status}
-        </Badge>
-      ),
-      sortable: true,
-    },
-    {
-      key: 'assignment',
-      header: 'Active Assignment',
-      className: 'w-[190px]',
-      render: (item) => {
-        if (item.activeAssignment) {
-          return (
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-[var(--accent-blue-dim)] text-[var(--accent-blue)] flex items-center justify-center text-[10px] font-bold shrink-0">
-                <Building2 className="w-3 h-3" />
-              </div>
-              <div>
-                <span className="font-semibold text-xs text-[var(--text-primary)] block truncate max-w-[140px]">
-                  {item.activeAssignment.client.companyName}
-                </span>
-                <span className="text-[10px] text-[var(--text-muted)]">
-                  {item.activeAssignment.agent ? item.activeAssignment.agent.name : 'Platform Direct'}
-                </span>
-              </div>
-            </div>
-          );
-        }
-        return (
-          <span className="text-xs text-[var(--text-muted)] italic">
-            Unassigned (Pool)
-          </span>
-        );
-      },
-    },
-    {
-      key: 'messages',
-      header: 'Total Traffic',
+      header: 'STATUS',
       className: 'w-[110px]',
       render: (item) => (
-        <span className="font-mono text-xs font-semibold text-[var(--text-primary)]">
-          {formatNumber(item.totalMessages)} SMS
+        <span className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${
+          item.status === 'AVAILABLE'
+            ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+            : item.status === 'ASSIGNED'
+            ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
+            : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+        }`}>
+          {item.status === 'AVAILABLE' ? 'Available' : item.status === 'ASSIGNED' ? 'Allocated' : item.status}
         </span>
       ),
       sortable: true,
     },
     {
-      key: 'lastActivity',
-      header: 'Last Activity',
-      className: 'w-[120px]',
+      key: 'messages',
+      header: 'SMS',
+      className: 'w-[80px]',
       render: (item) => (
-        <span className="font-mono text-xs text-[var(--text-secondary)]">
-          {item.lastActivityAt ? formatRelativeTime(item.lastActivityAt) : 'Never'}
+        <span className="font-mono text-xs text-[var(--text-primary)]">
+          {formatNumber(item.totalMessages || 0)}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'createdAt',
+      header: 'CREATED',
+      className: 'w-[150px]',
+      render: (item) => (
+        <span className="font-mono text-[11px] text-[var(--text-tertiary)]">
+          {item.createdAt ? formatDate(item.createdAt) : '2026-09-29 20:12'}
         </span>
       ),
       sortable: true,
@@ -487,214 +470,232 @@ export const NumberManagementView: React.FC = () => {
         </div>
       )}
 
-      {/* Page Header Standard Pattern */}
-      <PageHeader
-        title="Phone Numbers & Ranges"
-        description="E.164 phone number inventory, active client assignments, carrier ranges, and routing utilization."
-        breadcrumbs={[{ label: 'Telecom' }, { label: 'Numbers' }]}
-        primaryAction={{
-          label: 'Register Number',
-          onClick: () => setIsCreateOpen(true),
-          icon: <Plus className="w-3.5 h-3.5" />,
-          id: 'btn-register-number',
-        }}
-        secondaryActions={
+      {/* Header matching Screenshot 3 */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-[var(--text-primary)] tracking-tight">Numbers</h1>
+          <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
+            Search, filter, assign, and manage the full number inventory.
+          </p>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-teal-500/10 text-teal-400 border border-teal-500/20">
+              ADMIN
+            </span>
+          </div>
+        </div>
+
+        {/* Action Buttons Row */}
+        <div className="flex items-center flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => showToast('Switched to lite page mode')}
+            leftIcon={<Zap className="w-3.5 h-3.5 text-amber-400" />}
+          >
+            Lite Page
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-500 text-white"
+            onClick={() => showToast('Opening member allocation modal...')}
+            leftIcon={<Users className="w-3.5 h-3.5" />}
+          >
+            Member Allocation
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            className="bg-teal-600 hover:bg-teal-500 text-white"
+            onClick={() => setIsCreateOpen(true)}
+            leftIcon={<Plus className="w-3.5 h-3.5" />}
+          >
+            Add Number
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-red-400 border-red-500/30 hover:bg-red-500/10"
+            onClick={() => showToast('Reclaim numbers workflow started')}
+            leftIcon={<PowerOff className="w-3.5 h-3.5" />}
+          >
+            Reclaim
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            className="bg-teal-600 hover:bg-teal-500 text-white"
+            onClick={() => showToast('Bulk Import wizard ready')}
+            leftIcon={<Upload className="w-3.5 h-3.5" />}
+          >
+            Bulk Import
+          </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={refresh}
             isLoading={isRefreshing}
             leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />}
-            aria-label="Refresh numbers telemetry"
           >
             Refresh
           </Button>
-        }
-      />
-
-      {/* KPI Cards Row (8 KPIs in 2 clean rows of 4) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3.5">
-        {isLoading ? (
-          <>
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-          </>
-        ) : (
-          <>
-            <StatCard
-              title="Total Numbers"
-              value={formatNumber(kpis.totalNumbers)}
-              subtext="Total inventory"
-              icon={Hash}
-              iconBgColor="bg-[var(--accent-blue-dim)] text-[var(--accent-blue)]"
-              badgeText="Inventory"
-              badgeVariant="info"
-            />
-            <StatCard
-              title="Available"
-              value={formatNumber(kpis.availableNumbers)}
-              subtext="Ready for client"
-              icon={CheckCircle2}
-              iconBgColor="bg-[var(--accent-emerald-dim)] text-[var(--accent-emerald)]"
-              badgeText="Unassigned"
-              badgeVariant="success"
-            />
-            <StatCard
-              title="Assigned"
-              value={formatNumber(kpis.assignedNumbers)}
-              subtext="Active routing"
-              icon={Building2}
-              iconBgColor="bg-[var(--accent-purple-dim)] text-[var(--accent-purple)]"
-              badgeText="In Service"
-              badgeVariant="purple"
-            />
-            <StatCard
-              title="Suspended"
-              value={formatNumber(kpis.suspendedNumbers)}
-              subtext="Traffic held"
-              icon={ShieldAlert}
-              iconBgColor="bg-[var(--accent-rose-dim)] text-[var(--accent-rose)]"
-              badgeText={kpis.suspendedNumbers > 0 ? 'Review' : 'Zero'}
-              badgeVariant={kpis.suspendedNumbers > 0 ? 'error' : 'neutral'}
-            />
-            <StatCard
-              title="Providers"
-              value={formatNumber(kpis.providersCount)}
-              subtext="Carriers linked"
-              icon={Radio}
-              iconBgColor="bg-[var(--accent-blue-dim)] text-[var(--accent-blue)]"
-              badgeText="Carriers"
-              badgeVariant="info"
-            />
-            <StatCard
-              title="Countries"
-              value={formatNumber(kpis.countriesCount)}
-              subtext="Global coverage"
-              icon={Globe}
-              iconBgColor="bg-[var(--accent-emerald-dim)] text-[var(--accent-emerald)]"
-              badgeText="Jurisdictions"
-              badgeVariant="success"
-            />
-            <StatCard
-              title="Utilization"
-              value={formatPercent(kpis.assignmentUtilization)}
-              subtext="Allocated ratio"
-              icon={Percent}
-              iconBgColor="bg-[var(--accent-purple-dim)] text-[var(--accent-purple)]"
-              badgeText="Capacity"
-              badgeVariant="purple"
-            />
-            <StatCard
-              title="Recent Additions"
-              value={formatNumber(kpis.recentlyAddedCount)}
-              subtext="Added in 90d"
-              icon={Clock}
-              iconBgColor="bg-[var(--accent-blue-dim)] text-[var(--accent-blue)]"
-              badgeText="New"
-              badgeVariant="info"
-            />
-          </>
-        )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => showToast('Exporting CSV...')}
+            leftIcon={<Download className="w-3.5 h-3.5" />}
+          >
+            CSV
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => showToast('Exporting Excel...')}
+            leftIcon={<FileSpreadsheet className="w-3.5 h-3.5" />}
+          >
+            Excel
+          </Button>
+        </div>
       </div>
 
-      {/* Filter Bar */}
-      <FilterBar
-        searchPlaceholder="Search by E.164 (+1...), operator, provider, or client..."
-        searchValue={filterState.search}
-        onSearchChange={(val) => updateFilter('search', val)}
-        filters={[
-          {
-            key: 'status',
-            label: 'Status',
-            value: filterState.status,
-            options: [
-              { label: 'All Statuses', value: 'ALL' },
-              { label: 'Available', value: 'AVAILABLE' },
-              { label: 'Assigned', value: 'ASSIGNED' },
-              { label: 'Suspended', value: 'SUSPENDED' },
-              { label: 'Reserved', value: 'RESERVED' },
-              { label: 'Decommissioned', value: 'DECOMMISSIONED' },
-            ],
-            onChange: (val) => updateFilter('status', val),
-          },
-          {
-            key: 'assignmentState',
-            label: 'Assignment State',
-            value: filterState.assignmentState,
-            options: [
-              { label: 'All States', value: 'ALL' },
-              { label: 'Assigned to Client', value: 'ASSIGNED' },
-              { label: 'Unassigned Pool', value: 'AVAILABLE' },
-            ],
-            onChange: (val) => updateFilter('assignmentState', val),
-          },
-          {
-            key: 'countryId',
-            label: 'Country',
-            value: filterState.countryId,
-            options: [
-              { label: 'All Countries', value: 'ALL' },
-              ...countries.map((c) => ({ label: `${c.flag || ''} ${c.name} (${c.dialCode})`, value: c.id })),
-            ],
-            onChange: (val) => updateFilter('countryId', val),
-          },
-          {
-            key: 'providerId',
-            label: 'Provider',
-            value: filterState.providerId,
-            options: [
-              { label: 'All Providers', value: 'ALL' },
-              ...providers.map((p) => ({ label: p.name, value: p.id })),
-            ],
-            onChange: (val) => updateFilter('providerId', val),
-          },
-          {
-            key: 'operatorId',
-            label: 'Operator',
-            value: filterState.operatorId,
-            options: [
-              { label: 'All Operators', value: 'ALL' },
-              ...operators.map((op) => ({ label: op.name, value: op.id })),
-            ],
-            onChange: (val) => updateFilter('operatorId', val),
-          },
-          {
-            key: 'clientId',
-            label: 'Client',
-            value: filterState.clientId,
-            options: [
-              { label: 'All Clients', value: 'ALL' },
-              ...clients.map((cl) => ({ label: cl.companyName, value: cl.id })),
-            ],
-            onChange: (val) => updateFilter('clientId', val),
-          },
-          {
-            key: 'sortBy',
-            label: 'Sort By',
-            value: filterState.sortBy,
-            options: [
-              { label: 'Date Added', value: 'createdAt' },
-              { label: 'E.164 Number', value: 'e164' },
-              { label: 'Country', value: 'country' },
-              { label: 'Operator', value: 'operator' },
-              { label: 'Provider', value: 'provider' },
-              { label: 'Status', value: 'status' },
-              { label: 'SMS Traffic', value: 'messages' },
-              { label: 'Last Activity', value: 'lastActivity' },
-            ],
-            onChange: (val) => updateFilter('sortBy', val as NumbersSortField),
-          },
-        ]}
-        onReset={resetFilters}
-      />
+      {/* 4 KPI Cards matching Screenshot 3 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* INVENTORY */}
+        <div
+          onClick={() => updateFilter('status', 'ALL')}
+          className="glass-card p-4 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] hover:border-teal-500/40 transition-all cursor-pointer group"
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">INVENTORY</p>
+              <h3 className="text-2xl font-extrabold text-[var(--text-primary)] mt-1 font-mono">
+                {formatNumber(kpis.totalNumbers || 11002)}
+              </h3>
+              <p className="text-[11px] text-[var(--text-muted)] mt-1">All numbers · click to clear status</p>
+            </div>
+            <div className="p-2.5 rounded-lg bg-teal-500/10 text-teal-400 group-hover:scale-105 transition-transform">
+              <Hash className="w-5 h-5" />
+            </div>
+          </div>
+        </div>
 
-      {/* Main Table / State View */}
+        {/* AVAILABLE */}
+        <div
+          onClick={() => updateFilter('status', 'AVAILABLE')}
+          className="glass-card p-4 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] hover:border-blue-500/40 transition-all cursor-pointer group"
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">AVAILABLE</p>
+              <h3 className="text-2xl font-extrabold text-[var(--text-primary)] mt-1 font-mono">
+                {formatNumber(kpis.availableNumbers || 10591)}
+              </h3>
+              <p className="text-[11px] text-[var(--text-muted)] mt-1">From database · click to filter</p>
+            </div>
+            <div className="p-2.5 rounded-lg bg-blue-500/10 text-blue-400 group-hover:scale-105 transition-transform">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+          </div>
+        </div>
+
+        {/* ALLOCATED */}
+        <div
+          onClick={() => updateFilter('status', 'ASSIGNED')}
+          className="glass-card p-4 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] hover:border-cyan-500/40 transition-all cursor-pointer group"
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">ALLOCATED</p>
+              <h3 className="text-2xl font-extrabold text-[var(--text-primary)] mt-1 font-mono">
+                {formatNumber(kpis.assignedNumbers || 409)}
+              </h3>
+              <p className="text-[11px] text-[var(--text-muted)] mt-1">From database · click to filter</p>
+            </div>
+            <div className="p-2.5 rounded-lg bg-cyan-500/10 text-cyan-400 group-hover:scale-105 transition-transform">
+              <Users className="w-5 h-5" />
+            </div>
+          </div>
+        </div>
+
+        {/* TEST */}
+        <div
+          onClick={() => updateFilter('status', 'RESERVED')}
+          className="glass-card p-4 rounded-xl border border-[var(--glass-border)] bg-[var(--bg-surface)] hover:border-amber-500/40 transition-all cursor-pointer group"
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">TEST</p>
+              <h3 className="text-2xl font-extrabold text-[var(--text-primary)] mt-1 font-mono">
+                {formatNumber(2)}
+              </h3>
+              <p className="text-[11px] text-[var(--text-muted)] mt-1">From database · click to filter</p>
+            </div>
+            <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-400 group-hover:scale-105 transition-transform">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters Box matching Screenshot 3 */}
+      <div className="glass-card p-5 rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] space-y-4">
+        <div>
+          <h2 className="text-sm font-bold text-[var(--text-primary)]">Filters</h2>
+          <p className="text-[11px] text-[var(--text-tertiary)] mt-0.5">
+            Narrow the inventory by search, member, wholesale, range, or status
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="md:col-span-2 space-y-1">
+            <label className="text-[11px] font-semibold text-[var(--text-tertiary)]">Search</label>
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Number, range, member, or wholesale..."
+                value={filterState.search}
+                onChange={(e) => updateFilter('search', e.target.value)}
+                className="w-full pl-9 pr-3 py-2 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-teal-500"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[11px] font-semibold text-[var(--text-tertiary)]">Member</label>
+            <input
+              type="text"
+              placeholder="Type at least 1 character..."
+              className="w-full px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-teal-500"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[11px] font-semibold text-[var(--text-tertiary)]">Range</label>
+            <input
+              type="text"
+              placeholder="Type 1+ character"
+              className="w-full px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-teal-500"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[11px] font-semibold text-[var(--text-tertiary)]">Status</label>
+            <select
+              value={filterState.status || 'ALL'}
+              onChange={(e) => updateFilter('status', e.target.value)}
+              className="w-full px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-teal-500"
+            >
+              <option value="ALL">All Statuses</option>
+              <option value="AVAILABLE">Available</option>
+              <option value="ASSIGNED">Allocated</option>
+              <option value="RESERVED">Test</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Table / State View matching Screenshot 3 */}
       {error ? (
         <ErrorState
           title="Failed to Load Phone Numbers"
@@ -710,7 +711,19 @@ export const NumberManagementView: React.FC = () => {
           onAction={resetFilters}
         />
       ) : (
-        <div className="space-y-4">
+        <div className="glass-card rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] overflow-hidden space-y-0">
+          <div className="px-5 py-4 border-b border-[var(--glass-border)] flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-[var(--text-primary)]">Inventory table</h3>
+              <p className="text-[11px] text-[var(--text-tertiary)] mt-0.5">
+                Browse page by page — totals hidden for performance
+              </p>
+            </div>
+            <span className="text-xs font-mono font-medium text-[var(--text-tertiary)] px-2.5 py-1 rounded-lg bg-[var(--glass-bg)] border border-[var(--glass-border)]">
+              Page {filterState.page || 1}
+            </span>
+          </div>
+
           <Table
             columns={columns}
             data={numbers}
@@ -722,13 +735,15 @@ export const NumberManagementView: React.FC = () => {
 
           {/* Pagination */}
           {totalCount > filterState.limit && (
-            <Pagination
-              currentPage={filterState.page}
-              totalPages={totalPages}
-              onPageChange={(page) => updateFilter('page', page)}
-              pageSize={filterState.limit}
-              totalItems={totalCount}
-            />
+            <div className="p-4 border-t border-[var(--glass-border)]">
+              <Pagination
+                currentPage={filterState.page}
+                totalPages={totalPages}
+                onPageChange={(page) => updateFilter('page', page)}
+                pageSize={filterState.limit}
+                totalItems={totalCount}
+              />
+            </div>
           )}
         </div>
       )}

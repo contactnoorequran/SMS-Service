@@ -116,6 +116,9 @@ const ClientManagementView = React.lazy(() =>
 const ProviderManagementView = React.lazy(() =>
   import('./ProviderManagementView').then((m) => ({ default: m.ProviderManagementView }))
 );
+const RangesManagementView = React.lazy(() =>
+  import('./RangesManagementView').then((m) => ({ default: m.RangesManagementView }))
+);
 const MessagingManagementView = React.lazy(() =>
   import('./MessagingManagementView').then((m) => ({ default: m.MessagingManagementView }))
 );
@@ -246,7 +249,10 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = memo(({
     if (currentTab === 'financial-reports')
       return <FinancialReportsView />;
 
-    if (['numbers', 'countries', 'operators', 'ranges', 'assignments'].includes(currentTab))
+    if (currentTab === 'ranges')
+      return <RangesManagementView />;
+
+    if (['numbers', 'countries', 'operators', 'assignments'].includes(currentTab))
       return <NumberManagementView />;
 
     if (currentTab === 'traffic' || currentTab === 'messages')

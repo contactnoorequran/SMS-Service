@@ -58,7 +58,8 @@ export const AppShell: React.FC<AppShellProps> = ({ initialTab }) => {
     if (cleanPath.startsWith('/managers')) return 'managers';
     if (cleanPath.startsWith('/users')) return 'users';
     if (cleanPath.startsWith('/numbers')) return 'numbers';
-    if (cleanPath.startsWith('/ranges') || cleanPath.startsWith('/countries') || cleanPath.startsWith('/operators') || cleanPath.startsWith('/assignments')) return 'numbers';
+    if (cleanPath.startsWith('/ranges')) return 'ranges';
+    if (cleanPath.startsWith('/countries') || cleanPath.startsWith('/operators') || cleanPath.startsWith('/assignments')) return 'numbers';
     if (cleanPath.startsWith('/traffic') || cleanPath.startsWith('/messages')) return 'traffic';
     if (cleanPath.startsWith('/cdr')) return 'cdr';
     if (cleanPath.startsWith('/financials') || cleanPath.startsWith('/billing') || cleanPath.startsWith('/wallets')) return 'financials';

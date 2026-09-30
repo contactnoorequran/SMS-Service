@@ -22,6 +22,25 @@ import { BrandLogo } from '../ui/BrandLogo';
 import { AppIcon, AppIconName } from '../ui/AppIcon';
 import { useAuth } from '../../context/AuthContext';
 
+const GROUP_HEADER_ICONS: Record<string, AppIconName> = {
+  'Overview': 'LayoutDashboard',
+  'Operations': 'Layers',
+  'Management': 'Users',
+  'Reports': 'TrendingUp',
+  'Wholesale Customers': 'Building2',
+  'System': 'Settings',
+  'Main': 'LayoutDashboard',
+  'SMS Module': 'Layers',
+  'SMS Test Panel': 'Radio',
+  'Stats & Finance': 'TrendingUp',
+  'Account': 'Settings',
+  'Team Management': 'Users',
+  'Operations & Approvals': 'CheckCircle2',
+  'My SMS Numbers': 'number-inventory',
+  'API & Webhooks': 'Cable',
+  'Billing': 'Wallet',
+};
+
 interface SidebarProps {
   currentTab: string;
   onSelectTab: (tabId: string) => void;
@@ -159,9 +178,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {navGroups.map((group) => {
           const groupItems = itemsByGroup[group];
           if (!groupItems || groupItems.length === 0) return null;
-          const isDropdown = groupItems.length > 1;
-          const isExpanded = Boolean(expandedGroups[group]);
+          const isDropdown = groupItems.length > 1 || role === 'SUPER_ADMIN';
+          const isExpanded = expandedGroups[group] !== false;
           const isActiveGroup = groupItems.some(item => item.id === currentTab || item.targetTab === currentTab);
+          const groupIcon = GROUP_HEADER_ICONS[group] || (groupItems[0]?.iconName as AppIconName) || 'LayoutDashboard';
 
           return (
             <div key={group} className="space-y-1">
@@ -171,11 +191,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onClick={() => toggleGroup(group)}
                   aria-expanded={isExpanded}
                   aria-label={group}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-md text-left cursor-pointer hover:bg-[var(--glass-bg-hover)] transition-colors ${isActiveGroup ? 'text-[var(--text-primary)] bg-[var(--brand-primary-soft)]' : 'text-[var(--text-secondary)]'}`}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold rounded-md text-left cursor-pointer hover:bg-[var(--glass-bg-hover)] transition-colors ${isActiveGroup ? 'text-[var(--text-primary)] bg-[var(--brand-primary-soft)]' : 'text-[var(--text-secondary)]'}`}
                 >
-                  <AppIcon name={groupItems[0].iconName as AppIconName} size="sm" className="w-4 h-4 shrink-0" />
+                  <AppIcon name={groupIcon} size="sm" className="w-4 h-4 shrink-0 text-[var(--brand-primary)]" />
                   <span className="flex-1">{group}</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-0' : '-rotate-90'}`} />
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isExpanded ? 'rotate-0' : '-rotate-90'}`} />
                 </button>
               )}
 

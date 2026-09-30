@@ -81,7 +81,7 @@ export const CreateNumberModal: React.FC<CreateNumberModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Register New Phone Line to Inventory">
+    <Modal isOpen={isOpen} onClose={onClose} title="Add Number">
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <div className="p-3 rounded-xl bg-[var(--accent-rose-dim)] border border-[var(--accent-rose)]/30 text-[var(--accent-rose)] text-xs flex items-center gap-2">
@@ -90,11 +90,43 @@ export const CreateNumberModal: React.FC<CreateNumberModalProps> = ({
           </div>
         )}
 
-        {/* E.164 Number Input */}
+        {/* Target Range * */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-[var(--text-secondary)] flex items-center gap-1.5">
-            <Hash className="w-3.5 h-3.5 text-[var(--accent-blue)]" />
-            E.164 Phone Number *
+          <label className="text-xs font-semibold text-[var(--text-secondary)]">
+            Target Range *
+          </label>
+          <select
+            value={rangeId}
+            onChange={(e) => {
+              setRangeId(e.target.value);
+              const matched = ranges.find((r) => r.id === e.target.value);
+              if (matched) {
+                if (matched.countryId) setCountryId(matched.countryId);
+                if (matched.providerId) setProviderId(matched.providerId);
+              }
+            }}
+            className="w-full px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-teal-500"
+          >
+            <option value="">Type at least 1 character to search by range name...</option>
+            {ranges.length > 0 ? (
+              ranges.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name || `${r.startE164} - ${r.endE164}`}
+                </option>
+              ))
+            ) : (
+              <>
+                <option value="range-1">test-for-test (Alaa0)</option>
+                <option value="range-2">Alaa Test (UK)</option>
+              </>
+            )}
+          </select>
+        </div>
+
+        {/* Full International Number * */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-[var(--text-secondary)]">
+            Full International Number *
           </label>
           <input
             type="text"
@@ -104,138 +136,39 @@ export const CreateNumberModal: React.FC<CreateNumberModalProps> = ({
               setE164(e.target.value);
               setError(null);
             }}
-            placeholder="+12025550199"
-            className="w-full px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl text-xs font-mono text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-blue)]"
+            placeholder="445555599999"
+            className="w-full px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl text-xs font-mono text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-teal-500"
           />
         </div>
 
-        {/* Country & Provider Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-[var(--text-secondary)] flex items-center gap-1.5">
-              <Globe className="w-3.5 h-3.5 text-[var(--accent-emerald)]" />
-              Country *
-            </label>
-            <select
-              value={countryId}
-              onChange={(e) => {
-                setCountryId(e.target.value);
-                setOperatorId('');
-                setRangeId('');
-              }}
-              required
-              className="w-full px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-blue)]"
-            >
-              {countries.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.flag} {c.name} ({c.dialCode})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-[var(--text-secondary)] flex items-center gap-1.5">
-              <Radio className="w-3.5 h-3.5 text-[var(--accent-purple)]" />
-              Upstream Carrier Provider *
-            </label>
-            <select
-              value={providerId}
-              onChange={(e) => {
-                setProviderId(e.target.value);
-                setRangeId('');
-              }}
-              required
-              className="w-full px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-blue)]"
-            >
-              {providers.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Operator & Range Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-[var(--text-secondary)]">
-              Network Operator (Optional)
-            </label>
-            <select
-              value={operatorId}
-              onChange={(e) => setOperatorId(e.target.value)}
-              className="w-full px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-blue)]"
-            >
-              <option value="">Standard Telco / Direct Allocation</option>
-              {availableOperators.map((op) => (
-                <option key={op.id} value={op.id}>
-                  {op.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-[var(--text-secondary)]">
-              Inventory Range (Optional)
-            </label>
-            <select
-              value={rangeId}
-              onChange={(e) => setRangeId(e.target.value)}
-              className="w-full px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-blue)]"
-            >
-              <option value="">Stand-alone Single Number</option>
-              {availableRanges.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.startE164} - {r.endE164}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Initial Status & Monthly Cost */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-[var(--text-secondary)]">
-              Initial Status
-            </label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value as NumberStatus)}
-              className="w-full px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-blue)]"
-            >
-              <option value="AVAILABLE">AVAILABLE (Ready for assignment)</option>
-              <option value="RESERVED">RESERVED (Hold from assignment)</option>
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-[var(--text-secondary)] flex items-center gap-1.5">
-              <DollarSign className="w-3.5 h-3.5 text-[var(--accent-emerald)]" />
-              Monthly Base Cost ($)
-            </label>
-            <input
-              type="number"
-              step="0.10"
-              min="0"
-              value={monthlyCost}
-              onChange={(e) => setMonthlyCost(e.target.value)}
-              className="w-full px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl text-xs font-mono text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-blue)]"
-            />
-          </div>
+        {/* Status Dropdown */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-[var(--text-secondary)]">
+            Status
+          </label>
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value as NumberStatus)}
+            className="w-full px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-teal-500"
+          >
+            <option value="AVAILABLE">Available</option>
+            <option value="ASSIGNED">Allocated</option>
+          </select>
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-2 pt-2">
+        <div className="flex items-center justify-end gap-2 pt-4 border-t border-[var(--glass-border)]">
           <Button variant="secondary" size="sm" type="button" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button variant="primary" size="sm" type="submit" isLoading={isSubmitting}>
-            <Plus className="w-3.5 h-3.5 mr-1.5" />
-            Provision Number
+          <Button
+            variant="primary"
+            size="sm"
+            type="submit"
+            isLoading={isSubmitting}
+            className="bg-teal-600 hover:bg-teal-500 text-white"
+          >
+            Create Number
           </Button>
         </div>
       </form>

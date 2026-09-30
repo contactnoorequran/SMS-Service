@@ -290,10 +290,28 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
                 SMPP Settings
               </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  SMPP Role
+                </label>
+                <select
+                  value="Client — we connect to provider SMSC"
+                  disabled
+                  className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer"
+                >
+                  <option value="Client — we connect to provider SMSC">
+                    Client — we connect to provider SMSC
+                  </option>
+                  <option value="Server — provider connects to our SMSC">
+                    Server — provider connects to our SMSC
+                  </option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                <div className="sm:col-span-9">
                   <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
-                    Host / IP
+                    Provider SMPP Host / IP
                   </label>
                   <input
                     type="text"
@@ -304,13 +322,13 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
                   />
                 </div>
 
-                <div>
+                <div className="sm:col-span-3">
                   <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
                     Port
                   </label>
                   <input
                     type="text"
-                    placeholder="2775"
+                    placeholder="2227"
                     value={smppPort}
                     onChange={(e) => setSmppPort(e.target.value)}
                     className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
@@ -325,16 +343,19 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
                   </label>
                   <input
                     type="text"
-                    placeholder="worldsms"
+                    placeholder="admin"
                     value={smppSystemId}
                     onChange={(e) => setSmppSystemId(e.target.value)}
                     className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
                   />
+                  <p className="text-[10px] text-[var(--text-tertiary,#64748b)] mt-1">
+                    Your login at the provider SMSC.
+                  </p>
                 </div>
 
                 <div>
                   <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
-                    Password
+                    SMPP Password
                   </label>
                   <div className="relative">
                     <input
@@ -355,9 +376,35 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 flex items-center gap-2.5 text-[11px]">
-                <Radio className="w-4 h-4 shrink-0 text-amber-400" />
-                <span>SMPP transceiver socket will bind to standard port 2775 upon creation.</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                    System Type
+                  </label>
+                  <input
+                    type="text"
+                    placeholder=""
+                    value=""
+                    onChange={() => {}}
+                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                    Bind Mode
+                  </label>
+                  <select
+                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer"
+                  >
+                    <option value="TRX">TRX — Transceiver (recommended)</option>
+                    <option value="TX">TX — Transmitter</option>
+                    <option value="RX">RX — Receiver</option>
+                  </select>
+                  <p className="text-[10px] text-[var(--text-tertiary,#64748b)] mt-1">
+                    TRX/RX required to receive inbound MO and DLRs.
+                  </p>
+                </div>
               </div>
             </div>
           )}

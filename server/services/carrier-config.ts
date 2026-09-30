@@ -37,8 +37,8 @@ export const connectionSchema = z.object({
   bodyField: z.string().regex(/^[a-zA-Z][a-zA-Z0-9_]*$/).default('body'),
   messageIdPath: z.string().regex(/^[a-zA-Z0-9_.]+$/).default('id'),
   credentialRefLabel: z.string().max(100).optional(),
-  secrets: z.object({apiKey: z.string().max(4096).optional(), username: z.string().max(200).optional(), password: z.string().max(4096).optional(), webhookSecret: z.string().max(4096).optional()}).strict().optional(),
-}).strict();
+  secrets: z.object({apiKey: z.string().max(4096).optional(), username: z.string().max(200).optional(), password: z.string().max(4096).optional(), webhookSecret: z.string().max(4096).optional()}).optional(),
+});
 export type ConnectionConfig = Omit<z.infer<typeof connectionSchema>, 'secrets'>;
 export function validateLiveConfig(c: ConnectionConfig) {
   if (c.mode !== 'LIVE') return;

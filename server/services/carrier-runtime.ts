@@ -119,9 +119,16 @@ export function startCarrierRuntime() {
             if (c.config.mode !== 'LIVE' || !c.config.enabled) continue;
             active.add(c.id); const revision = row.updatedAt.toISOString();
             if (!stopping && (registered.get(c.id) !== revision || !smppManager.get(c.id))) {
-              registerSmpp(c); registered.set(c.id, revision); void smppManager.startTrunk(c.id).catch(() => {});
+              console.log(`[CarrierRuntime] Registering and starting SMPP trunk for "${c.config.name}" (${c.id})...`);
+              registerSmpp(c); registered.set(c.id, revision);
+              void smppManager.startTrunk(c.id).catch(err => {
+                console.error(`[CarrierRuntime] Failed to start SMPP trunk ${c.id}:`, err?.message || err);
+              });
             }
-          } catch { smppManager.stopTrunk(row.id); registered.delete(row.id); }
+          } catch(err: any) {
+            console.error(`[CarrierRuntime] Error loading connection ${row.id}:`, err?.message || err);
+            smppManager.stopTrunk(row.id); registered.delete(row.id);
+          }
         }
         for (const id of registered.keys()) if (!active.has(id)) { smppManager.stopTrunk(id); registered.delete(id); }
       }

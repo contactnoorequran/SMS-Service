@@ -142,34 +142,34 @@ export class DashboardService {
       prisma.user.count({ where: { role: { name: 'MANAGER' } } }).catch(() => 0),
       prisma.user.count({ where: { role: { name: 'AGENT' } } }).catch(() => 0),
       prisma.user.count({ where: { role: { name: 'CLIENT' } } }).catch(() => 0),
-      prisma.incomingMessage.count({ where: { receivedAt: { gte: startOfToday } } }).catch(() => 0),
-      prisma.incomingMessage.count({ where: { receivedAt: { gte: startOfWeek } } }).catch(() => 0),
+      prisma.inboundMessage.count({ where: { receivedAt: { gte: startOfToday } } }).catch(() => 0),
+      prisma.inboundMessage.count({ where: { receivedAt: { gte: startOfWeek } } }).catch(() => 0),
       prisma.wallet.aggregate({ _sum: { balance: true } }).catch(() => ({ _sum: { balance: 0 } })),
-      prisma.cDR.aggregate({
-        _sum: { netProfit: true, clientPayout: true, providerCost: true, agentCommission: true },
-      }).catch(() => ({ _sum: { netProfit: 0, clientPayout: 0, providerCost: 0, agentCommission: 0 } })),
+      prisma.cdr.aggregate({
+        _sum: { clientChargeMicrounits: true, providerCostMicrounits: true, platformProfitMicrounits: true, agentCommissionMicrounits: true },
+      }).catch(() => ({ _sum: { clientChargeMicrounits: 0, providerCostMicrounits: 0, platformProfitMicrounits: 0, agentCommissionMicrounits: 0 } })),
       prisma.auditLog.findMany({
         take: 10,
         orderBy: { createdAt: 'desc' },
         include: { user: { select: { email: true, firstName: true, lastName: true } } },
       }).catch(() => []),
-      prisma.incomingMessage.findMany({
+      prisma.inboundMessage.findMany({
         take: 10,
         orderBy: { receivedAt: 'desc' },
-        include: { provider: { select: { name: true } }, number: { select: { e164Number: true } } },
+        include: { provider: { select: { name: true } }, number: { select: { e164: true } } },
       }).catch(() => []),
-      prisma.numberAssignment.findMany({
+      prisma.activeAssignment.findMany({
         take: 10,
         orderBy: { assignedAt: 'desc' },
         include: {
-          number: { select: { e164Number: true } },
-          client: { include: { user: { select: { email: true, firstName: true, lastName: true } } } },
+          number: { select: { e164: true } },
+          client: { select: { name: true } },
         },
       }).catch(() => []),
       prisma.provider.findMany({
         include: {
-          connections: { select: { isConnected: true, throughputLimit: true } },
-          _count: { select: { incomingMessages: true, numbers: true } },
+          connections: { select: { status: true, priority: true } },
+          _count: { select: { inboundMessages: true, numbers: true } },
         },
       }).catch(() => []),
       prisma.country.findMany({
@@ -182,19 +182,19 @@ export class DashboardService {
         by: ['status'],
         _count: { id: true },
       }).catch(() => []),
-      prisma.incomingMessage.findMany({
+      prisma.inboundMessage.findMany({
         where: { receivedAt: { gte: sevenDaysAgo } },
         select: { receivedAt: true, status: true },
       }).catch(() => []),
-      prisma.cDR.findMany({
+      prisma.cdr.findMany({
         where: { createdAt: { gte: sevenDaysAgo } },
-        select: { createdAt: true, clientPayout: true, providerCost: true, netProfit: true, agentCommission: true },
+        select: { createdAt: true, clientChargeMicrounits: true, providerCostMicrounits: true, platformProfitMicrounits: true, agentCommissionMicrounits: true },
       }).catch(() => []),
     ]);
 
     const unassignedNumbers = Math.max(0, totalNumbers - assignedNumbers);
     const platformBalance = Number(walletsAggregate._sum?.balance || 0);
-    const totalEarnings = Number(cdrsAggregate._sum?.netProfit || 0);
+    const totalEarnings = Number(cdrsAggregate._sum?.platformProfitMicrounits || 0) / 1000000;
 
     // Build Time-Series for SMS Volume & Earnings (Last 7 Days) from actual records
     const smsVolume: SmsVolumePoint[] = [];
@@ -230,10 +230,10 @@ export class DashboardService {
         return cDate === dayStr;
       });
 
-      const dayGross = Number(dayCdrs.reduce((acc: number, c: any) => acc + Number(c.clientPayout || 0), 0).toFixed(4));
-      const dayCost = Number(dayCdrs.reduce((acc: number, c: any) => acc + Number(c.providerCost || 0), 0).toFixed(4));
-      const dayNet = Number(dayCdrs.reduce((acc: number, c: any) => acc + Number(c.netProfit || 0), 0).toFixed(4));
-      const dayComm = Number(dayCdrs.reduce((acc: number, c: any) => acc + Number(c.agentCommission || 0), 0).toFixed(4));
+      const dayGross = Number(dayCdrs.reduce((acc: number, c: any) => acc + (Number(c.clientChargeMicrounits || 0) / 1000000), 0).toFixed(4));
+      const dayCost = Number(dayCdrs.reduce((acc: number, c: any) => acc + (Number(c.providerCostMicrounits || 0) / 1000000), 0).toFixed(4));
+      const dayNet = Number(dayCdrs.reduce((acc: number, c: any) => acc + (Number(c.platformProfitMicrounits || 0) / 1000000), 0).toFixed(4));
+      const dayComm = Number(dayCdrs.reduce((acc: number, c: any) => acc + (Number(c.agentCommissionMicrounits || 0) / 1000000), 0).toFixed(4));
 
       earnings.push({
         date: dayStr,
@@ -296,7 +296,7 @@ export class DashboardService {
       const total = c._count?.numbers || c.numbers?.length || 0;
       return {
         country: c.name,
-        iso2: c.iso2,
+        iso2: c.isoCode,
         total,
         assigned,
         available: Math.max(0, total - assigned),
@@ -305,8 +305,8 @@ export class DashboardService {
 
     // Provider Traffic from real database
     const providerTraffic: ProviderTrafficItem[] = providersList.map((p: any) => {
-      const isConnected = p.connections?.some((c: any) => c.isConnected);
-      const totalMsgs = p._count?.incomingMessages || 0;
+      const isConnected = p.connections?.some((c: any) => c.status === 'ACTIVE');
+      const totalMsgs = p._count?.inboundMessages || 0;
       return {
         id: p.id,
         name: p.name,
@@ -340,8 +340,8 @@ export class DashboardService {
       recentActivity.push({
         id: `msg-${msg.id}`,
         type: 'MESSAGE',
-        title: `Inbound SMS on ${msg.number?.e164Number || msg.destinationAddress}`,
-        description: `From: ${msg.senderAddress} • Carrier: ${msg.provider?.name || 'Carrier Gateway'}`,
+        title: `Inbound SMS on ${msg.number?.e164 || msg.toNumber}`,
+        description: `From: ${msg.fromNumber} • Carrier: ${msg.provider?.name || 'Carrier Gateway'}`,
         timestamp: msg.receivedAt.toISOString(),
         status: 'SUCCESS',
         actor: 'Gateway',
@@ -353,8 +353,8 @@ export class DashboardService {
       recentActivity.push({
         id: `assign-${assign.id}`,
         type: 'ASSIGNMENT',
-        title: `Number Allocated: ${assign.number?.e164Number}`,
-        description: `Client: ${assign.client?.user?.email || 'Enterprise Client'} (${assign.status})`,
+        title: `Number Allocated: ${assign.number?.e164 || 'Number'}`,
+        description: `Client: ${assign.client?.name || 'Enterprise Client'}`,
         timestamp: assign.assignedAt.toISOString(),
         status: 'INFO',
         actor: 'System Admin',

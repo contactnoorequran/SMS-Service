@@ -18,11 +18,16 @@ export function encryptSecrets(value: CarrierSecrets) {
 }
 export function decryptSecrets(value?: string | null): CarrierSecrets {
   if (!value) return {};
-  const [version, iv, tag, body] = value.split('.');
-  if (version !== 'v1') throw new Error('Unsupported credential encryption version');
-  const cipher = createDecipheriv('aes-256-gcm', encryptionKey(), Buffer.from(iv, 'base64'));
-  cipher.setAuthTag(Buffer.from(tag, 'base64'));
-  return JSON.parse(Buffer.concat([cipher.update(Buffer.from(body, 'base64')), cipher.final()]).toString('utf8'));
+  try {
+    const parts = value.split('.');
+    if (parts.length !== 4 || parts[0] !== 'v1') return {};
+    const [, iv, tag, body] = parts;
+    const cipher = createDecipheriv('aes-256-gcm', encryptionKey(), Buffer.from(iv, 'base64'));
+    cipher.setAuthTag(Buffer.from(tag, 'base64'));
+    return JSON.parse(Buffer.concat([cipher.update(Buffer.from(body, 'base64')), cipher.final()]).toString('utf8'));
+  } catch (err) {
+    return {};
+  }
 }
 export function constantEqual(a: string, b: string) {
   const aa = Buffer.from(a), bb = Buffer.from(b);

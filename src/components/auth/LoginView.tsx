@@ -18,9 +18,13 @@ import {
   Building2,
   X,
   Info,
+  User,
+  Phone,
+  CheckCircle2,
 } from 'lucide-react';
 import { UserRole } from '../../types/auth';
 import { useAuth, SEED_ACCOUNTS } from '../../context/AuthContext';
+import { apiClient } from '../../services/api';
 import { BrandSymbol } from '../ui/BrandLogo';
 
 interface LoginViewProps {
@@ -48,8 +52,21 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showDemoPresets, setShowDemoPresets] = useState<boolean>(false);
 
-  // Modals for Forgot Password & Sign Up
+  // Modals for Forgot Password & Client Sign Up
   const [activeModal, setActiveModal] = useState<'forgot' | 'signup' | null>(null);
+
+  // Client Sign Up Form State
+  const [regForm, setRegForm] = useState({
+    companyName: '',
+    fullName: '',
+    username: '',
+    email: '',
+    phone: '',
+    password: '',
+  });
+  const [regError, setRegError] = useState<string | null>(null);
+  const [regSuccess, setRegSuccess] = useState<string | null>(null);
+  const [isRegistering, setIsRegistering] = useState<boolean>(false);
 
   // Auto-detect role when email changes
   const detectedRole = React.useMemo<UserRole>(() => {
@@ -84,6 +101,64 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       setErrorMessage(msg);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleClientSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegError(null);
+    setRegSuccess(null);
+
+    if (!regForm.companyName.trim()) {
+      setRegError('Company or organization name is required.');
+      return;
+    }
+    if (!regForm.fullName.trim()) {
+      setRegError('Full contact name is required.');
+      return;
+    }
+    if (!regForm.username.trim() || !/^[A-Za-z0-9_.-]{3,64}$/.test(regForm.username.trim())) {
+      setRegError('Username must be 3–64 characters (letters, numbers, underscores).');
+      return;
+    }
+    if (!regForm.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regForm.email.trim())) {
+      setRegError('A valid email address is required.');
+      return;
+    }
+    if (!regForm.password || regForm.password.length < 8) {
+      setRegError('Password must be at least 8 characters long.');
+      return;
+    }
+
+    setIsRegistering(true);
+
+    try {
+      const parts = regForm.fullName.trim().split(/\s+/);
+      const firstName = parts[0] || regForm.fullName.trim();
+      const lastName = parts.slice(1).join(' ') || '';
+
+      await apiClient.registerClient({
+        username: regForm.username.trim(),
+        email: regForm.email.trim().toLowerCase(),
+        password: regForm.password,
+        companyName: regForm.companyName.trim(),
+        firstName,
+        lastName,
+        contactPhone: regForm.phone.trim(),
+      });
+
+      setRegSuccess('Account created successfully! Logging you in...');
+
+      // Auto login as new client
+      await login(regForm.email.trim().toLowerCase(), regForm.password);
+      setTimeout(() => {
+        setActiveModal(null);
+        onLoginSuccess?.('CLIENT');
+      }, 1000);
+    } catch (err: any) {
+      setRegError(err?.message || 'Failed to create client account.');
+    } finally {
+      setIsRegistering(false);
     }
   };
 
@@ -211,7 +286,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             <button
               id="signup_redirect"
               type="button"
-              onClick={() => setActiveModal('signup')}
+              onClick={() => {
+                setRegError(null);
+                setRegSuccess(null);
+                setActiveModal('signup');
+              }}
               className="text-[14px] font-bold text-[#2563EB] hover:text-blue-700 dark:hover:text-blue-400 transition-colors cursor-pointer"
             >
               Sign Up
@@ -253,8 +332,166 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         </div>
       </div>
 
-      {/* Modern Dialog Modal for Forgot Password & Sign Up */}
-      {activeModal && (
+      {/* Client Registration Modal */}
+      {activeModal === 'signup' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in overflow-y-auto">
+          <div className="w-full max-w-[440px] bg-white dark:bg-[#0F172A] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-7 relative my-8">
+            <button
+              onClick={() => setActiveModal(null)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-[#2563EB] mb-3">
+              <Building2 className="w-5 h-5" />
+            </div>
+
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">
+              Create Client Account
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
+              Register your organization to start sending and receiving SMS traffic.
+            </p>
+
+            {regError && (
+              <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 flex items-start gap-2 text-xs text-rose-600 dark:text-rose-400">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{regError}</span>
+              </div>
+            )}
+
+            {regSuccess && (
+              <div className="mb-4 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 flex items-start gap-2 text-xs text-emerald-600 dark:text-emerald-400">
+                <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{regSuccess}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleClientSignUp} className="space-y-3.5">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                  Company / Organization Name *
+                </label>
+                <div className="relative">
+                  <Building2 className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    required
+                    value={regForm.companyName}
+                    onChange={(e) => setRegForm({ ...regForm, companyName: e.target.value })}
+                    placeholder="e.g. Acme Telecom Ltd"
+                    className="w-full h-10 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[10px] pl-9 pr-3 text-xs text-slate-900 dark:text-white outline-none focus:border-[#2563EB]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Contact Name *
+                  </label>
+                  <div className="relative">
+                    <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      required
+                      value={regForm.fullName}
+                      onChange={(e) => setRegForm({ ...regForm, fullName: e.target.value })}
+                      placeholder="John Doe"
+                      className="w-full h-10 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[10px] pl-9 pr-3 text-xs text-slate-900 dark:text-white outline-none focus:border-[#2563EB]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Username *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={regForm.username}
+                    onChange={(e) => setRegForm({ ...regForm, username: e.target.value })}
+                    placeholder="acme_client"
+                    className="w-full h-10 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[10px] px-3 text-xs text-slate-900 dark:text-white outline-none focus:border-[#2563EB] font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                  Email Address *
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="email"
+                    required
+                    value={regForm.email}
+                    onChange={(e) => setRegForm({ ...regForm, email: e.target.value })}
+                    placeholder="contact@acme.com"
+                    className="w-full h-10 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[10px] pl-9 pr-3 text-xs text-slate-900 dark:text-white outline-none focus:border-[#2563EB]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                  Phone Number (Optional)
+                </label>
+                <div className="relative">
+                  <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="tel"
+                    value={regForm.phone}
+                    onChange={(e) => setRegForm({ ...regForm, phone: e.target.value })}
+                    placeholder="+1234567890"
+                    className="w-full h-10 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[10px] pl-9 pr-3 text-xs text-slate-900 dark:text-white outline-none focus:border-[#2563EB]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                  Password (min. 8 characters) *
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    value={regForm.password}
+                    onChange={(e) => setRegForm({ ...regForm, password: e.target.value })}
+                    placeholder="••••••••••••"
+                    className="w-full h-10 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[10px] pl-9 pr-3 text-xs text-slate-900 dark:text-white outline-none focus:border-[#2563EB] font-mono"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isRegistering}
+                className="w-full mt-4 h-11 rounded-[10px] bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {isRegistering ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Registering Client Account...</span>
+                  </>
+                ) : (
+                  <span>Create Account & Sign In</span>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Forgot Password Modal */}
+      {activeModal === 'forgot' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
           <div className="w-full max-w-[380px] bg-white dark:bg-[#0F172A] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 relative">
             <button
@@ -270,13 +507,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             </div>
 
             <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-              {activeModal === 'forgot' ? 'Reset Password' : 'Create an Account'}
+              Reset Password
             </h3>
 
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
-              {activeModal === 'forgot'
-                ? 'To ensure enterprise security, please contact your system administrator or email support@worldsmsservice.tech to request a password reset token.'
-                : 'Enterprise registration is managed via administrator onboarding. Please reach out to admin@worldsmsservice.tech to get your organization provisioned.'}
+              To ensure enterprise security, please contact your system administrator or email{' '}
+              <span className="font-semibold text-[#2563EB]">support@worldsmsservice.tech</span> to
+              request a password reset token.
             </p>
 
             <button

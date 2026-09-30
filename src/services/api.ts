@@ -182,6 +182,22 @@ class ApiClient {
     return response.data;
   }
 
+  async registerClient(payload: {
+    username: string;
+    email: string;
+    password: string;
+    companyName?: string;
+    firstName?: string;
+    lastName?: string;
+    contactPhone?: string;
+  }): Promise<{ message: string; client: any }> {
+    const response = await this.request<{ message: string; client: any }>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return response.data;
+  }
+
   async refreshToken(): Promise<{ user: SafeUser; token: string }> {
     const currentToken = this.token || (typeof localStorage !== 'undefined' ? localStorage.getItem('sms_auth_token') : null);
     const response = await this.request<{ user: SafeUser; token: string }>('/auth/refresh', {

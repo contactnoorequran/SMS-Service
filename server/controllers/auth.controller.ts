@@ -6,6 +6,8 @@ import { TokenService } from '../services/token.service';
 import { AuditService } from '../services/audit.service';
 import { ALL_PERMISSIONS, DEFAULT_ROLE_PERMISSIONS, ROLE_HIERARCHY_WEIGHT } from '../services/permissions.service';
 import { sendSuccess, sendError } from '../utils/api-response';
+import { ClientService } from '../services/client.service';
+import { AuthTokenPayload } from '../types/auth';
 
 const loginSchema = z.object({
   email: z.string().min(1, 'Email is required'),
@@ -215,5 +217,70 @@ export class AuthController {
       defaultRolePermissions: DEFAULT_ROLE_PERMISSIONS,
       currentUserPermissions: req.user?.permissions || [],
     }, 'Permissions catalog retrieved', 200);
+  }
+
+  /**
+   * POST /api/auth/register
+   * Public endpoint to register a new client account.
+   */
+  static async registerClient(req: Request, res: Response): Promise<void> {
+    try {
+      const { username, email, password, companyName, firstName, lastName, contactPhone } = req.body;
+
+      if (!username || typeof username !== 'string' || !/^[A-Za-z0-9_.-]{3,64}$/.test(username.trim())) {
+        sendError(res, 400, 'VALIDATION_ERROR', 'Username must be 3–64 characters and contain only letters, numbers, dots, hyphens or underscores.');
+        return;
+      }
+
+      if (!password || typeof password !== 'string' || password.length < 8) {
+        sendError(res, 400, 'VALIDATION_ERROR', 'Password must be at least 8 characters long.');
+        return;
+      }
+
+      if (!email || typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+        sendError(res, 400, 'VALIDATION_ERROR', 'A valid email address is required.');
+        return;
+      }
+
+      const systemActor: AuthTokenPayload = {
+        userId: 'system',
+        email: 'system@smshub.local',
+        role: 'SUPER_ADMIN',
+        status: 'ACTIVE',
+        tokenId: 'self-reg',
+      };
+
+      const meta = {
+        ipAddress: (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1',
+        userAgent: req.get('user-agent') || 'Browser Client',
+      };
+
+      const result = await ClientService.createClient(
+        {
+          username: username.trim(),
+          email: email.trim().toLowerCase(),
+          password,
+          companyName: (companyName || username).trim(),
+          firstName: (firstName || '').trim(),
+          lastName: (lastName || '').trim(),
+          contactPhone: (contactPhone || '').trim(),
+          billingType: 'PREPAID',
+          status: 'ACTIVE',
+        },
+        systemActor,
+        meta
+      );
+
+      sendSuccess(res, {
+        client: result.client,
+        message: 'Client account created successfully. You can now sign in.',
+      }, 'Registration successful', 201);
+    } catch (err: any) {
+      if (err.message?.includes('already exists')) {
+        sendError(res, 400, 'DUPLICATE_ERROR', err.message);
+        return;
+      }
+      sendError(res, 500, 'SERVER_ERROR', err.message || 'Failed to register client account.');
+    }
   }
 }

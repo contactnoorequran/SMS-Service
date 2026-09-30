@@ -328,12 +328,3 @@ export async function setupExactUsers() {
   await prisma.$disconnect();
   return allUsers;
 }
-
-if (require.main === module) {
-  setupExactUsers()
-    .then(() => process.exit(0))
-    .catch((err) => {
-      console.error(err);
-      process.exit(1);
-    });
-}

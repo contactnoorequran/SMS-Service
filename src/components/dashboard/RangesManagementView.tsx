@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Plus,
   RefreshCw,
@@ -23,6 +23,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { apiClient } from '../../services/api';
 
 interface RangeItem {
   id: string;
@@ -47,30 +48,49 @@ export const RangesManagementView: React.FC = () => {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Mock ranges matching Screenshot 5
-  const [ranges, setRanges] = useState<RangeItem[]>([
-    {
-      id: 'r1',
-      name: 'test-for-test',
-      totalNumbers: 10000,
-      provider: 'Alaa0',
-      dailyLimit: 10,
-      status: 'Active',
-      membersCount: 408,
-    },
-    {
-      id: 'r2',
-      name: 'Alaa Test',
-      totalNumbers: 1002,
-      provider: '—',
-      dailyLimit: 1000000,
-      status: 'Active',
-      membersCount: 1,
-    },
-  ]);
+  // Real ranges from database
+  const [ranges, setRanges] = useState<RangeItem[]>([]);
+  const [providersList, setProvidersList] = useState<Array<{ id: string; name: string }>>([]);
+
+  const loadData = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      const [rangesRes, provRes] = await Promise.all([
+        fetch('/api/numbers/ranges', {
+          headers: { Authorization: `Bearer ${apiClient.getToken() || ''}` },
+        }),
+        apiClient.getProviders(),
+      ]);
+
+      const rangesData = await rangesRes.json();
+      const rawRanges = rangesData?.data?.ranges && Array.isArray(rangesData.data.ranges) ? rangesData.data.ranges : [];
+      setRanges(
+        rawRanges.map((r: any) => ({
+          id: r.id,
+          name: [r.country?.name, r.operator?.name, r.providerRangeId].filter(Boolean).join(' ') || r.startE164,
+          totalNumbers: r._count?.numbers ?? 0,
+          provider: r.provider?.name || '—',
+          dailyLimit: 10,
+          status: r.status === 'ACTIVE' ? 'Active' : 'Inactive',
+          membersCount: 0,
+        }))
+      );
+
+      const rawProv = provRes?.items && Array.isArray(provRes.items) ? provRes.items : [];
+      setProvidersList(rawProv.map((p: any) => ({ id: p.id, name: p.name })));
+    } catch (err: any) {
+      console.error('Failed to load ranges or providers:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Modal State
-  const [selectedProvider, setSelectedProvider] = useState('Alaa0');
+  const [selectedProvider, setSelectedProvider] = useState('');
   const [rangeName, setRangeName] = useState('');
   const [prefix, setPrefix] = useState('');
   const [providerPayout, setProviderPayout] = useState('0.0000');
@@ -80,19 +100,19 @@ export const RangesManagementView: React.FC = () => {
   const [isActiveForMembers, setIsActiveForMembers] = useState(true);
   const [internalNotes, setInternalNotes] = useState('');
 
-  // Edit Range Modal State (Screenshot 4)
+  // Edit Range Modal State
   const [editingRange, setEditingRange] = useState<RangeItem | null>(null);
-  const [editProvider, setEditProvider] = useState('Alaa0');
-  const [editRangeName, setEditRangeName] = useState('test-for-test');
-  const [editPrefix, setEditPrefix] = useState('44556322');
+  const [editProvider, setEditProvider] = useState('');
+  const [editRangeName, setEditRangeName] = useState('');
+  const [editPrefix, setEditPrefix] = useState('');
   const [editProviderPayout, setEditProviderPayout] = useState('0.03');
   const [editMemberPayout, setEditMemberPayout] = useState('0.012');
   const [editPayoutCycle, setEditPayoutCycle] = useState('Weekly');
   const [editDailySmsLimit, setEditDailySmsLimit] = useState('10');
   const [editIsActive, setEditIsActive] = useState(true);
-  const [editNotes, setEditNotes] = useState('hour limit 2k/h');
+  const [editNotes, setEditNotes] = useState('');
 
-  // Import Ranges Modal State (Screenshot 5)
+  // Import Ranges Modal State
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
 
@@ -112,7 +132,7 @@ export const RangesManagementView: React.FC = () => {
       id: `r-${Date.now()}`,
       name: rangeName.trim(),
       totalNumbers: 0,
-      provider: selectedProvider,
+      provider: selectedProvider || (providersList[0]?.name ?? 'Carrier'),
       dailyLimit: parseInt(dailySmsLimit, 10) || 5,
       status: 'Active',
       membersCount: 0,
@@ -128,8 +148,7 @@ export const RangesManagementView: React.FC = () => {
   };
 
   const handleRefresh = () => {
-    setIsRefreshing(true);
-    setTimeout(() => setIsRefreshing(false), 400);
+    loadData();
   };
 
   const filteredRanges = ranges.filter((r) => {
@@ -238,10 +257,10 @@ export const RangesManagementView: React.FC = () => {
               TOTAL NUMBERS
             </div>
             <div className="text-2xl font-bold font-mono text-[var(--text-primary)] mt-1">
-              11,002
+              {ranges.reduce((acc, r) => acc + (r.totalNumbers || 0), 0)}
             </div>
             <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">
-              Across all assigned ranges
+              Across all active ranges
             </div>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
@@ -256,7 +275,7 @@ export const RangesManagementView: React.FC = () => {
               CONNECTED PROVIDERS
             </div>
             <div className="text-2xl font-bold font-mono text-[var(--text-primary)] mt-1">
-              1
+              {new Set(ranges.map((r) => r.provider).filter((p) => p && p !== '—')).size}
             </div>
             <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">
               Supplying active ranges
@@ -452,8 +471,15 @@ export const RangesManagementView: React.FC = () => {
                     onChange={(e) => setSelectedProvider(e.target.value)}
                     className="w-full px-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 cursor-pointer"
                   >
-                    <option value="Alaa0">Alaa0</option>
-                    <option value="worldsms">worldsms</option>
+                    {providersList.length > 0 ? (
+                      providersList.map((p) => (
+                        <option key={p.id} value={p.name}>
+                          {p.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="">No Providers Configured</option>
+                    )}
                   </select>
                 </div>
 
@@ -680,8 +706,15 @@ export const RangesManagementView: React.FC = () => {
                     onChange={(e) => setEditProvider(e.target.value)}
                     className="w-full px-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 cursor-pointer"
                   >
-                    <option value="Alaa0">Alaa0</option>
-                    <option value="worldsms">worldsms</option>
+                    {providersList.length > 0 ? (
+                      providersList.map((p) => (
+                        <option key={p.id} value={p.name}>
+                          {p.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="">No Providers Configured</option>
+                    )}
                   </select>
                 </div>
 

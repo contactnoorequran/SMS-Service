@@ -51,6 +51,17 @@ export async function cleanupDemoAccounts() {
   });
   const demoAgentIds = demoAgents.map((a) => a.id);
 
+  const demoWallets = await prisma.wallet.findMany({
+    where: {
+      OR: [
+        { clientId: { in: demoClientIds } },
+        { agentId: { in: demoAgentIds } },
+      ],
+    },
+    select: { id: true },
+  });
+  const demoWalletIds = demoWallets.map((w) => w.id);
+
   // Execute in transaction
   const result = await prisma.$transaction(async (tx) => {
     // 1. Audit logs performed by demo users -> nullify performer
@@ -59,7 +70,16 @@ export async function cleanupDemoAccounts() {
       data: { performedById: null },
     });
 
-    // 2. Unassign any numbers assigned to demo clients/agents
+    // 2. Notifications & API Credentials for demo users
+    await tx.notification.deleteMany({
+      where: { userId: { in: demoUserIds } },
+    });
+
+    await tx.apiCredential.deleteMany({
+      where: { userId: { in: demoUserIds } },
+    });
+
+    // 3. Unassign any numbers assigned to demo clients/agents
     await tx.activeAssignment.deleteMany({
       where: {
         OR: [
@@ -83,7 +103,12 @@ export async function cleanupDemoAccounts() {
       data: { status: 'AVAILABLE' },
     });
 
-    // 3. Clear CDRs & Billing events linked to demo clients
+    // 4. Clear Rates linked to demo clients
+    await tx.rate.deleteMany({
+      where: { clientId: { in: demoClientIds } },
+    });
+
+    // 5. Clear CDRs & Billing events linked to demo clients
     await tx.cdr.deleteMany({
       where: {
         OR: [
@@ -102,17 +127,26 @@ export async function cleanupDemoAccounts() {
       },
     });
 
-    // 4. Remove wallets linked to demo clients/agents
-    await tx.wallet.deleteMany({
-      where: {
-        OR: [
-          { clientId: { in: demoClientIds } },
-          { agentId: { in: demoAgentIds } },
-        ],
-      },
-    });
+    // 6. Remove financial records linked to demo wallets
+    if (demoWalletIds.length > 0) {
+      await tx.ledgerEntry.deleteMany({
+        where: { walletId: { in: demoWalletIds } },
+      });
+      await tx.billingTransaction.deleteMany({
+        where: { walletId: { in: demoWalletIds } },
+      });
+      await tx.creditNote.deleteMany({
+        where: { walletId: { in: demoWalletIds } },
+      });
+      await tx.paymentRequest.deleteMany({
+        where: { walletId: { in: demoWalletIds } },
+      });
+      await tx.wallet.deleteMany({
+        where: { id: { in: demoWalletIds } },
+      });
+    }
 
-    // 5. Remove client memberships & clients
+    // 7. Remove client memberships & clients
     await tx.clientUser.deleteMany({
       where: {
         OR: [
@@ -126,7 +160,7 @@ export async function cleanupDemoAccounts() {
       where: { id: { in: demoClientIds } },
     });
 
-    // 6. Remove Agents & Manager profiles
+    // 8. Remove Agents & Manager profiles
     await tx.agent.deleteMany({
       where: { userId: { in: demoUserIds } },
     });
@@ -135,12 +169,12 @@ export async function cleanupDemoAccounts() {
       where: { userId: { in: demoUserIds } },
     });
 
-    // 7. Remove User roles
+    // 9. Remove User roles
     await tx.userRole.deleteMany({
       where: { userId: { in: demoUserIds } },
     });
 
-    // 8. Delete demo users
+    // 10. Delete demo users
     const deleted = await tx.user.deleteMany({
       where: { id: { in: demoUserIds } },
     });

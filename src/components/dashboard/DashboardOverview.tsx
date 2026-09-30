@@ -125,6 +125,12 @@ const CdrManagementView = React.lazy(() =>
 const BillingManagementView = React.lazy(() =>
   import('./BillingManagementView').then((m) => ({ default: m.BillingManagementView }))
 );
+const FieldSmsView = React.lazy(() =>
+  import('./FieldSmsView').then((m) => ({ default: m.FieldSmsView }))
+);
+const FinancialReportsView = React.lazy(() =>
+  import('./FinancialReportsView').then((m) => ({ default: m.FinancialReportsView }))
+);
 const SettingsView = React.lazy(() =>
   import('./SettingsView').then((m) => ({ default: m.SettingsView }))
 );
@@ -160,7 +166,7 @@ const KNOWN_TABS = new Set([
   // Super Admin tabs
   'numbers', 'countries', 'operators', 'ranges', 'assignments',
   'managers', 'agents', 'clients', 'providers', 'connections',
-  'traffic', 'messages', 'cdr', 'reports',
+  'traffic', 'messages', 'cdr', 'reports', 'field-sms', 'financial-reports',
   'financials', 'billing', 'wallets', 'transactions', 'rates',
   'users', 'audit', 'settings', 'database-schema', 'diagnostics', 'api', 'architecture',
 ]);
@@ -233,6 +239,12 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = memo(({
 
     if (currentTab === 'providers' || currentTab === 'connections')
       return <ProviderManagementView />;
+
+    if (currentTab === 'field-sms')
+      return <FieldSmsView />;
+
+    if (currentTab === 'financial-reports')
+      return <FinancialReportsView />;
 
     if (['numbers', 'countries', 'operators', 'ranges', 'assignments'].includes(currentTab))
       return <NumberManagementView />;

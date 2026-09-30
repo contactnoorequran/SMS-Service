@@ -51,6 +51,8 @@ export const AppShell: React.FC<AppShellProps> = ({ initialTab }) => {
     // Super Admin routes
     if (cleanPath.startsWith('/providers')) return 'providers';
     if (cleanPath.startsWith('/connections')) return 'connections';
+    if (cleanPath.startsWith('/field-sms')) return 'field-sms';
+    if (cleanPath.startsWith('/financial-reports')) return 'financial-reports';
     if (cleanPath.startsWith('/clients')) return 'clients';
     if (cleanPath.startsWith('/agents')) return 'agents';
     if (cleanPath.startsWith('/managers')) return 'managers';

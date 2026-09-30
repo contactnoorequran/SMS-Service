@@ -358,173 +358,85 @@ export const ProviderManagementView: React.FC = () => {
     PK: { name: 'Pakistan', flag: '🇵🇰' },
   };
 
-  // Table Columns Definition
+  // Table Columns Definition matching Screenshot 1
   const columns: ColumnDef<ProviderItem>[] = [
     {
       key: 'name',
-      header: 'Carrier Provider',
-      className: 'w-[260px]',
-      render: (provider) => {
-        const initials = provider.name
-          .split(' ')
-          .map((n) => n[0])
-          .slice(0, 2)
-          .join('');
-
-        return (
-          <div className="flex items-center gap-2.5 max-w-[260px]">
-            <div className="w-8 h-8 rounded-lg bg-[var(--accent-blue-dim)] border border-[rgba(59,130,246,0.25)] text-[var(--accent-blue)] flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
-              {initials}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <span
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    selectProvider(provider.id);
-                  }}
-                  title={provider.description || provider.name}
-                  className="font-semibold text-xs text-[var(--text-primary)] hover:text-[var(--accent-blue)] transition-colors truncate cursor-pointer"
-                >
-                  {provider.name}
-                </span>
-                <span className="font-mono text-[9px] text-[var(--text-tertiary)] bg-[rgba(0,0,0,0.25)] px-1 py-0.2 rounded border border-[var(--glass-border)] shrink-0">
-                  {provider.slug}
-                </span>
-              </div>
-            </div>
-          </div>
-        );
-      },
-      sortable: true,
-    },
-    {
-      key: 'type',
-      header: 'Type',
-      className: 'w-[110px]',
-      render: (provider) => {
-        const typeMap: Record<string, string> = {
-          TIER_1_CARRIER: 'Tier-1',
-          DIRECT_SMPP: 'Direct SMPP',
-          CLOUD_GATEWAY: 'Cloud Gateway',
-          AGGREGATOR: 'Aggregator',
-        };
-        return (
-          <Badge variant={getTypeBadgeVariant(provider.type)} size="sm">
-            {typeMap[provider.type] || provider.type}
-          </Badge>
-        );
-      },
-      sortable: true,
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      className: 'w-[85px]',
+      header: 'PROVIDER',
+      className: 'w-[240px]',
       render: (provider) => (
-        <Badge variant={getStatusBadgeVariant(provider.status)} size="sm">
-          {provider.status}
-        </Badge>
-      ),
-      sortable: true,
-    },
-    {
-      key: 'connections',
-      header: 'Binds',
-      className: 'w-[115px]',
-      render: (provider) => (
-        <button
-          type="button"
+        <span
           onClick={(e) => {
             e.stopPropagation();
-            setQuickModalTarget({ type: 'binds', provider });
+            selectProvider(provider.id);
           }}
-          className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[rgba(59,130,246,0.08)] hover:bg-[rgba(59,130,246,0.2)] text-[var(--accent-blue)] border border-[rgba(59,130,246,0.25)] transition-all cursor-pointer font-mono text-xs whitespace-nowrap shadow-xs"
-          title="Click to view connection bind telemetry"
+          className="font-medium text-xs text-[var(--text-primary)] hover:text-teal-400 transition-colors cursor-pointer"
         >
-          <Cable className="w-3.5 h-3.5 shrink-0" />
-          <span className="font-bold text-[var(--text-primary)]">
-            {provider.connectionsCount}
-          </span>
-          <span className="text-[10px] text-[var(--accent-emerald)] font-semibold shrink-0">
-            ({provider.healthyConnectionsCount} ok)
-          </span>
-        </button>
-      ),
-      sortable: true,
-    },
-    {
-      key: 'health',
-      header: 'Health',
-      className: 'w-[90px]',
-      render: (provider) => (
-        <Badge variant={getHealthBadgeVariant(provider.healthState)} size="sm">
-          {provider.healthState}
-        </Badge>
-      ),
-      sortable: true,
-    },
-    {
-      key: 'countries',
-      header: 'Coverage',
-      className: 'w-[125px]',
-      render: (provider) => (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setQuickModalTarget({ type: 'coverage', provider });
-          }}
-          className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[rgba(0,0,0,0.25)] hover:bg-[rgba(59,130,246,0.15)] border border-[var(--glass-border)] hover:border-[rgba(59,130,246,0.3)] transition-all cursor-pointer whitespace-nowrap text-xs shadow-xs"
-          title="Click to view destination coverage"
-        >
-          <Globe className="w-3.5 h-3.5 text-[var(--accent-blue)] shrink-0" />
-          <div className="flex items-center gap-1 font-mono text-[11px] font-semibold text-[var(--text-secondary)] shrink-0">
-            {provider.countriesCovered.slice(0, 2).map((code) => (
-              <span
-                key={code}
-                className="text-[10px] px-1 py-0.2 rounded bg-[rgba(255,255,255,0.05)] border border-[var(--glass-border)]"
-              >
-                {code}
-              </span>
-            ))}
-            {provider.countriesCovered.length > 2 && (
-              <span className="text-[10px] text-[var(--accent-blue)] font-bold">
-                +{provider.countriesCovered.length - 2}
-              </span>
-            )}
-          </div>
-        </button>
-      ),
-    },
-    {
-      key: 'numbers',
-      header: 'DIDs',
-      className: 'w-[80px]',
-      render: (provider) => (
-        <span className="font-mono text-xs font-semibold text-[var(--text-primary)]">
-          {formatNumber(provider.assignedNumbersCount)}
+          {provider.name}
         </span>
       ),
       sortable: true,
     },
     {
-      key: 'volume',
-      header: 'SMS Volume',
-      className: 'w-[100px]',
+      key: 'protocol',
+      header: 'PROTOCOL',
+      className: 'w-[120px]',
+      render: (provider) => {
+        const isSmpp =
+          provider.type === 'DIRECT_SMPP' ||
+          provider.name.toLowerCase().includes('smpp') ||
+          (provider.connections || []).some((c) => c.connectionType === 'SMPP_TRANSCEIVER');
+        return isSmpp ? (
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+            SMPP
+          </span>
+        ) : (
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">
+            HTTP API
+          </span>
+        );
+      },
+      sortable: true,
+    },
+    {
+      key: 'okSms',
+      header: 'OK SMS',
+      className: 'w-[110px]',
       render: (provider) => (
-        <span className="font-mono text-xs text-[var(--text-secondary)]">
-          {formatNumber(provider.totalMessages)}
+        <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-600/30 text-blue-300 border border-blue-500/40">
+          {provider.totalMessages || 0}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'fieldSms',
+      header: 'FIELD SMS',
+      className: 'w-[110px]',
+      render: () => (
+        <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-600/30 text-rose-300 border border-rose-500/40">
+          0
         </span>
       ),
       sortable: true,
     },
     {
       key: 'actions',
-      header: '',
-      className: 'w-[40px] text-right',
+      header: 'ACTIONS',
+      className: 'w-[90px] text-right',
       render: (provider) => (
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-end gap-1.5">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditingProvider(provider);
+            }}
+            className="p-1 rounded hover:bg-[rgba(255,255,255,0.08)] text-[var(--text-secondary)] hover:text-teal-400 transition-colors"
+            title="Edit Provider"
+          >
+            <Edit2 className="w-3.5 h-3.5" />
+          </button>
           <MoreActionsMenu
             ariaLabel={`Actions for ${provider.name}`}
             items={[
@@ -554,6 +466,7 @@ export const ProviderManagementView: React.FC = () => {
     },
   ];
 
+
   return (
     <div className="space-y-4 max-w-6xl mx-auto">
       {/* Toast Feedback */}
@@ -575,66 +488,60 @@ export const ProviderManagementView: React.FC = () => {
         </div>
       )}
 
-      {/* 1. Sleek Compact Header */}
-      <div className="p-5 glass-card border-[rgba(59,130,246,0.15)] relative overflow-hidden rounded-2xl">
-        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Badge variant="info" size="sm">
-                <Radio className="w-3.5 h-3.5 mr-1" />
-                Carrier Gateway Core
-              </Badge>
-              <span className="text-xs text-[var(--text-tertiary)] font-mono">
-                WORLD SMS SERVICE Telecom Routing
-              </span>
-            </div>
-            <h1 className="text-xl font-bold text-[var(--text-primary)] tracking-tight">
-              Carrier Providers & SMPP Interconnects
-            </h1>
-            <p className="text-xs text-[var(--text-secondary)]">
-              Direct MNO interconnects, SMPP v3.4 sockets, and carrier failover routing trunks.
-            </p>
+      {/* 1. Header matching Screenshot 1 */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
+        <div className="space-y-1">
+          <h1 className="text-xl font-bold text-[var(--text-primary)] tracking-tight">
+            Providers
+          </h1>
+          <p className="text-xs text-[var(--text-secondary)]">
+            Manage HTTP and SMPP providers, connection status, inbound webhooks, and diagnostics.
+          </p>
+          <div className="pt-0.5">
+            <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-teal-500/15 text-teal-400 border border-teal-500/30 uppercase tracking-wider">
+              ADMIN
+            </span>
           </div>
+        </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={refresh}
-              isLoading={isRefreshing}
-              className="text-xs gap-1.5"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setIsCreateOpen(true)}
-              className="text-xs gap-1.5"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Register Carrier</span>
-            </Button>
-          </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setIsCreateOpen(true)}
+            className="text-xs gap-1.5 bg-teal-600 hover:bg-teal-500 text-white shadow-sm"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Provider</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refresh}
+            isLoading={isRefreshing}
+            className="text-xs gap-1.5"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </Button>
         </div>
       </div>
 
-      {/* 2. Compact 4-Card Telemetry Row (Replaced 7 bulky cards) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      {/* 2. Top 2 KPI Cards matching Screenshot 1 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="glass-card p-4 rounded-xl border border-[var(--glass-border)] flex items-center justify-between">
           <div>
             <div className="text-[10px] text-[var(--text-tertiary)] uppercase font-semibold tracking-wider">
-              Total Gateways
+              TOTAL PROVIDERS
             </div>
             <div className="text-2xl font-bold font-mono text-[var(--text-primary)] mt-1">
-              {kpis.totalProviders}
+              {kpis.totalProviders || providers.length}
             </div>
-            <div className="text-[11px] text-[var(--accent-emerald)] font-medium mt-0.5">
-              {kpis.activeProviders} Routing Active
+            <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">
+              {kpis.activeProviders || providers.filter((p) => p.status === 'ACTIVE').length} active
             </div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-[var(--accent-blue-dim)] text-[var(--accent-blue)] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center">
             <Radio className="w-5 h-5" />
           </div>
         </div>
@@ -642,113 +549,78 @@ export const ProviderManagementView: React.FC = () => {
         <div className="glass-card p-4 rounded-xl border border-[var(--glass-border)] flex items-center justify-between">
           <div>
             <div className="text-[10px] text-[var(--text-tertiary)] uppercase font-semibold tracking-wider">
-              Active Interconnect Binds
-            </div>
-            <div className="text-2xl font-bold font-mono text-[var(--accent-emerald)] mt-1">
-              {kpis.healthyConnections} / {kpis.totalConnections}
-            </div>
-            <div className="text-[11px] text-[var(--text-tertiary)] mt-0.5">
-              Passing Heartbeat
-            </div>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-[var(--accent-emerald-dim)] text-[var(--accent-emerald)] flex items-center justify-center">
-            <Cable className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="glass-card p-4 rounded-xl border border-[var(--glass-border)] flex items-center justify-between">
-          <div>
-            <div className="text-[10px] text-[var(--text-tertiary)] uppercase font-semibold tracking-wider">
-              Assigned Numbers
+              HTTP PROVIDERS
             </div>
             <div className="text-2xl font-bold font-mono text-[var(--text-primary)] mt-1">
-              {formatNumber(kpis.totalAssignedNumbers)}
+              {providers.filter((p) => p.type === 'CLOUD_GATEWAY' || p.name.toLowerCase().includes('http')).length}
             </div>
-            <div className="text-[11px] text-[var(--accent-blue)] mt-0.5">
-              Active DID Inventory
-            </div>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-[rgba(59,130,246,0.1)] text-[var(--accent-blue)] flex items-center justify-center">
-            <Hash className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="glass-card p-4 rounded-xl border border-[var(--glass-border)] flex items-center justify-between">
-          <div>
-            <div className="text-[10px] text-[var(--text-tertiary)] uppercase font-semibold tracking-wider">
-              Carrier Throughput
-            </div>
-            <div className="text-2xl font-bold font-mono text-purple-400 mt-1">
-              {formatNumber(kpis.currentTrafficVolume)}
-            </div>
-            <div className="text-[11px] text-[var(--accent-emerald)] mt-0.5">
-              SMS Processed
+            <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">
+              API / webhook integrations
             </div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
-            <Send className="w-5 h-5" />
+          <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
+            <Layers className="w-5 h-5" />
           </div>
         </div>
       </div>
 
-      {/* 3. Streamlined 1-Line Filter & Search Bar */}
-      <div className="glass-card p-3 rounded-xl border border-[var(--glass-border)] flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3 text-xs flex-wrap">
-        {/* Search */}
-        <div className="relative flex-1 min-w-[220px] max-w-md">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]" />
-          <input
-            type="text"
-            placeholder="Search provider, code, or country..."
-            value={filterState.search}
-            onChange={(e) => updateFilter('search', e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent-blue)]"
-          />
+      {/* 3. Filters Section matching Screenshot 1 */}
+      <div className="glass-card p-4 rounded-xl border border-[var(--glass-border)] space-y-3">
+        <div>
+          <h2 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
+            Filters
+          </h2>
+          <p className="text-[11px] text-[var(--text-tertiary)]">
+            Search by name, host, or system ID
+          </p>
         </div>
 
-        {/* Quick Type Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 xl:pb-0 shrink-0">
-          {[
-            { id: 'ALL', label: 'All Types' },
-            { id: 'TIER_1_CARRIER', label: 'Tier-1' },
-            { id: 'DIRECT_SMPP', label: 'SMPP' },
-            { id: 'CLOUD_GATEWAY', label: 'Cloud' },
-            { id: 'AGGREGATOR', label: 'Aggregator' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => updateFilter('type', tab.id)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
-                filterState.type === tab.id
-                  ? 'bg-[var(--accent-blue)] text-white shadow-xs font-semibold'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg)]'
-              }`}
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 text-xs">
+          <div className="sm:col-span-6 relative">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]" />
+            <input
+              type="text"
+              placeholder="Search: Name, host, system ID..."
+              value={filterState.search}
+              onChange={(e) => updateFilter('search', e.target.value)}
+              className="w-full pl-9 pr-3 py-2 rounded-xl bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-teal-500"
+            />
+          </div>
+
+          <div className="sm:col-span-4">
+            <select
+              value={filterState.type}
+              onChange={(e) => updateFilter('type', e.target.value)}
+              className="w-full px-3 py-2 rounded-xl bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 cursor-pointer"
             >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+              <option value="ALL">Connection: All connections</option>
+              <option value="DIRECT_SMPP">SMPP</option>
+              <option value="CLOUD_GATEWAY">HTTP API</option>
+            </select>
+          </div>
 
-        {/* Status Dropdown & Reset */}
-        <div className="flex items-center gap-2">
-          <select
-            value={filterState.status}
-            onChange={(e) => updateFilter('status', e.target.value)}
-            className="px-2.5 py-1.5 rounded-lg bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] cursor-pointer"
-          >
-            <option value="ALL">All Statuses</option>
-            <option value="ACTIVE">Active Only</option>
-            <option value="SUSPENDED">Suspended Only</option>
-          </select>
-
-          {(filterState.search || filterState.type !== 'ALL' || filterState.status !== 'ALL') && (
-            <button
-              onClick={resetFilters}
-              className="px-2 py-1 text-xs text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+          <div className="sm:col-span-2">
+            <select
+              value={filterState.limit}
+              onChange={(e) => updateFilter('limit', Number(e.target.value))}
+              className="w-full px-3 py-2 rounded-xl bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 cursor-pointer"
             >
-              Reset
-            </button>
-          )}
+              <option value="10">Rows: 10</option>
+              <option value="25">Rows: 25</option>
+              <option value="50">Rows: 50</option>
+            </select>
+          </div>
         </div>
+      </div>
+
+      {/* 4. Table Header matching Screenshot 1 */}
+      <div className="pt-2">
+        <h2 className="text-sm font-bold text-[var(--text-primary)]">
+          Providers Inventory
+        </h2>
+        <p className="text-[11px] text-[var(--text-tertiary)]">
+          {providers.length} providers in current view
+        </p>
       </div>
 
       {/* 4. Main Carriers Table */}

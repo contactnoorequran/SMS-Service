@@ -9,7 +9,6 @@ import {
   Mail,
   Eye,
   EyeOff,
-  ArrowRight,
   AlertCircle,
   Loader2,
   ChevronDown,
@@ -17,10 +16,12 @@ import {
   Users,
   UserCheck,
   Building2,
+  X,
+  Info,
 } from 'lucide-react';
 import { UserRole } from '../../types/auth';
 import { useAuth, SEED_ACCOUNTS } from '../../context/AuthContext';
-import { BrandLogo } from '../ui/BrandLogo';
+import { BrandSymbol } from '../ui/BrandLogo';
 
 interface LoginViewProps {
   onLoginSuccess?: (role: UserRole) => void;
@@ -47,6 +48,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showDemoPresets, setShowDemoPresets] = useState<boolean>(false);
 
+  // Modals for Forgot Password & Sign Up
+  const [activeModal, setActiveModal] = useState<'forgot' | 'signup' | null>(null);
+
   // Auto-detect role when email changes
   const detectedRole = React.useMemo<UserRole>(() => {
     const lower = email.toLowerCase().trim();
@@ -64,7 +68,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    if (!email.trim() || !password) {
       setErrorMessage('Please enter both your email address and password.');
       return;
     }
@@ -73,7 +77,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     setErrorMessage(null);
 
     try {
-      await login(email, password);
+      await login(email.trim(), password);
       onLoginSuccess?.(detectedRole);
     } catch (err: any) {
       const msg = err?.message || 'Invalid email or password. Please verify your credentials.';
@@ -84,147 +88,209 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen w-screen bg-[var(--bg-deep)] text-[var(--text-primary)] flex flex-col justify-between relative overflow-hidden font-sans select-none">
-      {/* Subtle ambient lighting */}
-      <div className="absolute top-[-15%] left-[25%] w-[600px] h-[600px] rounded-full bg-[var(--brand-primary-glow)] blur-[160px] pointer-events-none opacity-25" />
+    <div
+      className="min-h-screen w-full flex flex-col items-center justify-center p-6 select-none transition-colors duration-200"
+      style={{ backgroundColor: '#F8FAFC' }}
+    >
+      {/* Centered Modern Minimalist Card */}
+      <div className="w-full max-w-[420px] bg-white dark:bg-[#0F172A] rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-200/80 dark:border-slate-800 p-6 sm:p-8 relative">
+        {/* App Logo - ImageView (80x80, margin-bottom: 32) */}
+        <div
+          id="app_logo"
+          className="w-[80px] h-[80px] mb-8 mx-auto flex items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-50 to-indigo-50/50 dark:from-blue-950/40 dark:to-slate-900 border border-blue-100 dark:border-blue-900/40 shadow-sm"
+        >
+          <BrandSymbol sizePx={56} theme="accent" idPrefix="login-logo-symbol" />
+        </div>
 
-      {/* Main Centered Login Box */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 z-10 w-full">
-        <div className="w-full max-w-[420px]">
-          {/* Card Container */}
-          <div className="glass-card p-6 sm:p-8 rounded-2xl border border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-xl shadow-xl">
-            {/* Logo and Header */}
-            <div className="flex flex-col items-center text-center mb-6">
-              <BrandLogo variant="full" size="md" theme="accent" />
-              <h1 className="text-xl font-bold tracking-tight text-[var(--text-primary)] mt-4">
-                Sign in to your account
-              </h1>
-              <p className="text-xs text-[var(--text-secondary)] mt-1">
-                Enter your credentials to access the SMS portal
-              </p>
-            </div>
+        {/* Title Text (Welcome Back!, 26px, bold, #1E293B, margin-bottom: 8) */}
+        <h1
+          id="title_text"
+          className="text-[26px] font-bold text-[#1E293B] dark:text-white mb-2 text-center tracking-tight leading-tight"
+        >
+          Welcome Back!
+        </h1>
 
-            {/* Error Notification */}
-            {errorMessage && (
-              <div className="mb-4 p-3 rounded-xl bg-[var(--accent-rose-dim)] border border-[rgba(244,63,94,0.3)] flex items-start gap-2.5 text-xs text-[var(--accent-rose)] animate-shake">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>{errorMessage}</span>
-              </div>
-            )}
+        {/* Subtitle Text (Please enter your details to sign in, 14px, #64748B, margin-bottom: 32) */}
+        <p
+          id="subtitle_text"
+          className="text-[14px] text-[#64748B] dark:text-slate-400 mb-8 text-center leading-normal"
+        >
+          Please enter your details to sign in
+        </p>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Email Input */}
-              <div>
-                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-[var(--text-tertiary)] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    id="input-login-email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      setErrorMessage(null);
-                    }}
-                    placeholder="name@company.com"
-                    className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] focus:border-[var(--brand-primary)] text-xs text-[var(--text-primary)] rounded-xl pl-10 pr-4 py-2.5 outline-none transition-all placeholder:text-[var(--text-disabled)]"
-                  />
-                </div>
-              </div>
+        {/* Error Banner */}
+        {errorMessage && (
+          <div className="mb-5 p-3 rounded-[12px] bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 flex items-start gap-2.5 text-xs text-rose-600 dark:text-rose-400 animate-shake">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span className="font-medium">{errorMessage}</span>
+          </div>
+        )}
 
-              {/* Password Input */}
-              <div>
-                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-[var(--text-tertiary)] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    id="input-login-password"
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      setErrorMessage(null);
-                    }}
-                    placeholder="••••••••••••"
-                    className="w-full bg-[var(--bg-surface)] border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] focus:border-[var(--brand-primary)] text-xs text-[var(--text-primary)] rounded-xl pl-10 pr-10 py-2.5 outline-none transition-all placeholder:text-[var(--text-disabled)] font-mono"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] p-1 cursor-pointer"
-                    aria-label="Toggle password visibility"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <button
-                id="btn-login-submit"
-                type="submit"
-                disabled={isSubmitting || authLoading}
-                className="w-full mt-2 py-2.5 px-4 rounded-xl bg-[var(--brand-primary)] hover:opacity-90 text-white font-semibold text-xs tracking-wide shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting || authLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Signing in...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Sign In</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </form>
-
-            {/* Subtle Demo Presets Accordion (Discreet, not in-your-face) */}
-            <div className="mt-5 pt-4 border-t border-[var(--glass-border)] text-center">
-              <button
-                type="button"
-                onClick={() => setShowDemoPresets((prev) => !prev)}
-                className="text-xs text-[var(--text-tertiary)] hover:text-[var(--brand-primary)] transition-colors inline-flex items-center gap-1 cursor-pointer font-medium"
-              >
-                <span>Quick Fill Test Account</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showDemoPresets ? 'rotate-180' : ''}`} />
-              </button>
-
-              {showDemoPresets && (
-                <div className="mt-3 grid grid-cols-2 gap-2 text-left">
-                  {DEMO_PRESETS.map((preset) => {
-                    const Icon = preset.icon;
-                    return (
-                      <button
-                        key={preset.role}
-                        type="button"
-                        onClick={() => handleSelectPreset(preset.role)}
-                        className="p-2 rounded-lg bg-[var(--glass-bg-active)] hover:bg-[var(--glass-bg-hover)] border border-[var(--glass-border)] text-left transition-colors cursor-pointer flex items-center gap-2"
-                      >
-                        <Icon className="w-3.5 h-3.5 text-[var(--brand-primary)] shrink-0" />
-                        <span className="text-xs text-[var(--text-primary)] font-medium truncate">
-                          {preset.label}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+        {/* Form Container */}
+        <form onSubmit={handleSubmit} className="w-full">
+          {/* Email TextField (placeholder: Enter your email, icon: mail_outline, border_radius: 12, bg: #FFFFFF, margin_bottom: 16) */}
+          <div className="mb-4">
+            <div className="relative">
+              <Mail className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                id="input_email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setErrorMessage(null);
+                }}
+                placeholder="Enter your email"
+                className="w-full h-11 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 text-[14px] text-slate-900 dark:text-white rounded-[12px] pl-10 pr-4 outline-none transition-all placeholder:text-slate-400"
+              />
             </div>
           </div>
+
+          {/* Password TextField (placeholder: Password, is_password: true, icon: lock_outline, border_radius: 12, bg: #FFFFFF, margin_bottom: 12) */}
+          <div className="mb-3">
+            <div className="relative">
+              <Lock className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                id="input_password"
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setErrorMessage(null);
+                }}
+                placeholder="Password"
+                className="w-full h-11 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 text-[14px] text-slate-900 dark:text-white rounded-[12px] pl-10 pr-10 outline-none transition-all placeholder:text-slate-400 font-mono text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-pointer"
+                aria-label="Toggle password visibility"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Forgot Password Button (alignment: right, font_size: 13, color: #2563EB, margin_bottom: 24) */}
+          <div className="flex justify-end mb-6">
+            <button
+              id="forgot_password_btn"
+              type="button"
+              onClick={() => setActiveModal('forgot')}
+              className="text-[13px] text-[#2563EB] hover:text-blue-700 dark:hover:text-blue-400 font-medium transition-colors cursor-pointer"
+            >
+              Forgot Password?
+            </button>
+          </div>
+
+          {/* Login Button (text: Sign In, bg: #2563EB, text_color: #FFFFFF, border_radius: 12, height: 50, margin_bottom: 24) */}
+          <button
+            id="login_btn"
+            type="submit"
+            disabled={isSubmitting || authLoading}
+            className="w-full h-[50px] rounded-[12px] bg-[#2563EB] hover:bg-blue-700 text-white font-semibold text-[15px] shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting || authLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Signing in...</span>
+              </>
+            ) : (
+              <span>Sign In</span>
+            )}
+          </button>
+
+          {/* Row (alignment: center, children: Don't have an account? [TextView 14px #64748B] + Sign Up [Button 14px bold #2563EB]) */}
+          <div className="flex items-center justify-center gap-1">
+            <span className="text-[14px] text-[#64748B] dark:text-slate-400">
+              Don't have an account?{' '}
+            </span>
+            <button
+              id="signup_redirect"
+              type="button"
+              onClick={() => setActiveModal('signup')}
+              className="text-[14px] font-bold text-[#2563EB] hover:text-blue-700 dark:hover:text-blue-400 transition-colors cursor-pointer"
+            >
+              Sign Up
+            </button>
+          </div>
+        </form>
+
+        {/* Discreet Test Accounts Collapsible Helper */}
+        <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/80 text-center">
+          <button
+            type="button"
+            onClick={() => setShowDemoPresets((prev) => !prev)}
+            className="text-xs text-slate-400 hover:text-[#2563EB] transition-colors inline-flex items-center gap-1 cursor-pointer font-medium"
+          >
+            <span>Quick Fill Test Account</span>
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showDemoPresets ? 'rotate-180' : ''}`} />
+          </button>
+
+          {showDemoPresets && (
+            <div className="mt-3 grid grid-cols-2 gap-2 text-left">
+              {DEMO_PRESETS.map((preset) => {
+                const Icon = preset.icon;
+                return (
+                  <button
+                    key={preset.role}
+                    type="button"
+                    onClick={() => handleSelectPreset(preset.role)}
+                    className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700/60 text-left transition-colors cursor-pointer flex items-center gap-2"
+                  >
+                    <Icon className="w-3.5 h-3.5 text-[#2563EB] shrink-0" />
+                    <span className="text-xs text-slate-700 dark:text-slate-200 font-medium truncate">
+                      {preset.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
-      </main>
+      </div>
+
+      {/* Modern Dialog Modal for Forgot Password & Sign Up */}
+      {activeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-[380px] bg-white dark:bg-[#0F172A] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 relative">
+            <button
+              onClick={() => setActiveModal(null)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg"
+              aria-label="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-[#2563EB] mb-4">
+              <Info className="w-5 h-5" />
+            </div>
+
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+              {activeModal === 'forgot' ? 'Reset Password' : 'Create an Account'}
+            </h3>
+
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+              {activeModal === 'forgot'
+                ? 'To ensure enterprise security, please contact your system administrator or email support@worldsmsservice.tech to request a password reset token.'
+                : 'Enterprise registration is managed via administrator onboarding. Please reach out to admin@worldsmsservice.tech to get your organization provisioned.'}
+            </p>
+
+            <button
+              onClick={() => setActiveModal(null)}
+              className="w-full py-2.5 rounded-[12px] bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all"
+            >
+              Understood
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Clean, minimal footer */}
-      <footer className="py-4 text-center text-xs text-[var(--text-tertiary)]">
+      <footer className="mt-8 text-center text-xs text-slate-400">
         &copy; {new Date().getFullYear()} WORLD SMS SERVICE. All rights reserved.
       </footer>
     </div>

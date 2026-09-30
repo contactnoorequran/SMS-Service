@@ -58,14 +58,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
   const toggleCollapse = externalToggleCollapse || (() => setInternalCollapsed((prev) => !prev));
 
-  // Dynamic notification/attention counts (only display when requiring attention)
-  const attentionCounts: Record<string, number> = {
-    messages: 12,
-    traffic: 12,
-    'payment-requests': 3,
-    'manager-approvals': 3,
-    notifications: 2,
-  };
+  // Dynamic notification/attention counts (empty by default, no fake hardcoded numbers)
+  const attentionCounts: Record<string, number> = {};
 
   useEffect(() => {
     if (isOpen) {

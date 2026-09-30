@@ -89,33 +89,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full bg-blue-700/30 blur-3xl pointer-events-none" />
       <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-80 h-80 rounded-full bg-sky-300/10 blur-2xl pointer-events-none" />
 
-      {/* Top-Left Crown Icon Badge */}
-      <div className="absolute top-6 left-6 z-20">
-        <div
-          title="WORLD SMS SERVICE - Enterprise"
-          className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#051330] border border-white/15 flex items-center justify-center shadow-xl hover:scale-105 transition-transform duration-200 cursor-pointer"
-        >
-          <svg
-            width="26"
-            height="26"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="drop-shadow-sm"
-          >
-            <path
-              d="M3 18H21L19.5 8L15 13L12 5L9 13L4.5 8L3 18Z"
-              fill="#FBBF24"
-              stroke="#F59E0B"
-              strokeWidth="1.25"
-              strokeLinejoin="round"
-            />
-            <circle cx="12" cy="4" r="1.5" fill="#FBBF24" />
-            <circle cx="4.5" cy="7" r="1.2" fill="#FBBF24" />
-            <circle cx="19.5" cy="7" r="1.2" fill="#FBBF24" />
-          </svg>
-        </div>
-      </div>
 
       {/* Main Horizontal Card Container */}
       <div className="w-full max-w-[940px] min-h-[530px] rounded-[32px] sm:rounded-[36px] bg-white shadow-[0_30px_80px_rgba(0,30,100,0.38)] overflow-hidden flex flex-col md:flex-row relative z-10 animate-fade-in">

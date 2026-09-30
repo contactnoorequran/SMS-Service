@@ -80,41 +80,9 @@ export default defineConfig(() => {
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     build: {
-      // ── Performance: raise warning limit, use fast esbuild minifier ──
-      chunkSizeWarningLimit: 600,
+      chunkSizeWarningLimit: 1500,
       minify: 'esbuild',
       target: 'esnext',
-      rollupOptions: {
-        output: {
-          // ── Split 995KB monolith into focused chunks ──────────────────
-          manualChunks(id) {
-            // 1. React runtime — browser caches this forever
-            if (
-              id.includes('node_modules/react/') ||
-              id.includes('node_modules/react-dom/') ||
-              id.includes('node_modules/react-router')
-            ) {
-              return 'vendor-react';
-            }
-            // 2. Lucide icons — tree-shaken but still large
-            if (id.includes('node_modules/lucide-react')) {
-              return 'vendor-lucide';
-            }
-            // 3. Charting / data-vis libraries
-            if (
-              id.includes('node_modules/recharts') ||
-              id.includes('node_modules/d3-') ||
-              id.includes('node_modules/victory')
-            ) {
-              return 'vendor-charts';
-            }
-            // 4. All other node_modules
-            if (id.includes('node_modules/')) {
-              return 'vendor-misc';
-            }
-          },
-        },
-      },
     },
   };
 });

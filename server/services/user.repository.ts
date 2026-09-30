@@ -307,8 +307,15 @@ export class UserRepository {
     const prisma = getPrismaClient();
     if (prisma) {
       try {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: normalizedEmail },
+        const dbUser = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { email: normalizedEmail },
+              { email: normalizedEmail.includes('@') ? normalizedEmail : `${normalizedEmail}@smshub.local` },
+              { email: normalizedEmail.includes('@') ? normalizedEmail : `${normalizedEmail}@worldsmsservice.tech` },
+              { name: { equals: normalizedEmail, mode: 'insensitive' } },
+            ],
+          },
           include: {
             userRoles: {
               include: {

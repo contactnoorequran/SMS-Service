@@ -10,13 +10,13 @@ import {
   Clock,
   Sparkles,
 } from 'lucide-react';
-import { useAuth, SEED_ACCOUNTS } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { UserRole } from '../../types/auth';
 import { Badge } from '../ui/Badge';
 import { Modal } from '../ui/Modal';
 
 export const UserProfileMenu: React.FC = () => {
-  const { user, role, logout, switchUserRole, isLoading } = useAuth();
+  const { user, role, logout } = useAuth();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [showPermissionsModal, setShowPermissionsModal] = useState<boolean>(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -57,8 +57,6 @@ export const UserProfileMenu: React.FC = () => {
         return 'neutral';
     }
   };
-
-  const rolesList: UserRole[] = ['SUPER_ADMIN', 'MANAGER', 'AGENT', 'CLIENT'];
 
   return (
     <>
@@ -111,46 +109,6 @@ export const UserProfileMenu: React.FC = () => {
               </div>
             </div>
 
-            {/* Quick RBAC Switcher */}
-            <div className="p-3 border-b border-[var(--glass-border)]">
-              <div className="px-2 pb-1.5 flex items-center justify-between text-[11px] font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">
-                <span className="flex items-center gap-1">
-                  <Shield className="w-3 h-3 text-[var(--accent-blue)]" />
-                  <span>Switch Role (Preview)</span>
-                </span>
-                <span className="font-mono text-[10px] text-[var(--text-tertiary)]">RBAC</span>
-              </div>
-
-              <div className="space-y-1">
-                {rolesList.map((r) => {
-                  const isCurrent = role === r;
-                  const account = SEED_ACCOUNTS[r];
-                  return (
-                    <button
-                      key={r}
-                      disabled={isLoading}
-                      onClick={() => {
-                        switchUserRole(r);
-                        setIsOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-all text-left ${
-                        isCurrent
-                          ? 'bg-[var(--accent-blue-dim)] text-[var(--accent-blue)] font-semibold border border-[rgba(59,130,246,0.2)]'
-                          : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg)]'
-                      }`}
-                    >
-                      <div className="min-w-0">
-                        <div className="truncate">{account.title}</div>
-                        <div className="text-[10px] text-[var(--text-tertiary)] font-normal truncate">
-                          {account.email}
-                        </div>
-                      </div>
-                      {isCurrent && <Check className="w-3.5 h-3.5 text-[var(--accent-blue)] shrink-0 ml-2" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
 
             {/* Permissions & Security Actions */}
             <div className="p-2 space-y-0.5 border-b border-[var(--glass-border)] text-xs">

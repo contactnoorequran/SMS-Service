@@ -9,30 +9,13 @@ import {
   User,
   AlertCircle,
   Loader2,
-  ChevronDown,
-  Shield,
-  Users,
-  UserCheck,
-  Building2,
-  Check,
 } from 'lucide-react';
 import { UserRole } from '../../types/auth';
-import { useAuth, SEED_ACCOUNTS } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 interface LoginViewProps {
   onLoginSuccess?: (role: UserRole) => void;
 }
-
-const DEMO_PRESETS: Array<{
-  role: UserRole;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-}> = [
-  { role: 'SUPER_ADMIN', label: 'Super Admin', icon: Shield },
-  { role: 'AGENT', label: 'Agent', icon: Users },
-  { role: 'MANAGER', label: 'Manager', icon: UserCheck },
-  { role: 'CLIENT', label: 'Client', icon: Building2 },
-];
 
 export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const { login, isLoading: authLoading } = useAuth();
@@ -43,7 +26,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const [rememberMe, setRememberMe] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [showOtherAccounts, setShowOtherAccounts] = useState<boolean>(false);
 
   // Auto-detect role when email or username changes
   const detectedRole = React.useMemo<UserRole>(() => {
@@ -53,13 +35,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     if (lower.includes('client')) return 'CLIENT';
     return 'AGENT';
   }, [usernameOrEmail]);
-
-  const handleSelectPreset = (role: UserRole) => {
-    setUsernameOrEmail(SEED_ACCOUNTS[role].email);
-    setPassword(SEED_ACCOUNTS[role].pass);
-    setErrorMessage(null);
-    setShowOtherAccounts(false);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -256,50 +231,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                 <span>Sign in</span>
               )}
             </button>
-
-            {/* "Or" Horizontal Divider */}
-            <div className="flex items-center my-3 text-xs text-slate-400">
-              <div className="flex-1 h-[1px] bg-slate-200" />
-              <span className="px-3 font-medium">Or</span>
-              <div className="flex-1 h-[1px] bg-slate-200" />
-            </div>
-
-            {/* Secondary Action Button: "Sign in with other" */}
-            <button
-              id="btn_other_signin"
-              type="button"
-              onClick={() => setShowOtherAccounts((prev) => !prev)}
-              className="w-full h-12 rounded-xl bg-white border-2 border-slate-700/80 hover:bg-slate-50 text-slate-800 font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <span>Sign in with other</span>
-              <ChevronDown
-                className={`w-4 h-4 text-slate-500 transition-transform ${
-                  showOtherAccounts ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-
-            {/* Quick Fill Test Accounts Popdown */}
-            {showOtherAccounts && (
-              <div className="pt-2 grid grid-cols-2 gap-2 animate-fade-in">
-                {DEMO_PRESETS.map((preset) => {
-                  const Icon = preset.icon;
-                  return (
-                    <button
-                      key={preset.role}
-                      type="button"
-                      onClick={() => handleSelectPreset(preset.role)}
-                      className="p-2 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-left transition-colors cursor-pointer flex items-center gap-2"
-                    >
-                      <Icon className="w-3.5 h-3.5 text-[#0066FF] shrink-0" />
-                      <span className="text-xs text-slate-700 font-semibold truncate">
-                        {preset.label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
           </form>
         </div>
 

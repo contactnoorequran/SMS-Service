@@ -11,7 +11,7 @@ interface AuthContextType {
   isLoading: boolean;
   hasPermission: (permission: string) => boolean;
   hasRole: (roles: UserRole | UserRole[]) => boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (usernameOrEmail: string, password: string) => Promise<SafeUser>;
   logout: () => Promise<void>;
   switchUserRole: (role: UserRole) => Promise<void>;
 }
@@ -19,28 +19,28 @@ interface AuthContextType {
 // Seed accounts configuration for testing and role switching
 export const SEED_ACCOUNTS: Record<UserRole, { email: string; pass: string; title: string; desc: string }> = {
   SUPER_ADMIN: {
-    email: 'admin@smshub.local',
-    pass: 'Admin#Secure2026!',
-    title: 'Super Administrator',
-    desc: 'Unrestricted control, financial ledgers, audit logs, system settings',
+    email: 'abuzar@smshub.local',
+    pass: '11223344',
+    title: 'Abuzar',
+    desc: 'Super Administrator',
   },
   MANAGER: {
-    email: 'manager@smshub.local',
-    pass: 'Manager#Secure2026!',
-    title: 'Operations Manager',
-    desc: 'Provider routes, agent management, number pool allocations',
+    email: 'muddasir@smshub.local',
+    pass: '11223344',
+    title: 'Muddasir',
+    desc: 'Operations Manager',
   },
   AGENT: {
-    email: 'agent@smshub.local',
-    pass: 'Agent#Secure2026!',
-    title: 'Business Agent',
-    desc: 'Assigned clients, commission tracking, client message volume',
+    email: 'zubair@smshub.local',
+    pass: '11223344',
+    title: 'Zubair',
+    desc: 'Business Agent',
   },
   CLIENT: {
-    email: 'client@smshub.local',
-    pass: 'Client#Secure2026!',
-    title: 'Enterprise Client',
-    desc: 'Dedicated leased numbers, inbound webhook stream, wallet balance',
+    email: 'hamza@smshub.local',
+    pass: '11223344',
+    title: 'Hamza',
+    desc: 'Enterprise Client',
   },
 };
 
@@ -153,10 +153,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [user]
   );
 
-  const login = useCallback(async (email: string, pass: string) => {
+  const login = useCallback(async (usernameOrEmail: string, pass: string): Promise<SafeUser> => {
     setIsLoading(true);
     try {
-      const res = await apiClient.login(email, pass);
+      const res = await apiClient.login(usernameOrEmail, pass);
       setUser(res.user);
       setToken(res.token);
       if (typeof sessionStorage !== 'undefined') {
@@ -165,6 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         localStorage.setItem('sms_current_role', res.user.role.name);
       } catch {}
+      return res.user;
     } finally {
       setIsLoading(false);
     }

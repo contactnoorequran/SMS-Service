@@ -10,8 +10,12 @@ import { ClientService } from '../services/client.service';
 import { AuthTokenPayload } from '../types/auth';
 
 const loginSchema = z.object({
-  email: z.string().min(1, 'Email is required'),
+  username: z.string().optional(),
+  email: z.string().optional(),
   password: z.string().min(1, 'Password is required'),
+}).refine((data) => !!(data.username?.trim() || data.email?.trim()), {
+  message: 'Username is required',
+  path: ['username'],
 });
 
 export class AuthController {
@@ -30,23 +34,24 @@ export class AuthController {
       return;
     }
 
-    const { email, password } = validation.data;
+    const { username, email, password } = validation.data;
+    const identifier = (username || email)!.trim();
 
     // Ensure seed users are initialized
     await UserRepository.initializeSeedUsers();
 
     // 2. Lookup user record
-    const user = await UserRepository.findByEmail(email);
+    const user = await UserRepository.findByEmail(identifier);
     if (!user) {
       await AuditService.recordEvent({
-        email,
+        email: identifier,
         action: 'LOGIN_FAILED',
         reason: 'User account not found',
         ipAddress,
         userAgent,
       });
 
-      sendError(res, 401, 'INVALID_CREDENTIALS', 'Invalid email or password.');
+      sendError(res, 401, 'INVALID_CREDENTIALS', 'Invalid username or password.');
       return;
     }
 
@@ -62,7 +67,7 @@ export class AuthController {
         userAgent,
       });
 
-      sendError(res, 401, 'INVALID_CREDENTIALS', 'Invalid email or password.');
+      sendError(res, 401, 'INVALID_CREDENTIALS', 'Invalid username or password.');
       return;
     }
 

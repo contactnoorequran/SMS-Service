@@ -9,6 +9,7 @@ import {
   User,
   AlertCircle,
   Loader2,
+  Check,
 } from 'lucide-react';
 import { UserRole } from '../../types/auth';
 import { useAuth } from '../../context/AuthContext';
@@ -20,26 +21,27 @@ interface LoginViewProps {
 export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const { login, isLoading: authLoading } = useAuth();
 
-  const [usernameOrEmail, setUsernameOrEmail] = useState<string>('');
+  const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [rememberMe, setRememberMe] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Auto-detect role when email or username changes
+  // Auto-detect fallback role when username changes
   const detectedRole = React.useMemo<UserRole>(() => {
-    const lower = usernameOrEmail.toLowerCase().trim();
-    if (lower.includes('admin')) return 'SUPER_ADMIN';
-    if (lower.includes('manager')) return 'MANAGER';
-    if (lower.includes('client')) return 'CLIENT';
-    return 'AGENT';
-  }, [usernameOrEmail]);
+    const lower = username.toLowerCase().trim();
+    if (lower === 'abuzar' || lower.includes('admin')) return 'SUPER_ADMIN';
+    if (lower === 'muddasir' || lower.includes('manager')) return 'MANAGER';
+    if (lower === 'hamza' || lower.includes('client')) return 'CLIENT';
+    if (lower === 'zubair' || lower.includes('agent')) return 'AGENT';
+    return 'SUPER_ADMIN';
+  }, [username]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!usernameOrEmail.trim() || !password) {
-      setErrorMessage('Please enter both your username/email and password.');
+    if (!username.trim() || !password) {
+      setErrorMessage('Please enter both your username and password.');
       return;
     }
 
@@ -47,8 +49,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     setErrorMessage(null);
 
     try {
-      await login(usernameOrEmail.trim(), password);
-      onLoginSuccess?.(detectedRole);
+      const loggedInUser = await login(username.trim(), password);
+      onLoginSuccess?.(loggedInUser?.role?.name || detectedRole);
     } catch (err: any) {
       const msg = err?.message || 'Invalid username or password. Please verify your credentials.';
       setErrorMessage(msg);
@@ -147,7 +149,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="w-full space-y-4">
-            {/* Input 1: User Name / Email */}
+            {/* Input 1: Username */}
             <div>
               <div className="relative flex items-center">
                 <User className="w-4 h-4 text-slate-400 absolute left-4 pointer-events-none" />
@@ -155,12 +157,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   id="input_username"
                   type="text"
                   required
-                  value={usernameOrEmail}
+                  autoComplete="username"
+                  value={username}
                   onChange={(e) => {
-                    setUsernameOrEmail(e.target.value);
+                    setUsername(e.target.value);
                     setErrorMessage(null);
                   }}
-                  placeholder="User Name"
+                  placeholder="Username"
                   className="w-full h-12 bg-[#F1F5F9] hover:bg-[#E8EDF5] focus:bg-white text-xs sm:text-sm text-slate-800 rounded-xl pl-12 pr-4 outline-none border border-transparent focus:border-[#0066FF] transition-all placeholder:text-slate-400 font-medium"
                 />
               </div>

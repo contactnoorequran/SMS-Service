@@ -57,105 +57,42 @@ export class UserRepository {
       status: UserStatus;
     }> = [
       {
-        email: env.SEED_ADMIN_EMAIL,
-        passwordRaw: env.SEED_ADMIN_PASSWORD,
+        email: 'abuzar@smshub.local',
+        passwordRaw: '11223344',
         role: 'SUPER_ADMIN',
-        displayName: 'Super Administrator',
-        firstName: 'Alexander',
-        lastName: 'Vance',
+        displayName: 'Abuzar',
+        firstName: 'Abuzar',
+        lastName: '',
         status: 'ACTIVE',
       },
       {
-        email: env.SEED_MANAGER_EMAIL,
-        passwordRaw: env.SEED_MANAGER_PASSWORD,
-        role: 'MANAGER',
-        displayName: 'Operations Manager',
-        firstName: 'Elena',
-        lastName: 'Rostova',
-        status: 'ACTIVE',
-      },
-      {
-        email: env.SEED_AGENT_EMAIL,
-        passwordRaw: env.SEED_AGENT_PASSWORD,
+        email: 'zubair@smshub.local',
+        passwordRaw: '11223344',
         role: 'AGENT',
-        displayName: 'Business Agent',
-        firstName: 'Marcus',
-        lastName: 'Brody',
+        displayName: 'Zubair',
+        firstName: 'Zubair',
+        lastName: '',
         status: 'ACTIVE',
       },
       {
-        email: env.SEED_CLIENT_EMAIL,
-        passwordRaw: env.SEED_CLIENT_PASSWORD,
-        role: 'CLIENT',
-        displayName: 'Enterprise Client',
-        firstName: 'Sophia',
-        lastName: 'Chen',
-        status: 'ACTIVE',
-      },
-      {
-        email: 'disabled@smshub.local',
-        passwordRaw: env.SEED_CLIENT_PASSWORD,
-        role: 'CLIENT',
-        displayName: 'Suspended Client',
-        firstName: 'Dormant',
-        lastName: 'Account',
-        status: 'SUSPENDED',
-      },
-    ];
-
-    // Guarantee default platform dev accounts are always available for UI role-switching and tests
-    const defaultLocalAccounts: Array<{
-      email: string;
-      passwordRaw: string;
-      role: UserRole;
-      displayName: string;
-      firstName: string;
-      lastName: string;
-      status: UserStatus;
-    }> = [
-      {
-        email: 'admin@smshub.local',
-        passwordRaw: 'Admin#Secure2026!',
-        role: 'SUPER_ADMIN',
-        displayName: 'Super Administrator',
-        firstName: 'Alexander',
-        lastName: 'Vance',
-        status: 'ACTIVE',
-      },
-      {
-        email: 'manager@smshub.local',
-        passwordRaw: 'Manager#Secure2026!',
+        email: 'muddasir@smshub.local',
+        passwordRaw: '11223344',
         role: 'MANAGER',
-        displayName: 'Operations Manager',
-        firstName: 'Elena',
-        lastName: 'Rostova',
+        displayName: 'Muddasir',
+        firstName: 'Muddasir',
+        lastName: '',
         status: 'ACTIVE',
       },
       {
-        email: 'agent@smshub.local',
-        passwordRaw: 'Agent#Secure2026!',
-        role: 'AGENT',
-        displayName: 'Business Agent',
-        firstName: 'Marcus',
-        lastName: 'Brody',
-        status: 'ACTIVE',
-      },
-      {
-        email: 'client@smshub.local',
-        passwordRaw: 'Client#Secure2026!',
+        email: 'hamza@smshub.local',
+        passwordRaw: '11223344',
         role: 'CLIENT',
-        displayName: 'Enterprise Client',
-        firstName: 'Sophia',
-        lastName: 'Chen',
+        displayName: 'Hamza',
+        firstName: 'Hamza',
+        lastName: '',
         status: 'ACTIVE',
       },
     ];
-
-    for (const localAcc of defaultLocalAccounts) {
-      if (!seedConfigs.some((s) => s.email.toLowerCase() === localAcc.email.toLowerCase())) {
-        seedConfigs.push(localAcc);
-      }
-    }
 
     for (const seed of seedConfigs) {
       const emailLower = seed.email.toLowerCase();
@@ -300,8 +237,9 @@ export class UserRepository {
   /**
    * Finds a user record by email (including passwordHash for internal authentication verification).
    */
-  static async findByEmail(email: string): Promise<StoredUser | null> {
-    const normalizedEmail = email.toLowerCase().trim();
+  static async findByEmail(emailOrUsername: string): Promise<StoredUser | null> {
+    const raw = emailOrUsername.trim();
+    const normalized = raw.toLowerCase();
 
     // Check database if connected
     const prisma = getPrismaClient();
@@ -310,10 +248,11 @@ export class UserRepository {
         const dbUser = await prisma.user.findFirst({
           where: {
             OR: [
-              { email: normalizedEmail },
-              { email: normalizedEmail.includes('@') ? normalizedEmail : `${normalizedEmail}@smshub.local` },
-              { email: normalizedEmail.includes('@') ? normalizedEmail : `${normalizedEmail}@worldsmsservice.tech` },
-              { name: { equals: normalizedEmail, mode: 'insensitive' } },
+              { email: normalized },
+              { email: normalized.includes('@') ? normalized : `${normalized}@smshub.local` },
+              { email: normalized.includes('@') ? normalized : `${normalized}@worldsmsservice.tech` },
+              { name: { equals: raw, mode: 'insensitive' } },
+              { name: { equals: normalized, mode: 'insensitive' } },
             ],
           },
           include: {
@@ -338,7 +277,7 @@ export class UserRepository {
 
         if (dbUser) {
           const stored = this.mapDbUserToStored(dbUser);
-          memoryUsers.set(normalizedEmail, stored);
+          memoryUsers.set(normalized, stored);
           return stored;
         }
       } catch (err) {
@@ -347,7 +286,12 @@ export class UserRepository {
     }
 
     // Check in-memory store
-    const memUser = memoryUsers.get(normalizedEmail);
+    const memUser = memoryUsers.get(normalized) || Array.from(memoryUsers.values()).find(
+      (u) =>
+        u.email.toLowerCase() === normalized ||
+        (u.firstName && u.firstName.toLowerCase() === normalized) ||
+        (u.role && u.role.displayName.toLowerCase() === normalized)
+    );
     return memUser || null;
   }
 

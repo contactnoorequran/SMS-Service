@@ -4,118 +4,125 @@
 
 /* ─── Tailwind v4 Theme Extension ─── */
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: 'Outfit', 'Plus Jakarta Sans', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
 
-  --color-glass-bg: #ffffff;
-  --color-glass-bg-hover: #f4f4f5;
-  --color-glass-bg-active: #ededee;
-  --color-glass-border: #e2e2e5;
-  --color-glass-border-hover: #bcbcc2;
-  --color-glass-border-active: #71717a;
+  --color-glass-bg: rgba(255, 255, 255, 0.85);
+  --color-glass-bg-hover: rgba(255, 255, 255, 0.95);
+  --color-glass-bg-active: #f1f5f9;
+  --color-glass-border: rgba(226, 232, 240, 0.85);
+  --color-glass-border-hover: rgba(186, 230, 253, 0.9);
+  --color-glass-border-active: #0284c7;
 
-  --color-bg-deep: #f5f5f5;
+  --color-bg-deep: #f8fafc;
   --color-bg-surface: #ffffff;
   --color-bg-elevated: #ffffff;
 
-  --color-accent-blue: #18181b;
-  --color-accent-blue-dim: #f0f0f1;
-  --color-accent-blue-glow: transparent;
-  --color-accent-emerald: #3f3f46;
-  --color-accent-emerald-dim: #f0f0f1;
-  --color-accent-amber: #52525b;
-  --color-accent-amber-dim: #f0f0f1;
-  --color-accent-rose: #27272a;
-  --color-accent-rose-dim: #f0f0f1;
-  --color-accent-violet: #71717a;
-  --color-accent-violet-dim: #f0f0f1;
-  --color-accent-cyan: #52525b;
-  --color-accent-cyan-dim: #f0f0f1;
+  --color-accent-blue: #0284c7;
+  --color-accent-blue-dim: rgba(2, 132, 199, 0.08);
+  --color-accent-blue-glow: rgba(2, 132, 199, 0.25);
+  --color-accent-emerald: #059669;
+  --color-accent-emerald-dim: rgba(5, 150, 105, 0.08);
+  --color-accent-amber: #d97706;
+  --color-accent-amber-dim: rgba(217, 119, 6, 0.08);
+  --color-accent-rose: #e11d48;
+  --color-accent-rose-dim: rgba(225, 29, 72, 0.08);
+  --color-accent-violet: #7c3aed;
+  --color-accent-violet-dim: rgba(124, 58, 237, 0.08);
+  --color-accent-cyan: #0891b2;
+  --color-accent-cyan-dim: rgba(8, 145, 178, 0.08);
 
-  --color-text-primary: #18181b;
-  --color-text-secondary: #52525b;
-  --color-text-tertiary: #66666f;
-  --color-text-disabled: #a1a1aa;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #64748b;
+  --color-text-disabled: #94a3b8;
 
   /* WORLD SMS SERVICE Brand Identity Colors */
-  --color-brand-primary: #18181b;
-  --color-brand-primary-hover: #333338;
-  --color-brand-primary-soft: #ededee;
-  --color-brand-primary-glow: transparent;
-  --color-brand-secondary: #3f3f46;
-  --color-brand-secondary-soft: #f4f4f5;
-  --color-brand-glow: transparent;
+  --color-brand-primary: #0284c7;
+  --color-brand-primary-hover: #0369a1;
+  --color-brand-primary-soft: rgba(2, 132, 199, 0.08);
+  --color-brand-primary-glow: rgba(2, 132, 199, 0.25);
+  --color-brand-secondary: #3b82f6;
+  --color-brand-secondary-soft: rgba(59, 130, 246, 0.08);
+  --color-brand-glow: rgba(2, 132, 199, 0.3);
   --color-brand-surface: #ffffff;
-  --color-brand-border: #d4d4d8;
-  --color-brand-accent: #3f3f46;
-  --color-brand-text: #18181b;
-  --color-brand-muted: #52525b;
+  --color-brand-border: rgba(2, 132, 199, 0.2);
+  --color-brand-accent: #059669;
+  --color-brand-text: #0f172a;
+  --color-brand-muted: #475569;
 }
 
 /* ─── CSS Custom Properties ─── */
 :root {
+  /* Fonts */
+  --font-sans: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+
   /* Backgrounds */
-  --bg-deep: #f5f5f5;
+  --bg-deep: #f8fafc;
   --bg-surface: #ffffff;
   --bg-elevated: #ffffff;
 
   /* Glass */
-  --glass-bg: #ffffff;
-  --glass-bg-hover: #f4f4f5;
-  --glass-bg-active: #ededee;
-  --glass-border: #e2e2e5;
-  --glass-border-hover: #bcbcc2;
-  --glass-border-active: #71717a;
-  --glass-blur: 0px;
-  --glass-blur-heavy: 0px;
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-bg-hover: rgba(255, 255, 255, 0.95);
+  --glass-bg-active: #f1f5f9;
+  --glass-border: rgba(226, 232, 240, 0.85);
+  --glass-border-hover: rgba(186, 230, 253, 0.9);
+  --glass-border-active: #0284c7;
+  --glass-blur: 16px;
+  --glass-blur-heavy: 24px;
 
   /* Accents */
-  --accent-blue: #18181b;
-  --accent-blue-dim: #f0f0f1;
-  --accent-blue-glow: transparent;
-  --accent-emerald: #3f3f46;
-  --accent-emerald-dim: #f0f0f1;
-  --accent-amber: #52525b;
-  --accent-amber-dim: #f0f0f1;
-  --accent-rose: #27272a;
-  --accent-rose-dim: #f0f0f1;
-  --accent-violet: #71717a;
-  --accent-violet-dim: #f0f0f1;
-  --accent-cyan: #52525b;
-  --accent-cyan-dim: #f0f0f1;
+  --accent-blue: #0284c7;
+  --accent-blue-dim: rgba(2, 132, 199, 0.08);
+  --accent-blue-glow: rgba(2, 132, 199, 0.25);
+  --accent-emerald: #059669;
+  --accent-emerald-dim: rgba(5, 150, 105, 0.08);
+  --accent-amber: #d97706;
+  --accent-amber-dim: rgba(217, 119, 6, 0.08);
+  --accent-rose: #e11d48;
+  --accent-rose-dim: rgba(225, 29, 72, 0.08);
+  --accent-violet: #7c3aed;
+  --accent-violet-dim: rgba(124, 58, 237, 0.08);
+  --accent-cyan: #0891b2;
+  --accent-cyan-dim: rgba(8, 145, 178, 0.08);
 
   /* WORLD SMS SERVICE Brand Tokens */
-  --brand-primary: #18181b;          /* Enterprise Telecom Sky Blue */
-  --brand-primary-hover: #333338;
-  --brand-primary-soft: #ededee;
-  --brand-primary-glow: transparent;
-  --brand-secondary: #3f3f46;        /* Carrier High-Reliability Cobalt */
-  --brand-secondary-soft: #f4f4f5;
-  --brand-glow: transparent;
+  --brand-primary: #0284c7;          /* Enterprise Telecom Sky Blue */
+  --brand-primary-hover: #0369a1;
+  --brand-primary-soft: rgba(2, 132, 199, 0.08);
+  --brand-primary-glow: rgba(2, 132, 199, 0.25);
+  --brand-secondary: #3b82f6;        /* Carrier High-Reliability Cobalt */
+  --brand-secondary-soft: rgba(59, 130, 246, 0.08);
+  --brand-glow: rgba(2, 132, 199, 0.3);
   --brand-surface: #ffffff;
-  --brand-border: #d4d4d8;
-  --brand-accent: #3f3f46;           /* Delivery Verification Emerald */
-  --brand-text: #18181b;
-  --brand-text-muted: #52525b;
+  --brand-border: rgba(2, 132, 199, 0.2);
+  --brand-accent: #059669;           /* Delivery Verification Emerald */
+  --brand-text: #0f172a;
+  --brand-text-muted: #475569;
 
   /* Text */
-  --text-primary: #18181b;
-  --text-secondary: #52525b;
-  --text-tertiary: #66666f;
-  --text-disabled: #a1a1aa;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+  --text-disabled: #94a3b8;
 
   /* Animation */
-  --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --duration-fast: 150ms;
-  --duration-normal: 200ms;
-  --duration-slow: 300ms;
+  --duration-normal: 250ms;
+  --duration-slow: 350ms;
 
   /* Radii */
-  --radius-sm: 4px;
-  --radius-md: 5px;
-  --radius-lg: 6px;
-  --radius-xl: 8px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
   --radius-full: 9999px;
+  --card-radius: 14px;
 }
 
 /* ─── Typography Foundation Hierarchy ─── */
@@ -312,14 +319,16 @@ html {
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   background: var(--bg-deep);
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── Ambient Background ─── */
+/* ─── Ambient Radiant Glow Background ─── */
 #root {
   position: relative;
   min-height: 100vh;
@@ -332,9 +341,18 @@ body {
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 80% 60% at 10% 20%, rgba(59, 130, 246, 0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 90% 80%, rgba(139, 92, 246, 0.04) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(6, 182, 212, 0.03) 0%, transparent 60%);
+    radial-gradient(ellipse 85% 65% at 12% 15%, rgba(2, 132, 199, 0.07) 0%, transparent 65%),
+    radial-gradient(ellipse 65% 55% at 88% 85%, rgba(124, 58, 237, 0.05) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 45% at 50% 40%, rgba(8, 145, 178, 0.04) 0%, transparent 60%);
+  transition: opacity 0.4s ease;
+}
+
+html[data-color-mode="dark"] #root::before,
+html.dark #root::before {
+  background:
+    radial-gradient(ellipse 90% 70% at 15% 15%, rgba(56, 189, 248, 0.12) 0%, transparent 65%),
+    radial-gradient(ellipse 70% 60% at 85% 85%, rgba(167, 139, 250, 0.08) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 50% at 50% 30%, rgba(52, 211, 153, 0.05) 0%, transparent 60%);
 }
 
 /* ─── Glass Utility Classes ─── */
@@ -365,28 +383,44 @@ body {
 /* Level 1: Primary structural frames (Sidebar, Header, Main Panel Shell) */
 .surface-level-1,
 .glass-panel {
-  background: rgba(13, 17, 28, 0.72);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--glass-border);
 }
 
 /* Level 2: Elevated interactive cards, StatCards, content widgets */
 .surface-level-2,
 .glass-card {
-  background: rgba(18, 24, 38, 0.65);
+  background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
-  transition: all var(--duration-normal) var(--ease-out);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
 }
 
 .surface-level-2:hover,
 .glass-card:hover {
-  background: rgba(22, 30, 48, 0.78);
   border-color: var(--glass-border-hover);
+  box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.08), 0 4px 10px -2px rgba(0, 0, 0, 0.04);
+}
+
+.icon-box-kpi {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.06);
+}
+
+.glass-card:hover .icon-box-kpi {
+  transform: scale(1.08);
 }
 
 /* Level 3: Modals, popovers, flyout dialogs */
@@ -744,19 +778,6 @@ th.cell-wrap {
     scroll-behavior: auto !important;
   }
 }
-
-/* Compact monochrome surfaces, matching the reference's white admin panels. */
-:root { color-scheme: light; }
-body { font-size: 13px; }
-#root::before { display: none; }
-.glass, .glass-panel, .surface-level-1, .glass-card, .surface-level-2,
-.glass-modal, .surface-level-3, .glass-surface {
-  background: #fff; backdrop-filter: none; -webkit-backdrop-filter: none;
-  border-color: var(--glass-border); box-shadow: 0 2px 7px rgba(0,0,0,.045);
-  border-radius: var(--card-radius, 8px);
-}
-.glass-card:hover, .surface-level-2:hover { background: #fff; }
-.glass-hover:hover { transform: none; }
 
 /* ─── Universal Dynamic Card System (Cards Waghera Changings) ─── */
 .glass-card {

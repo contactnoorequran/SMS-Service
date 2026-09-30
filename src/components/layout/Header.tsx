@@ -180,7 +180,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           type="button"
           onClick={onOpenGlobalSearch}
-          className="w-60 flex items-center justify-between px-3 py-1.5 rounded-md bg-[rgba(0,0,0,0.25)] hover:bg-[rgba(0,0,0,0.4)] border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-all cursor-pointer shadow-xs"
+          className="w-60 flex items-center justify-between px-3 py-1.5 rounded-lg bg-[var(--glass-bg-active)] hover:bg-[var(--glass-bg-hover)] border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)] text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-all cursor-pointer shadow-xs"
         >
           <div className="flex items-center gap-2 truncate">
             <Search className="w-3.5 h-3.5 text-[var(--brand-primary)] shrink-0" />

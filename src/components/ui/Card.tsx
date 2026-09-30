@@ -173,25 +173,25 @@ export const StatCard: React.FC<StatCardProps> = ({
       onKeyDown={handleKeyDown}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
-      className={`glass-card p-5 h-full flex flex-col justify-between transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] ${
+      className={`glass-card p-5 h-full flex flex-col justify-between transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] group ${
         onClick
-          ? 'cursor-pointer hover:-translate-y-0.5 hover:border-[var(--glass-border-hover)] hover:shadow-lg'
-          : ''
+          ? 'cursor-pointer hover:-translate-y-1 hover:border-[var(--glass-border-hover)] hover:shadow-xl'
+          : 'hover:border-[var(--glass-border-hover)]'
       } ${className}`}
     >
       <div>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-medium text-[var(--text-secondary)] truncate">{title}</p>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-bold tracking-tight text-[var(--text-primary)] font-mono">
+            <p className="text-xs font-semibold text-[var(--text-secondary)] truncate tracking-wide">{title}</p>
+            <div className="mt-2.5 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-[28px] font-extrabold tracking-tight text-[var(--text-primary)] font-display tabular-nums leading-none">
                 {value}
               </span>
               {renderedBadge && <span className="shrink-0">{renderedBadge}</span>}
             </div>
           </div>
           {renderedIcon && (
-            <div className={`icon-box-kpi ${iconBgColor}`}>
+            <div className={`icon-box-kpi ${iconBgColor} group-hover:scale-105 transition-transform duration-300`}>
               {renderedIcon}
             </div>
           )}

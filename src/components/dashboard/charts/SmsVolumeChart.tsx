@@ -27,7 +27,7 @@ export const SmsVolumeChart: React.FC<SmsVolumeChartProps> = ({ data }) => {
   const deliveryRate = totalVolume > 0 ? (totalDelivered / totalVolume) * 100 : 0;
 
   return (
-    <div className="bg-[var(--glass-bg)] backdrop-blur-md border border-[var(--glass-border)] rounded-xl p-5 shadow-xs">
+    <div className="glass-card p-5 sm:p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[var(--glass-border)]">
         <div>

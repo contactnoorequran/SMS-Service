@@ -228,7 +228,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
           {/* Right Login Card Column */}
           <div className="lg:col-span-6">
-            <div className="glass-card p-6 sm:p-8 rounded-2xl border border-[var(--glass-border)] bg-[rgba(13,19,33,0.85)] shadow-2xl relative">
+            <div className="glass-card p-6 sm:p-8 rounded-2xl border border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-xl shadow-2xl relative">
               <div className="flex items-center justify-between pb-4 border-b border-[var(--glass-border)] mb-6">
                 <div>
                   <h2 className="text-lg font-bold text-[var(--text-primary)]">Account Login</h2>

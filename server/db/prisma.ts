@@ -132,7 +132,7 @@ export function getPrismaClient(): PrismaClient | null {
 }
 
 let cachedDbStatus: { status: DbHealthStatus; timestamp: number } | null = null;
-const DB_HEALTH_CACHE_TTL = 15000; // 15 seconds
+const DB_HEALTH_CACHE_TTL = 30000; // 30 seconds cache to avoid query thrashing
 
 export async function checkDbHealth(): Promise<DbHealthStatus> {
   if (!env.DATABASE_URL) {
@@ -161,10 +161,10 @@ export async function checkDbHealth(): Promise<DbHealthStatus> {
 
   const start = Date.now();
   try {
-    // Execute a lightweight query with a strict 1200ms timeout to prevent hanging the API
+    // Execute a lightweight query with a realistic 5000ms timeout for cross-region cloud pools
     const pingPromise = client.$queryRaw`SELECT 1 as health_check`;
     const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Database ping timeout (1200ms)')), 1200)
+      setTimeout(() => reject(new Error('Database ping timeout (5000ms)')), 5000)
     );
 
     await Promise.race([pingPromise, timeoutPromise]);
@@ -180,11 +180,6 @@ export async function checkDbHealth(): Promise<DbHealthStatus> {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Database ping failed';
     dbLogger.warn('Database health check failed:', { error: message });
-    // Auto-heal: reset stale instance so next call re-establishes connection
-    if (prismaInstance) {
-      prismaInstance.$disconnect().catch(() => {});
-      prismaInstance = null;
-    }
     const result: DbHealthStatus = {
       status: 'DISCONNECTED',
       provider: 'postgresql',

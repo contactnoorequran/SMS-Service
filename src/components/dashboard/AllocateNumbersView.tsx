@@ -115,14 +115,14 @@ export const AllocateNumbersView: React.FC<AllocateNumbersViewProps> = ({ onBack
       {/* Header matching Screenshot 1 */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-[var(--text-primary,#f8fafc)] tracking-tight">
+          <h1 className="text-xl font-bold text-[var(--text-primary)] tracking-tight">
             Allocate Numbers
           </h1>
-          <p className="text-xs text-[var(--text-secondary,#94a3b8)] mt-0.5">
+          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
             Assign available numbers to a member by single range, multiple ranges, or every range under a provider.
           </p>
           <div className="pt-2">
-            <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-teal-500/15 text-teal-400 border border-teal-500/30 uppercase tracking-wider">
+            <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-teal-500/15 text-teal-500 dark:text-teal-400 border border-teal-500/30 uppercase tracking-wider">
               ADMIN
             </span>
           </div>
@@ -138,7 +138,7 @@ export const AllocateNumbersView: React.FC<AllocateNumbersViewProps> = ({ onBack
               window.dispatchEvent(new PopStateEvent('popstate'));
             }
           }}
-          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[var(--text-secondary,#94a3b8)] hover:text-white border border-[var(--glass-border,#334155)] hover:bg-[rgba(255,255,255,0.06)] flex items-center gap-1.5 transition-colors cursor-pointer self-start sm:self-auto"
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--glass-border)] hover:bg-[var(--glass-bg-hover)] flex items-center gap-1.5 transition-colors cursor-pointer self-start sm:self-auto"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to Numbers</span>
@@ -146,25 +146,25 @@ export const AllocateNumbersView: React.FC<AllocateNumbersViewProps> = ({ onBack
       </div>
 
       {/* Card 1: Instant Allocation Processor matching Screenshot 1 */}
-      <div className="glass-card p-6 rounded-2xl border border-[var(--glass-border,#334155)] bg-[var(--bg-surface,#0f172a)] space-y-5">
+      <div className="glass-card p-6 rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] space-y-5">
         <div>
-          <h2 className="text-sm font-bold text-[var(--text-primary,#f8fafc)]">
+          <h2 className="text-sm font-bold text-[var(--text-primary)]">
             Instant Allocation Processor
           </h2>
-          <p className="text-[11px] text-[var(--text-tertiary,#64748b)] mt-0.5">
+          <p className="text-[11px] text-[var(--text-tertiary)] mt-0.5">
             Default member earning/SMS from each range is used automatically — no price override here.
           </p>
         </div>
 
         {/* Mode Tabs: Single Range | Multiple Ranges | All Provider Ranges */}
-        <div className="flex items-center gap-1.5 border-b border-[var(--glass-border,#334155)] pb-3">
+        <div className="flex items-center gap-1.5 border-b border-[var(--glass-border)] pb-3">
           <button
             type="button"
             onClick={() => setAllocationMode('single')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors ${
               allocationMode === 'single'
-                ? 'bg-teal-500/15 text-teal-400 border border-teal-500/30'
-                : 'text-[var(--text-secondary,#94a3b8)] hover:text-white hover:bg-[rgba(255,255,255,0.04)]'
+                ? 'bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-hover)]'
             }`}
           >
             Single Range
@@ -174,8 +174,8 @@ export const AllocateNumbersView: React.FC<AllocateNumbersViewProps> = ({ onBack
             onClick={() => setAllocationMode('multiple')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors ${
               allocationMode === 'multiple'
-                ? 'bg-teal-500/15 text-teal-400 border border-teal-500/30'
-                : 'text-[var(--text-secondary,#94a3b8)] hover:text-white hover:bg-[rgba(255,255,255,0.04)]'
+                ? 'bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-hover)]'
             }`}
           >
             Multiple Ranges
@@ -185,8 +185,8 @@ export const AllocateNumbersView: React.FC<AllocateNumbersViewProps> = ({ onBack
             onClick={() => setAllocationMode('all')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors ${
               allocationMode === 'all'
-                ? 'bg-teal-500/15 text-teal-400 border border-teal-500/30'
-                : 'text-[var(--text-secondary,#94a3b8)] hover:text-white hover:bg-[rgba(255,255,255,0.04)]'
+                ? 'bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-hover)]'
             }`}
           >
             All Provider Ranges
@@ -197,19 +197,19 @@ export const AllocateNumbersView: React.FC<AllocateNumbersViewProps> = ({ onBack
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Field 1: Member Username */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)]">
+              <label className="text-[11px] font-semibold text-[var(--text-secondary)]">
                 1. Member Username <span className="text-rose-400">*</span>
               </label>
               <select
                 value={memberUsername}
                 onChange={(e) => setMemberUsername(e.target.value)}
-                className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer"
+                className="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 cursor-pointer"
               >
                 <option value="demouser">demouser (Active Member)</option>
                 <option value="agent1">agent1 (SMS Agent)</option>
                 <option value="client_wholesale">client_wholesale (Enterprise)</option>
               </select>
-              <p className="text-[10px] text-[var(--text-tertiary,#64748b)]">
+              <p className="text-[10px] text-[var(--text-tertiary)]">
                 Type at least 1 character to search by member username...
               </p>
               <button
@@ -223,18 +223,18 @@ export const AllocateNumbersView: React.FC<AllocateNumbersViewProps> = ({ onBack
 
             {/* Field 2: Target Range */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)]">
+              <label className="text-[11px] font-semibold text-[var(--text-secondary)]">
                 2. Target Range <span className="text-rose-400">*</span>
               </label>
               <select
                 value={targetRange}
                 onChange={(e) => setTargetRange(e.target.value)}
-                className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer"
+                className="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 cursor-pointer"
               >
                 <option value="test-for-test">test-for-test (Alaa0 - 10,000 numbers)</option>
                 <option value="Alaa Test">Alaa Test (UK - 1,002 numbers)</option>
               </select>
-              <p className="text-[10px] text-[var(--text-tertiary,#64748b)]">
+              <p className="text-[10px] text-[var(--text-tertiary)]">
                 Type at least 1 character...
               </p>
             </div>
@@ -242,7 +242,7 @@ export const AllocateNumbersView: React.FC<AllocateNumbersViewProps> = ({ onBack
 
           {/* Field 3: Quantity Required */}
           <div className="space-y-1.5 max-w-md">
-            <label className="text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)]">
+            <label className="text-[11px] font-semibold text-[var(--text-secondary)]">
               3. Quantity Required <span className="text-rose-400">*</span>
             </label>
             <input
@@ -251,16 +251,16 @@ export const AllocateNumbersView: React.FC<AllocateNumbersViewProps> = ({ onBack
               max="10000"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs font-mono text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500"
+              className="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-xs font-mono text-[var(--text-primary)] focus:outline-none focus:border-teal-500"
             />
-            <p className="text-[10px] text-[var(--text-tertiary,#64748b)]">
+            <p className="text-[10px] text-[var(--text-tertiary)]">
               Cannot exceed available stock
             </p>
           </div>
 
           {/* Info callout matching Screenshot 1 */}
-          <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/25 text-blue-300 flex items-center gap-2 text-xs">
-            <Info className="w-4 h-4 text-blue-400 shrink-0" />
+          <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/25 text-blue-600 dark:text-blue-300 flex items-center gap-2 text-xs">
+            <Info className="w-4 h-4 text-blue-500 dark:text-blue-400 shrink-0" />
             <span>Search members by username. Default range earning/SMS applies automatically.</span>
           </div>
 
@@ -277,19 +277,19 @@ export const AllocateNumbersView: React.FC<AllocateNumbersViewProps> = ({ onBack
       </div>
 
       {/* Card 2: Recent Allocations matching Screenshot 1 */}
-      <div className="glass-card rounded-2xl border border-[var(--glass-border,#334155)] bg-[var(--bg-surface,#0f172a)] overflow-hidden">
-        <div className="px-6 py-4 border-b border-[var(--glass-border,#334155)] flex items-center justify-between">
+      <div className="glass-card rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)] overflow-hidden">
+        <div className="px-6 py-4 border-b border-[var(--glass-border)] flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-bold text-[var(--text-primary,#f8fafc)]">
+            <h3 className="text-sm font-bold text-[var(--text-primary)]">
               Recent Allocations
             </h3>
-            <p className="text-[11px] text-[var(--text-tertiary,#64748b)] mt-0.5">
+            <p className="text-[11px] text-[var(--text-tertiary)] mt-0.5">
               Last 100 member allocations - 10 per page — re-download the TXT anytime
             </p>
           </div>
           <button
             onClick={handleRefresh}
-            className="p-1.5 rounded-lg border border-[var(--glass-border,#334155)] text-[var(--text-secondary,#94a3b8)] hover:text-white hover:bg-[rgba(255,255,255,0.06)] flex items-center gap-1.5 text-xs font-medium transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg border border-[var(--glass-border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-hover)] flex items-center gap-1.5 text-xs font-medium transition-colors cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
@@ -299,7 +299,7 @@ export const AllocateNumbersView: React.FC<AllocateNumbersViewProps> = ({ onBack
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-[var(--glass-border,#334155)] text-[10px] uppercase font-bold text-[var(--text-tertiary,#64748b)] bg-[rgba(0,0,0,0.15)]">
+              <tr className="border-b border-[var(--glass-border)] text-[10px] uppercase font-bold text-[var(--text-secondary)] bg-[var(--table-th-bg)]">
                 <th className="py-3 px-5">WHEN</th>
                 <th className="py-3 px-4">MEMBER</th>
                 <th className="py-3 px-4">RANGE</th>
@@ -307,28 +307,28 @@ export const AllocateNumbersView: React.FC<AllocateNumbersViewProps> = ({ onBack
                 <th className="py-3 px-5 text-right">FILE</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--glass-border,#334155)]">
+            <tbody className="divide-y divide-[var(--glass-border)]">
               {recentAllocations.map((alloc) => (
-                <tr key={alloc.id} className="hover:bg-[rgba(255,255,255,0.02)] transition-colors">
-                  <td className="py-3.5 px-5 font-mono text-xs text-[var(--text-primary,#f8fafc)]">
+                <tr key={alloc.id} className="hover:bg-[var(--table-hover-bg)] transition-colors">
+                  <td className="py-3.5 px-5 font-mono text-xs text-[var(--text-primary)]">
                     <div>{alloc.when}</div>
-                    <div className="text-[10px] text-[var(--text-tertiary,#64748b)] font-sans mt-0.5">
+                    <div className="text-[10px] text-[var(--text-tertiary)] font-sans mt-0.5">
                       {alloc.relativeTime}
                     </div>
                   </td>
-                  <td className="py-3.5 px-4 font-semibold text-xs text-[var(--text-primary,#f8fafc)]">
+                  <td className="py-3.5 px-4 font-semibold text-xs text-[var(--text-primary)]">
                     {alloc.member}
                   </td>
-                  <td className="py-3.5 px-4 text-xs text-[var(--text-secondary,#94a3b8)] font-mono">
+                  <td className="py-3.5 px-4 text-xs text-[var(--text-secondary)] font-mono">
                     {alloc.range}
                   </td>
-                  <td className="py-3.5 px-4 text-xs font-mono font-bold text-[var(--text-primary,#f8fafc)]">
+                  <td className="py-3.5 px-4 text-xs font-mono font-bold text-[var(--text-primary)]">
                     {alloc.quantity.toLocaleString()}
                   </td>
                   <td className="py-3.5 px-5 text-right">
                     <button
                       onClick={() => showToast(`Downloaded ${alloc.fileName}`)}
-                      className="text-blue-400 hover:text-blue-300 font-semibold text-xs cursor-pointer hover:underline"
+                      className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 font-semibold text-xs cursor-pointer hover:underline"
                     >
                       Download
                     </button>

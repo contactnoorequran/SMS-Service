@@ -220,7 +220,7 @@ export const RoleManagementView: React.FC = () => {
                 </button>
 
                 {isExpanded && (
-                  <div className="p-3.5 pt-0 border-t border-[var(--glass-border)] space-y-3 bg-[rgba(0,0,0,0.15)]">
+                  <div className="p-3.5 pt-0 border-t border-[var(--glass-border)] space-y-3 bg-[var(--input-bg-subtle)]">
                     {groups.map((grp) => {
                       const grantedPerms = grp.permissions.filter((p) =>
                         isRoleGranted(role, p.code)

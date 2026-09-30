@@ -161,7 +161,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Role Indicator Strip (only visible when expanded) */}
       {!isCollapsed && (
-        <div className="px-4 py-2 border-b border-[var(--glass-border)] bg-[rgba(0,0,0,0.15)] flex items-center justify-between text-[11px]">
+        <div className="px-4 py-2 border-b border-[var(--glass-border)] bg-[var(--input-bg-subtle)] flex items-center justify-between text-[11px]">
           <div className="flex items-center gap-2 min-w-0">
             <Shield className="w-3.5 h-3.5 text-[var(--brand-primary)] shrink-0" />
             <span className="font-mono text-[var(--text-tertiary)]">Role:</span>
@@ -258,7 +258,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Footer Specs (when expanded) */}
       {!isCollapsed && (
-        <div className="p-3 border-t border-[var(--glass-border)] bg-[rgba(0,0,0,0.15)] text-[10px] text-[var(--text-tertiary)] font-mono flex items-center justify-between shrink-0">
+        <div className="p-3 border-t border-[var(--glass-border)] bg-[var(--input-bg-subtle)] text-[10px] text-[var(--text-tertiary)] font-mono flex items-center justify-between shrink-0">
           <span>WORLD SMS SERVICE</span>
           <span>v1.7.0</span>
         </div>

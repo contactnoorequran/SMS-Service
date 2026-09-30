@@ -136,21 +136,21 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-[var(--card-bg,#1e293b)] text-[var(--text-primary,#f8fafc)] border border-[var(--glass-border,#334155)] rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden animate-scale-in">
+      <div className="bg-[var(--card-bg)] text-[var(--text-primary)] border border-[var(--glass-border)] rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden animate-scale-in">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border,#334155)]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/30 text-teal-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[var(--accent-emerald-dim)] border border-[rgba(16,185,129,0.3)] text-[var(--accent-emerald)] flex items-center justify-center">
               <Layers className="w-4 h-4" />
             </div>
-            <h2 className="text-base font-bold text-[var(--text-primary,#f8fafc)]">
+            <h2 className="text-base font-bold text-[var(--text-primary)]">
               Add Provider
             </h2>
           </div>
           <button
             type="button"
             onClick={handleClose}
-            className="text-[var(--text-tertiary,#94a3b8)] hover:text-[var(--text-primary,#f8fafc)] p-1 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors"
+            className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] p-1 rounded-lg hover:bg-[var(--glass-bg-hover)] transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -159,8 +159,8 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
         {/* Modal Body Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5 text-xs">
           {modalError && (
-            <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 flex items-center gap-2.5 text-xs font-semibold animate-fade-in">
-              <Info className="w-4 h-4 text-rose-400 shrink-0" />
+            <div className="p-3 rounded-xl bg-[var(--accent-rose-dim)] border border-[rgba(244,63,94,0.3)] text-rose-700 dark:text-rose-300 flex items-center gap-2.5 text-xs font-semibold animate-fade-in">
+              <Info className="w-4 h-4 text-[var(--accent-rose)] shrink-0" />
               <span>{modalError}</span>
             </div>
           )}
@@ -168,8 +168,8 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
           {/* Top row: Provider Name, Protocol, Active Toggle */}
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-end">
             <div className="sm:col-span-6">
-              <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
-                Provider Name <span className="text-rose-400">*</span>
+              <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
+                Provider Name <span className="text-[var(--accent-rose)]">*</span>
               </label>
               <input
                 type="text"
@@ -182,24 +182,24 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
                     setModalError(null);
                   }
                 }}
-                className={`w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border rounded-xl text-xs text-[var(--text-primary,#f8fafc)] placeholder:text-[var(--text-tertiary,#64748b)] focus:outline-none focus:border-teal-500 transition-all ${
-                  errors.name ? 'border-rose-500 ring-1 ring-rose-500' : 'border-[var(--glass-border,#334155)]'
+                className={`w-full px-3 py-2 bg-[var(--input-bg)] border rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--brand-primary)] transition-all ${
+                  errors.name ? 'border-[var(--accent-rose)] ring-1 ring-[var(--accent-rose)]' : 'border-[var(--input-border)]'
                 }`}
                 autoFocus
               />
               {errors.name && (
-                <p className="text-[10px] text-rose-400 mt-1">{errors.name}</p>
+                <p className="text-[10px] text-[var(--accent-rose)] mt-1">{errors.name}</p>
               )}
             </div>
 
             <div className="sm:col-span-4">
-              <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+              <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                 Protocol
               </label>
               <select
                 value={protocol}
                 onChange={(e) => setProtocol(e.target.value as any)}
-                className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer"
+                className="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] cursor-pointer"
               >
                 <option value="HTTP API">HTTP API</option>
                 <option value="SMPP">SMPP</option>
@@ -211,7 +211,7 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
                 type="button"
                 onClick={() => setIsActive(!isActive)}
                 className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  isActive ? 'bg-teal-500' : 'bg-slate-700'
+                  isActive ? 'bg-teal-500' : 'bg-slate-300 dark:bg-slate-700'
                 }`}
               >
                 <span
@@ -220,7 +220,7 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
                   }`}
                 />
               </button>
-              <span className="text-xs font-semibold text-[var(--text-secondary,#94a3b8)]">
+              <span className="text-xs font-semibold text-[var(--text-secondary)]">
                 Active
               </span>
             </div>
@@ -229,30 +229,30 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
           {/* Section: HTTP Settings */}
           {protocol === 'HTTP API' ? (
             <div className="space-y-4 pt-1">
-              <h3 className="text-xs font-bold text-[var(--text-primary,#f8fafc)] uppercase tracking-wider">
+              <h3 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
                 HTTP Settings
               </h3>
 
               <div>
-                <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                   HTTP Direction
                 </label>
                 <select
                   value={httpDirection}
                   onChange={(e) => setHttpDirection(e.target.value)}
-                  className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer"
+                  className="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] cursor-pointer"
                 >
                   <option value="Both directions">Both directions</option>
                   <option value="Inbound only">Inbound only (receive to webhook)</option>
                   <option value="Outbound only">Outbound only (POST to provider API)</option>
                 </select>
-                <p className="text-[10px] text-[var(--text-tertiary,#64748b)] mt-1">
+                <p className="text-[10px] text-[var(--text-tertiary)] mt-1">
                   Receive = they POST to your webhook. Send = you POST to their API.
                 </p>
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                   Provider Outbound API URL
                 </label>
                 <input
@@ -260,12 +260,12 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
                   placeholder="https://api.provider.com/v1/sms/send or admin"
                   value={outboundUrl}
                   onChange={(e) => setOutboundUrl(e.target.value)}
-                  className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] placeholder:text-[var(--text-tertiary,#64748b)] focus:outline-none focus:border-teal-500"
+                  className="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--brand-primary)]"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                   Provider Outbound API Key
                 </label>
                 <div className="relative">
@@ -274,21 +274,21 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
                     placeholder="Enter API Key / Bearer Token"
                     value={outboundApiKey}
                     onChange={(e) => setOutboundApiKey(e.target.value)}
-                    className="w-full pl-3 pr-9 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] placeholder:text-[var(--text-tertiary,#64748b)] focus:outline-none focus:border-teal-500"
+                    className="w-full pl-3 pr-9 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--brand-primary)]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowApiKey(!showApiKey)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-tertiary,#94a3b8)] hover:text-[var(--text-primary,#f8fafc)]"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] cursor-pointer"
                   >
-                    {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5 text-teal-400" />}
+                    {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5 text-[var(--accent-emerald)]" />}
                   </button>
                 </div>
               </div>
 
               {/* Inbound Payload Format Notice */}
-              <div className="p-3 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sky-300 flex items-start gap-2.5 text-[11px]">
-                <Info className="w-4 h-4 shrink-0 text-sky-400 mt-0.5" />
+              <div className="p-3 rounded-xl bg-[var(--accent-blue-dim)] border border-[rgba(56,189,248,0.3)] text-sky-700 dark:text-sky-300 flex items-start gap-2.5 text-[11px]">
+                <Info className="w-4 h-4 shrink-0 text-[var(--accent-blue)] mt-0.5" />
                 <span className="font-mono text-[11px] leading-relaxed break-all">
                   Inbound payload format: POST JSON {'{"to":"925...","from":"123...","message":"text","msg_id":"optional"}'}
                 </span>
@@ -300,7 +300,7 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
                   type="button"
                   onClick={() => setBypassInboundToken(!bypassInboundToken)}
                   className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    bypassInboundToken ? 'bg-teal-500' : 'bg-slate-700'
+                    bypassInboundToken ? 'bg-teal-500' : 'bg-slate-300 dark:bg-slate-700'
                   }`}
                 >
                   <span
@@ -309,25 +309,25 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
                     }`}
                   />
                 </button>
-                <span className="text-xs font-semibold text-[var(--text-primary,#f8fafc)]">
+                <span className="text-xs font-semibold text-[var(--text-primary)]">
                   Bypass Inbound Token
                 </span>
               </div>
 
               {/* Generated Notice */}
-              <div className="p-3 rounded-xl bg-teal-500/5 border border-teal-500/20 text-teal-300 flex items-center gap-2.5 text-[11px]">
-                <CheckCircle2 className="w-4 h-4 shrink-0 text-teal-400" />
+              <div className="p-3 rounded-xl bg-[var(--accent-emerald-dim)] border border-[rgba(16,185,129,0.3)] text-emerald-700 dark:text-teal-300 flex items-center gap-2.5 text-[11px]">
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-[var(--accent-emerald)]" />
                 <span>An inbound token and webhook URL will be generated after you save.</span>
               </div>
             </div>
           ) : (
             <div className="space-y-4 pt-1">
-              <h3 className="text-xs font-bold text-[var(--text-primary,#f8fafc)] uppercase tracking-wider">
+              <h3 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
                 SMPP Settings
               </h3>
 
               <div>
-                <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                   SMPP Role
                 </label>
                 <select
@@ -339,7 +339,7 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
                       setSmppRole('Client');
                     }
                   }}
-                  className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer"
+                  className="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] cursor-pointer"
                 >
                   <option value="Client — we connect to provider SMSC">
                     Client — we connect to provider SMSC
@@ -353,16 +353,16 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
               {smppRole === 'Server' ? (
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
                   <div className="sm:col-span-6">
-                    <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                    <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                       Your listen port
                     </label>
                     <input
                       type="text"
                       value={listenPort}
                       onChange={(e) => setListenPort(e.target.value)}
-                      className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
+                      className="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] font-mono"
                     />
-                    <p className="text-[10px] text-[var(--text-tertiary,#64748b)] mt-1">
+                    <p className="text-[10px] text-[var(--text-tertiary)] mt-1">
                       Open this TCP port in the firewall. Default: 2775
                     </p>
                   </div>
@@ -371,7 +371,7 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
                       type="button"
                       onClick={() => setSendOutboundMoDlr(!sendOutboundMoDlr)}
                       className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        sendOutboundMoDlr ? 'bg-teal-500' : 'bg-slate-700'
+                        sendOutboundMoDlr ? 'bg-teal-500' : 'bg-slate-300 dark:bg-slate-700'
                       }`}
                     >
                       <span
@@ -380,7 +380,7 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
                         }`}
                       />
                     </button>
-                    <span className="text-xs font-semibold text-[var(--text-primary,#f8fafc)]">
+                    <span className="text-xs font-semibold text-[var(--text-primary)]">
                       Send outbound MO DLR
                     </span>
                   </div>
@@ -388,7 +388,7 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
                   <div className="sm:col-span-9">
-                    <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                    <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                       Provider SMPP Host / IP
                     </label>
                     <input
@@ -396,11 +396,11 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
                       placeholder="e.g. 76.13.217.198"
                       value={smppHost}
                       onChange={(e) => setSmppHost(e.target.value)}
-                      className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
+                      className="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] font-mono"
                     />
                   </div>
                   <div className="sm:col-span-3">
-                    <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                    <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                       Port
                     </label>
                     <input
@@ -408,7 +408,7 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
                       placeholder="2227"
                       value={smppPort}
                       onChange={(e) => setSmppPort(e.target.value)}
-                      className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
+                      className="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] font-mono"
                     />
                   </div>
                 </div>
@@ -416,7 +416,7 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                     System ID
                   </label>
                   <input
@@ -424,15 +424,15 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
                     placeholder="admin"
                     value={smppSystemId}
                     onChange={(e) => setSmppSystemId(e.target.value)}
-                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
+                    className="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] font-mono"
                   />
-                  <p className="text-[10px] text-[var(--text-tertiary,#64748b)] mt-1">
+                  <p className="text-[10px] text-[var(--text-tertiary)] mt-1">
                     Your login at the provider SMSC.
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                     SMPP Password
                   </label>
                   <div className="relative">
@@ -441,14 +441,14 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
                       placeholder="SMPP Password"
                       value={smppPassword}
                       onChange={(e) => setSmppPassword(e.target.value)}
-                      className="w-full pl-3 pr-9 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
+                      className="w-full pl-3 pr-9 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] font-mono"
                     />
                     <button
                       type="button"
                       onClick={() => setShowSmppPassword(!showSmppPassword)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-tertiary,#94a3b8)] hover:text-[var(--text-primary,#f8fafc)]"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] cursor-pointer"
                     >
-                      {showSmppPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5 text-teal-400" />}
+                      {showSmppPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5 text-[var(--accent-emerald)]" />}
                     </button>
                   </div>
                 </div>
@@ -456,7 +456,7 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                     System Type
                   </label>
                   <input
@@ -464,22 +464,22 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
                     placeholder=""
                     value=""
                     onChange={() => {}}
-                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
+                    className="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                     Bind Mode
                   </label>
                   <select
-                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer"
+                    className="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] cursor-pointer"
                   >
                     <option value="TRX">TRX — Transceiver (recommended)</option>
                     <option value="TX">TX — Transmitter</option>
                     <option value="RX">RX — Receiver</option>
                   </select>
-                  <p className="text-[10px] text-[var(--text-tertiary,#64748b)] mt-1">
+                  <p className="text-[10px] text-[var(--text-tertiary)] mt-1">
                     TRX/RX required to receive inbound MO and DLRs.
                   </p>
                 </div>
@@ -488,11 +488,11 @@ export const CreateProviderModal: React.FC<CreateProviderModalProps> = ({
           )}
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--glass-border,#334155)]">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--glass-border)]">
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2 text-xs font-semibold text-[var(--text-secondary,#94a3b8)] hover:text-[var(--text-primary,#f8fafc)] hover:bg-[rgba(255,255,255,0.05)] rounded-xl transition-all"
+              className="px-4 py-2 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-bg-hover)] border border-[var(--glass-border)] rounded-xl transition-all cursor-pointer"
             >
               Cancel
             </button>

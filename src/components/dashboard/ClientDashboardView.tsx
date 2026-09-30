@@ -238,7 +238,7 @@ export const ClientDashboardView: React.FC<ClientDashboardViewProps> = ({ onNavi
           </button>
         </div>
 
-        <div className="divide-y divide-[var(--glass-border)] border border-[var(--glass-border)] rounded-xl overflow-hidden bg-[rgba(0,0,0,0.12)]">
+        <div className="divide-y divide-[var(--glass-border)] border border-[var(--glass-border)] rounded-xl overflow-hidden bg-[var(--input-bg-subtle)]">
           {INITIAL_OTPS.map((msg) => (
             <div
               key={msg.id}
@@ -271,7 +271,7 @@ export const ClientDashboardView: React.FC<ClientDashboardViewProps> = ({ onNavi
 
               {/* OTP Code Badge & Copy Action */}
               <div className="flex items-center gap-3 shrink-0 self-start sm:self-center">
-                <div className="p-2 px-3 bg-[rgba(0,0,0,0.3)] border border-[rgba(59,130,246,0.3)] rounded-xl flex items-center gap-2">
+                <div className="p-2 px-3 bg-[var(--input-bg)] border border-[rgba(59,130,246,0.3)] rounded-xl flex items-center gap-2">
                   <span className="text-[10px] uppercase font-mono text-[var(--text-tertiary)]">OTP:</span>
                   <span className="font-mono font-bold text-sm text-[var(--accent-blue)] tracking-wider">
                     {msg.code}
@@ -326,7 +326,7 @@ export const ClientDashboardView: React.FC<ClientDashboardViewProps> = ({ onNavi
             Use your personal bearer token to fetch inbound SMS, poll OTPs, and query leased number health via REST API.
           </p>
 
-          <div className="p-3 bg-[rgba(0,0,0,0.25)] border border-[var(--glass-border)] rounded-xl flex items-center justify-between gap-3 font-mono text-xs">
+          <div className="p-3 bg-[var(--input-bg)] border border-[var(--glass-border)] rounded-xl flex items-center justify-between gap-3 font-mono text-xs">
             <span className="text-[var(--text-tertiary)] truncate">
               sms_live_pk_88a9120e98f7c112b450...
             </span>
@@ -364,7 +364,7 @@ export const ClientDashboardView: React.FC<ClientDashboardViewProps> = ({ onNavi
             Forward every inbound SMS and extracted OTP directly to your application backend with sub-50ms latency.
           </p>
 
-          <div className="p-3 bg-[rgba(0,0,0,0.25)] border border-[var(--glass-border)] rounded-xl space-y-1.5 font-mono text-xs">
+          <div className="p-3 bg-[var(--input-bg)] border border-[var(--glass-border)] rounded-xl space-y-1.5 font-mono text-xs">
             <div className="text-[11px] text-[var(--text-tertiary)]">Target URL:</div>
             <div className="text-[var(--text-primary)] truncate font-semibold">
               https://api.acmetelematics.com/v1/sms/inbound

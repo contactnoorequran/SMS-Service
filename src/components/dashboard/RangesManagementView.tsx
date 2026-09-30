@@ -151,10 +151,10 @@ export const RangesManagementView: React.FC = () => {
       {/* 1. Header matching Screenshot 5 */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-1">
         <div className="space-y-1">
-          <h1 className="text-xl font-bold text-[var(--text-primary,#f8fafc)] tracking-tight">
+          <h1 className="text-xl font-bold text-[var(--text-primary)] tracking-tight">
             Ranges
           </h1>
-          <p className="text-xs text-[var(--text-secondary,#94a3b8)]">
+          <p className="text-xs text-[var(--text-secondary)]">
             Manage traffic ranges, payout rates, daily caps, and custom price sync.
           </p>
           <div className="pt-0.5">
@@ -175,7 +175,7 @@ export const RangesManagementView: React.FC = () => {
           </button>
           <button
             onClick={() => showToast('Opened Range Lite')}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.08)] text-[var(--text-secondary,#94a3b8)] border border-[var(--glass-border,#334155)] flex items-center gap-1.5 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.08)] text-[var(--text-secondary)] border border-[var(--glass-border)] flex items-center gap-1.5 transition-colors"
           >
             <Zap className="w-3.5 h-3.5 text-amber-400" />
             <span>Add Range Lite</span>
@@ -196,14 +196,14 @@ export const RangesManagementView: React.FC = () => {
           </button>
           <button
             onClick={() => showToast('Downloading CSV template...')}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.08)] text-[var(--text-secondary,#94a3b8)] border border-[var(--glass-border,#334155)] flex items-center gap-1.5 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.08)] text-[var(--text-secondary)] border border-[var(--glass-border)] flex items-center gap-1.5 transition-colors"
           >
             <Download className="w-3.5 h-3.5 text-teal-400" />
             <span>CSV Template</span>
           </button>
           <button
             onClick={handleRefresh}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.08)] text-[var(--text-secondary,#94a3b8)] border border-[var(--glass-border,#334155)] flex items-center gap-1.5 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.08)] text-[var(--text-secondary)] border border-[var(--glass-border)] flex items-center gap-1.5 transition-colors"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
@@ -214,15 +214,15 @@ export const RangesManagementView: React.FC = () => {
       {/* 2. Top 3 KPI Cards matching Screenshot 5 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* TOTAL RANGES */}
-        <div className="glass-card p-4 rounded-xl border border-[var(--glass-border,#334155)] flex items-center justify-between">
+        <div className="glass-card p-4 rounded-xl border border-[var(--glass-border)] flex items-center justify-between">
           <div>
-            <div className="text-[10px] text-[var(--text-tertiary,#64748b)] uppercase font-semibold tracking-wider">
+            <div className="text-[10px] text-[var(--text-tertiary)] uppercase font-semibold tracking-wider">
               TOTAL RANGES
             </div>
-            <div className="text-2xl font-bold font-mono text-[var(--text-primary,#f8fafc)] mt-1">
+            <div className="text-2xl font-bold font-mono text-[var(--text-primary)] mt-1">
               {ranges.length}
             </div>
-            <div className="text-[11px] text-[var(--text-secondary,#94a3b8)] mt-0.5">
+            <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">
               {ranges.filter((r) => r.status === 'Active').length} active for members
             </div>
           </div>
@@ -232,15 +232,15 @@ export const RangesManagementView: React.FC = () => {
         </div>
 
         {/* TOTAL NUMBERS */}
-        <div className="glass-card p-4 rounded-xl border border-[var(--glass-border,#334155)] flex items-center justify-between">
+        <div className="glass-card p-4 rounded-xl border border-[var(--glass-border)] flex items-center justify-between">
           <div>
-            <div className="text-[10px] text-[var(--text-tertiary,#64748b)] uppercase font-semibold tracking-wider">
+            <div className="text-[10px] text-[var(--text-tertiary)] uppercase font-semibold tracking-wider">
               TOTAL NUMBERS
             </div>
-            <div className="text-2xl font-bold font-mono text-[var(--text-primary,#f8fafc)] mt-1">
+            <div className="text-2xl font-bold font-mono text-[var(--text-primary)] mt-1">
               11,002
             </div>
-            <div className="text-[11px] text-[var(--text-secondary,#94a3b8)] mt-0.5">
+            <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">
               Across all assigned ranges
             </div>
           </div>
@@ -250,15 +250,15 @@ export const RangesManagementView: React.FC = () => {
         </div>
 
         {/* CONNECTED PROVIDERS */}
-        <div className="glass-card p-4 rounded-xl border border-[var(--glass-border,#334155)] flex items-center justify-between">
+        <div className="glass-card p-4 rounded-xl border border-[var(--glass-border)] flex items-center justify-between">
           <div>
-            <div className="text-[10px] text-[var(--text-tertiary,#64748b)] uppercase font-semibold tracking-wider">
+            <div className="text-[10px] text-[var(--text-tertiary)] uppercase font-semibold tracking-wider">
               CONNECTED PROVIDERS
             </div>
-            <div className="text-2xl font-bold font-mono text-[var(--text-primary,#f8fafc)] mt-1">
+            <div className="text-2xl font-bold font-mono text-[var(--text-primary)] mt-1">
               1
             </div>
-            <div className="text-[11px] text-[var(--text-secondary,#94a3b8)] mt-0.5">
+            <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">
               Supplying active ranges
             </div>
           </div>
@@ -269,25 +269,25 @@ export const RangesManagementView: React.FC = () => {
       </div>
 
       {/* 3. Filters Section matching Screenshot 5 */}
-      <div className="glass-card p-4 rounded-xl border border-[var(--glass-border,#334155)] space-y-3">
+      <div className="glass-card p-4 rounded-xl border border-[var(--glass-border)] space-y-3">
         <div>
-          <h2 className="text-xs font-bold text-[var(--text-primary,#f8fafc)] uppercase tracking-wider">
+          <h2 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
             Filters
           </h2>
-          <p className="text-[11px] text-[var(--text-tertiary,#64748b)]">
+          <p className="text-[11px] text-[var(--text-tertiary)]">
             Search by range name, prefix, or a phone number inside the range
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 text-xs">
           <div className="sm:col-span-6 relative">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary,#64748b)]" />
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <input
               type="text"
               placeholder="Search: Range name, prefix, or number..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 rounded-xl bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] text-xs text-[var(--text-primary,#f8fafc)] placeholder-[var(--text-tertiary,#64748b)] focus:outline-none focus:border-teal-500"
+              className="w-full pl-9 pr-3 py-2 rounded-xl bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-teal-500"
             />
           </div>
 
@@ -295,7 +295,7 @@ export const RangesManagementView: React.FC = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer"
+              className="w-full px-3 py-2 rounded-xl bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 cursor-pointer"
             >
               <option value="ALL">Status: All</option>
               <option value="Active">Active</option>
@@ -307,7 +307,7 @@ export const RangesManagementView: React.FC = () => {
             <select
               value={rowsPerPage}
               onChange={(e) => setRowsPerPage(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer font-mono"
+              className="w-full px-3 py-2 rounded-xl bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 cursor-pointer font-mono"
             >
               <option value="10">Rows: 10</option>
               <option value="25">Rows: 25</option>
@@ -318,13 +318,13 @@ export const RangesManagementView: React.FC = () => {
       </div>
 
       {/* 4. Ranges Inventory Table matching Screenshot 5 */}
-      <div className="glass-card rounded-2xl border border-[var(--glass-border,#334155)] overflow-hidden">
-        <div className="p-4 border-b border-[var(--glass-border,#334155)] flex items-center justify-between">
+      <div className="glass-card rounded-2xl border border-[var(--glass-border)] overflow-hidden">
+        <div className="p-4 border-b border-[var(--glass-border)] flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-bold text-[var(--text-primary,#f8fafc)]">
+            <h2 className="text-sm font-bold text-[var(--text-primary)]">
               Ranges Inventory
             </h2>
-            <p className="text-xs text-[var(--text-secondary,#94a3b8)] mt-0.5">
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
               {ranges.length} ranges in current view
             </p>
           </div>
@@ -332,7 +332,7 @@ export const RangesManagementView: React.FC = () => {
 
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
-            <thead className="bg-[rgba(0,0,0,0.2)] text-[var(--text-secondary,#94a3b8)] border-b border-[var(--glass-border,#334155)] uppercase text-[10px] font-semibold tracking-wider">
+            <thead className="bg-[var(--input-bg)] border-[var(--input-border)] text-[var(--text-secondary)] border-b border-[var(--glass-border)] uppercase text-[10px] font-semibold tracking-wider">
               <tr>
                 <th className="py-3 px-4 w-10">
                   <input type="checkbox" className="rounded" />
@@ -345,24 +345,24 @@ export const RangesManagementView: React.FC = () => {
                 <th className="py-3 px-4 text-right">ACTIONS</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--glass-border,#334155)]">
+            <tbody className="divide-y divide-[var(--glass-border)]">
               {filteredRanges.map((r) => (
                 <tr key={r.id} className="hover:bg-[rgba(255,255,255,0.02)] transition-colors">
                   <td className="py-3.5 px-4">
                     <input type="checkbox" className="rounded" />
                   </td>
                   <td className="py-3.5 px-4">
-                    <div className="font-semibold text-[var(--text-primary,#f8fafc)]">
+                    <div className="font-semibold text-[var(--text-primary)]">
                       {r.name}
                     </div>
-                    <div className="text-[11px] text-[var(--text-tertiary,#64748b)]">
+                    <div className="text-[11px] text-[var(--text-tertiary)]">
                       {r.totalNumbers.toLocaleString()} numbers
                     </div>
                   </td>
-                  <td className="py-3.5 px-4 font-medium text-[var(--text-secondary,#94a3b8)]">
+                  <td className="py-3.5 px-4 font-medium text-[var(--text-secondary)]">
                     {r.provider}
                   </td>
-                  <td className="py-3.5 px-4 font-mono font-medium text-[var(--text-primary,#f8fafc)]">
+                  <td className="py-3.5 px-4 font-mono font-medium text-[var(--text-primary)]">
                     {r.dailyLimit.toLocaleString()}
                   </td>
                   <td className="py-3.5 px-4">
@@ -371,7 +371,7 @@ export const RangesManagementView: React.FC = () => {
                     </span>
                   </td>
                   <td className="py-3.5 px-4">
-                    <div className="flex items-center gap-1.5 text-[var(--text-secondary,#94a3b8)]">
+                    <div className="flex items-center gap-1.5 text-[var(--text-secondary)]">
                       <Users className="w-3.5 h-3.5 text-teal-400" />
                       <span className="font-semibold font-mono">{r.membersCount}</span>
                     </div>
@@ -391,13 +391,13 @@ export const RangesManagementView: React.FC = () => {
                           setEditIsActive(r.status === 'Active');
                           setEditNotes(r.name === 'test-for-test' ? 'hour limit 2k/h' : '');
                         }}
-                        className="p-1 rounded hover:bg-[rgba(255,255,255,0.08)] text-[var(--text-secondary,#94a3b8)] hover:text-teal-400 transition-colors cursor-pointer"
+                        className="p-1 rounded hover:bg-[rgba(255,255,255,0.08)] text-[var(--text-secondary)] hover:text-teal-400 transition-colors cursor-pointer"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => showToast(`Menu for ${r.name}`)}
-                        className="p-1 rounded hover:bg-[rgba(255,255,255,0.08)] text-[var(--text-secondary,#94a3b8)] hover:text-white transition-colors"
+                        className="p-1 rounded hover:bg-[rgba(255,255,255,0.08)] text-[var(--text-secondary)] hover:text-white transition-colors"
                       >
                         <MoreVertical className="w-3.5 h-3.5" />
                       </button>
@@ -413,15 +413,15 @@ export const RangesManagementView: React.FC = () => {
       {/* 5. Add New Range Modal matching Screenshot 5 */}
       {isCreateOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[var(--card-bg,#1e293b)] text-[var(--text-primary,#f8fafc)] border border-[var(--glass-border,#334155)] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden animate-scale-in">
+          <div className="bg-[var(--card-bg)] text-[var(--text-primary)] border border-[var(--glass-border)] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden animate-scale-in">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border,#334155)]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)]">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/30 text-teal-400 flex items-center justify-center">
                   <Layers className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-[var(--text-primary,#f8fafc)]">
+                  <h2 className="text-base font-bold text-[var(--text-primary)]">
                     Add New Range
                   </h2>
                 </div>
@@ -429,7 +429,7 @@ export const RangesManagementView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsCreateOpen(false)}
-                className="text-[var(--text-tertiary,#94a3b8)] hover:text-[var(--text-primary,#f8fafc)] p-1 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors"
+                className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] p-1 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -437,20 +437,20 @@ export const RangesManagementView: React.FC = () => {
 
             {/* Modal Form */}
             <form onSubmit={handleCreateRange} className="p-6 space-y-4 text-xs">
-              <p className="text-[11px] text-[var(--text-tertiary,#64748b)] pb-1">
+              <p className="text-[11px] text-[var(--text-tertiary)] pb-1">
                 Configure identity, provider payout, member payout, and daily caps.
               </p>
 
               {/* Row 1: Provider, Range Name, Prefix */}
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
                 <div className="sm:col-span-4">
-                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                     Provider <span className="text-rose-400">*</span>
                   </label>
                   <select
                     value={selectedProvider}
                     onChange={(e) => setSelectedProvider(e.target.value)}
-                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer"
+                    className="w-full px-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 cursor-pointer"
                   >
                     <option value="Alaa0">Alaa0</option>
                     <option value="worldsms">worldsms</option>
@@ -458,7 +458,7 @@ export const RangesManagementView: React.FC = () => {
                 </div>
 
                 <div className="sm:col-span-5">
-                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                     Range Name <span className="text-rose-400">*</span>
                   </label>
                   <input
@@ -466,12 +466,12 @@ export const RangesManagementView: React.FC = () => {
                     placeholder="e.g. UK O2 Mobile"
                     value={rangeName}
                     onChange={(e) => setRangeName(e.target.value)}
-                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] placeholder:text-[var(--text-tertiary,#64748b)] focus:outline-none focus:border-teal-500"
+                    className="w-full px-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-teal-500"
                   />
                 </div>
 
                 <div className="sm:col-span-3">
-                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                     Prefix <span className="text-rose-400">*</span>
                   </label>
                   <input
@@ -479,7 +479,7 @@ export const RangesManagementView: React.FC = () => {
                     placeholder="4477"
                     value={prefix}
                     onChange={(e) => setPrefix(e.target.value)}
-                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
+                    className="w-full px-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 font-mono"
                   />
                 </div>
               </div>
@@ -487,39 +487,39 @@ export const RangesManagementView: React.FC = () => {
               {/* Row 2: Provider Payout, Member Payout, Platform net profit banner */}
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-end">
                 <div className="sm:col-span-4">
-                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                     Provider Payout <span className="text-rose-400">*</span>
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-tertiary,#64748b)] font-semibold">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-tertiary)] font-semibold">$</span>
                     <input
                       type="text"
                       placeholder="0.0000"
                       value={providerPayout}
                       onChange={(e) => setProviderPayout(e.target.value)}
-                      className="w-full pl-7 pr-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
+                      className="w-full pl-7 pr-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 font-mono"
                     />
                   </div>
-                  <p className="text-[10px] text-[var(--text-tertiary,#64748b)] mt-1">
+                  <p className="text-[10px] text-[var(--text-tertiary)] mt-1">
                     Gross rate from provider per SMS
                   </p>
                 </div>
 
                 <div className="sm:col-span-4">
-                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                     Member Payout <span className="text-rose-400">*</span>
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-tertiary,#64748b)] font-semibold">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-tertiary)] font-semibold">$</span>
                     <input
                       type="text"
                       placeholder="0.0000"
                       value={memberPayout}
                       onChange={(e) => setMemberPayout(e.target.value)}
-                      className="w-full pl-7 pr-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
+                      className="w-full pl-7 pr-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 font-mono"
                     />
                   </div>
-                  <p className="text-[10px] text-[var(--text-tertiary,#64748b)] mt-1">
+                  <p className="text-[10px] text-[var(--text-tertiary)] mt-1">
                     Net rate paid to member per SMS
                   </p>
                 </div>
@@ -536,13 +536,13 @@ export const RangesManagementView: React.FC = () => {
               {/* Row 3: Payout Cycle, Daily SMS Limit, Active for Members toggle */}
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-end">
                 <div className="sm:col-span-4">
-                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                     Payout Cycle <span className="text-rose-400">*</span>
                   </label>
                   <select
                     value={payoutCycle}
                     onChange={(e) => setPayoutCycle(e.target.value)}
-                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer"
+                    className="w-full px-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 cursor-pointer"
                   >
                     <option value="Weekly">Weekly</option>
                     <option value="Monthly">Monthly</option>
@@ -551,16 +551,16 @@ export const RangesManagementView: React.FC = () => {
                 </div>
 
                 <div className="sm:col-span-4">
-                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                     Daily SMS Limit <span className="text-rose-400">*</span>
                   </label>
                   <input
                     type="number"
                     value={dailySmsLimit}
                     onChange={(e) => setDailySmsLimit(e.target.value)}
-                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono"
+                    className="w-full px-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 font-mono"
                   />
-                  <p className="text-[10px] text-[var(--text-tertiary,#64748b)] mt-1">
+                  <p className="text-[10px] text-[var(--text-tertiary)] mt-1">
                     Max messages per number per day
                   </p>
                 </div>
@@ -570,7 +570,7 @@ export const RangesManagementView: React.FC = () => {
                     type="button"
                     onClick={() => setIsActiveForMembers(!isActiveForMembers)}
                     className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      isActiveForMembers ? 'bg-teal-500' : 'bg-slate-700'
+                      isActiveForMembers ? 'bg-teal-500' : 'bg-slate-300 dark:bg-slate-700'
                     }`}
                   >
                     <span
@@ -579,7 +579,7 @@ export const RangesManagementView: React.FC = () => {
                       }`}
                     />
                   </button>
-                  <span className="text-xs font-semibold text-[var(--text-primary,#f8fafc)]">
+                  <span className="text-xs font-semibold text-[var(--text-primary)]">
                     Active for Members
                   </span>
                 </div>
@@ -587,7 +587,7 @@ export const RangesManagementView: React.FC = () => {
 
               {/* Row 4: Internal Notes */}
               <div>
-                <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                   Internal Notes
                 </label>
                 <input
@@ -595,7 +595,7 @@ export const RangesManagementView: React.FC = () => {
                   placeholder=""
                   value={internalNotes}
                   onChange={(e) => setInternalNotes(e.target.value)}
-                  className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500"
+                  className="w-full px-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500"
                 />
               </div>
 
@@ -606,11 +606,11 @@ export const RangesManagementView: React.FC = () => {
               </div>
 
               {/* Modal Footer */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--glass-border,#334155)]">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--glass-border)]">
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-[var(--text-secondary,#94a3b8)] hover:text-[var(--text-primary,#f8fafc)] hover:bg-[rgba(255,255,255,0.05)] rounded-xl transition-all"
+                  className="px-4 py-2 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.05)] rounded-xl transition-all"
                 >
                   Cancel
                 </button>
@@ -629,21 +629,21 @@ export const RangesManagementView: React.FC = () => {
       {/* 6. Edit Range Modal matching Screenshot 4 */}
       {editingRange && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[var(--card-bg,#1e293b)] text-[var(--text-primary,#f8fafc)] border border-[var(--glass-border,#334155)] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden animate-scale-in">
+          <div className="bg-[var(--card-bg)] text-[var(--text-primary)] border border-[var(--glass-border)] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden animate-scale-in">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border,#334155)]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)]">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/30 text-teal-400 flex items-center justify-center">
                   <Layers className="w-4 h-4" />
                 </div>
-                <h2 className="text-base font-bold text-[var(--text-primary,#f8fafc)]">
+                <h2 className="text-base font-bold text-[var(--text-primary)]">
                   Edit Range
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={() => setEditingRange(null)}
-                className="text-[var(--text-tertiary,#94a3b8)] hover:text-[var(--text-primary,#f8fafc)] p-1 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors"
+                className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] p-1 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -665,20 +665,20 @@ export const RangesManagementView: React.FC = () => {
               }}
               className="p-6 space-y-4 text-xs"
             >
-              <p className="text-[11px] text-[var(--text-tertiary,#64748b)] pb-1">
+              <p className="text-[11px] text-[var(--text-tertiary)] pb-1">
                 Configure identity, provider payout, member payout, and daily caps.
               </p>
 
               {/* Row 1: Provider, Range Name, Prefix */}
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
                 <div className="sm:col-span-4">
-                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                     Provider <span className="text-rose-400">*</span>
                   </label>
                   <select
                     value={editProvider}
                     onChange={(e) => setEditProvider(e.target.value)}
-                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer"
+                    className="w-full px-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 cursor-pointer"
                   >
                     <option value="Alaa0">Alaa0</option>
                     <option value="worldsms">worldsms</option>
@@ -686,26 +686,26 @@ export const RangesManagementView: React.FC = () => {
                 </div>
 
                 <div className="sm:col-span-5">
-                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                     Range Name <span className="text-rose-400">*</span>
                   </label>
                   <input
                     type="text"
                     value={editRangeName}
                     onChange={(e) => setEditRangeName(e.target.value)}
-                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500"
+                    className="w-full px-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500"
                   />
                 </div>
 
                 <div className="sm:col-span-3">
-                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                     Prefix <span className="text-rose-400">*</span>
                   </label>
                   <input
                     type="text"
                     value={editPrefix}
                     onChange={(e) => setEditPrefix(e.target.value)}
-                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] font-mono focus:outline-none focus:border-teal-500"
+                    className="w-full px-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] font-mono focus:outline-none focus:border-teal-500"
                   />
                 </div>
               </div>
@@ -713,37 +713,37 @@ export const RangesManagementView: React.FC = () => {
               {/* Row 2: Provider Payout, Member Payout, Live Platform Profit */}
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-center">
                 <div className="sm:col-span-4">
-                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                     Provider Payout <span className="text-rose-400">*</span>
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-2 text-[var(--text-tertiary,#64748b)] font-mono">$</span>
+                    <span className="absolute left-3 top-2 text-[var(--text-tertiary)] font-mono">$</span>
                     <input
                       type="text"
                       value={editProviderPayout}
                       onChange={(e) => setEditProviderPayout(e.target.value)}
-                      className="w-full pl-7 pr-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs font-mono text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500"
+                      className="w-full pl-7 pr-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs font-mono text-[var(--text-primary)] focus:outline-none focus:border-teal-500"
                     />
                   </div>
-                  <p className="text-[10px] text-[var(--text-tertiary,#64748b)] mt-1">
+                  <p className="text-[10px] text-[var(--text-tertiary)] mt-1">
                     Gross rate from provider per SMS
                   </p>
                 </div>
 
                 <div className="sm:col-span-4">
-                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                     Member Payout <span className="text-rose-400">*</span>
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-2 text-[var(--text-tertiary,#64748b)] font-mono">$</span>
+                    <span className="absolute left-3 top-2 text-[var(--text-tertiary)] font-mono">$</span>
                     <input
                       type="text"
                       value={editMemberPayout}
                       onChange={(e) => setEditMemberPayout(e.target.value)}
-                      className="w-full pl-7 pr-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs font-mono text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500"
+                      className="w-full pl-7 pr-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs font-mono text-[var(--text-primary)] focus:outline-none focus:border-teal-500"
                     />
                   </div>
-                  <p className="text-[10px] text-[var(--text-tertiary,#64748b)] mt-1">
+                  <p className="text-[10px] text-[var(--text-tertiary)] mt-1">
                     Net rate paid to member per SMS
                   </p>
                 </div>
@@ -759,13 +759,13 @@ export const RangesManagementView: React.FC = () => {
               {/* Row 3: Payout Cycle, Daily SMS Limit, Active for Members */}
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-center">
                 <div className="sm:col-span-4">
-                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                     Payout Cycle <span className="text-rose-400">*</span>
                   </label>
                   <select
                     value={editPayoutCycle}
                     onChange={(e) => setEditPayoutCycle(e.target.value)}
-                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer"
+                    className="w-full px-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 cursor-pointer"
                   >
                     <option value="Weekly">Weekly</option>
                     <option value="Daily">Daily</option>
@@ -774,16 +774,16 @@ export const RangesManagementView: React.FC = () => {
                 </div>
 
                 <div className="sm:col-span-4">
-                  <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                  <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                     Daily SMS Limit <span className="text-rose-400">*</span>
                   </label>
                   <input
                     type="number"
                     value={editDailySmsLimit}
                     onChange={(e) => setEditDailySmsLimit(e.target.value)}
-                    className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs font-mono text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500"
+                    className="w-full px-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs font-mono text-[var(--text-primary)] focus:outline-none focus:border-teal-500"
                   />
-                  <p className="text-[10px] text-[var(--text-tertiary,#64748b)] mt-1">
+                  <p className="text-[10px] text-[var(--text-tertiary)] mt-1">
                     Max messages per number per day
                   </p>
                 </div>
@@ -793,7 +793,7 @@ export const RangesManagementView: React.FC = () => {
                     type="button"
                     onClick={() => setEditIsActive(!editIsActive)}
                     className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      editIsActive ? 'bg-teal-500' : 'bg-slate-700'
+                      editIsActive ? 'bg-teal-500' : 'bg-slate-300 dark:bg-slate-700'
                     }`}
                   >
                     <span
@@ -802,7 +802,7 @@ export const RangesManagementView: React.FC = () => {
                       }`}
                     />
                   </button>
-                  <span className="text-xs font-semibold text-[var(--text-primary,#f8fafc)]">
+                  <span className="text-xs font-semibold text-[var(--text-primary)]">
                     Active for Members
                   </span>
                 </div>
@@ -810,14 +810,14 @@ export const RangesManagementView: React.FC = () => {
 
               {/* Row 4: Internal Notes */}
               <div>
-                <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+                <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                   Internal Notes
                 </label>
                 <input
                   type="text"
                   value={editNotes}
                   onChange={(e) => setEditNotes(e.target.value)}
-                  className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500"
+                  className="w-full px-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500"
                 />
               </div>
 
@@ -828,11 +828,11 @@ export const RangesManagementView: React.FC = () => {
               </div>
 
               {/* Modal Footer */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--glass-border,#334155)]">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--glass-border)]">
                 <button
                   type="button"
                   onClick={() => setEditingRange(null)}
-                  className="px-4 py-2 text-xs font-semibold text-[var(--text-secondary,#94a3b8)] hover:text-[var(--text-primary,#f8fafc)] hover:bg-[rgba(255,255,255,0.05)] rounded-xl transition-all"
+                  className="px-4 py-2 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.05)] rounded-xl transition-all"
                 >
                   Cancel
                 </button>
@@ -851,21 +851,21 @@ export const RangesManagementView: React.FC = () => {
       {/* 7. Import Ranges Modal matching Screenshot 5 */}
       {isImportOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[var(--card-bg,#1e293b)] text-[var(--text-primary,#f8fafc)] border border-[var(--glass-border,#334155)] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-scale-in">
+          <div className="bg-[var(--card-bg)] text-[var(--text-primary)] border border-[var(--glass-border)] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-scale-in">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border,#334155)]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)]">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/30 text-teal-400 flex items-center justify-center">
                   <Upload className="w-4 h-4" />
                 </div>
-                <h2 className="text-base font-bold text-[var(--text-primary,#f8fafc)]">
+                <h2 className="text-base font-bold text-[var(--text-primary)]">
                   Import Ranges
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={() => setIsImportOpen(false)}
-                className="text-[var(--text-tertiary,#94a3b8)] hover:text-[var(--text-primary,#f8fafc)] p-1 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors"
+                className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] p-1 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -873,7 +873,7 @@ export const RangesManagementView: React.FC = () => {
 
             {/* Modal Body */}
             <div className="p-6 space-y-4 text-xs">
-              <p className="text-xs text-[var(--text-secondary,#94a3b8)] leading-relaxed">
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
                 Upload a CSV matching the official template (max 500 rows). Provider names must already exist.
               </p>
 
@@ -881,7 +881,7 @@ export const RangesManagementView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => showToast('CSV Template downloaded')}
-                  className="px-3.5 py-2 rounded-xl border border-[var(--glass-border,#334155)] text-teal-400 hover:bg-teal-500/10 text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer"
+                  className="px-3.5 py-2 rounded-xl border border-[var(--glass-border)] text-teal-400 hover:bg-teal-500/10 text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Download CSV Template</span>
@@ -910,11 +910,11 @@ export const RangesManagementView: React.FC = () => {
               </div>
 
               {/* Modal Footer */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--glass-border,#334155)]">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--glass-border)]">
                 <button
                   type="button"
                   onClick={() => setIsImportOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-[var(--text-secondary,#94a3b8)] hover:text-[var(--text-primary,#f8fafc)] hover:bg-[rgba(255,255,255,0.05)] rounded-xl transition-all"
+                  className="px-4 py-2 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.05)] rounded-xl transition-all"
                 >
                   Cancel
                 </button>

@@ -195,7 +195,7 @@ export const ClientInboundStreamView: React.FC = () => {
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer border ${
                 isLiveActive
                   ? 'bg-[var(--accent-emerald-dim)] text-[var(--accent-emerald)] border-[rgba(16,185,129,0.3)]'
-                  : 'bg-[rgba(0,0,0,0.2)] text-[var(--text-tertiary)] border-[var(--glass-border)]'
+                  : 'bg-[var(--input-bg-subtle)] text-[var(--text-tertiary)] border-[var(--glass-border)]'
               }`}
             >
               <span className={`w-1.5 h-1.5 rounded-full ${isLiveActive ? 'bg-[var(--accent-emerald)] animate-pulse' : 'bg-[var(--text-tertiary)]'}`} />
@@ -214,7 +214,7 @@ export const ClientInboundStreamView: React.FC = () => {
             placeholder="Search sender, code or phone number..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent-blue)]"
+            className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-[var(--input-bg)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent-blue)]"
           />
         </div>
 
@@ -279,7 +279,7 @@ export const ClientInboundStreamView: React.FC = () => {
                     </span>
                   </div>
 
-                  <p className="text-xs text-[var(--text-primary)] bg-[rgba(0,0,0,0.2)] p-2.5 rounded-xl border border-[var(--glass-border)] font-mono leading-relaxed select-all">
+                  <p className="text-xs text-[var(--text-primary)] bg-[var(--input-bg-subtle)] p-2.5 rounded-xl border border-[var(--glass-border)] font-mono leading-relaxed select-all">
                     {msg.text}
                   </p>
 

@@ -87,7 +87,7 @@ export const UserProfileMenu: React.FC = () => {
         {isOpen && (
           <div className="absolute right-0 mt-2 w-72 bg-[var(--bg-surface)] border border-[var(--glass-border)] rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] z-50 overflow-hidden animate-fade-in backdrop-blur-xl">
             {/* Header info */}
-            <div className="p-4 border-b border-[var(--glass-border)] bg-[rgba(0,0,0,0.15)]">
+            <div className="p-4 border-b border-[var(--glass-border)] bg-[var(--input-bg-subtle)]">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[var(--brand-primary)] text-white font-bold text-sm flex items-center justify-center shadow-[0_0_16px_var(--accent-blue-dim)]">
                   {getInitials()}

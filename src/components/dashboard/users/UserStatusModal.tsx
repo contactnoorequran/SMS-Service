@@ -93,7 +93,7 @@ export const UserStatusModal: React.FC<UserStatusModalProps> = ({
         </div>
 
         {/* Transition State Visualization */}
-        <div className="p-3 rounded-xl bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] flex items-center justify-center gap-4">
+        <div className="p-3 rounded-xl bg-[var(--input-bg-subtle)] border border-[var(--glass-border)] flex items-center justify-center gap-4">
           <div className="text-center">
             <span className="text-[10px] text-[var(--text-tertiary)] block mb-1">Current State</span>
             <Badge variant={getStatusBadgeVariant(user.status)} size="sm">

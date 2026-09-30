@@ -222,7 +222,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Input Bar */}
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[var(--glass-border)] bg-[rgba(0,0,0,0.2)]">
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[var(--glass-border)] bg-[var(--input-bg)]">
           <Search className="w-5 h-5 text-[var(--accent-blue)] shrink-0" />
           <input
             ref={inputRef}
@@ -307,7 +307,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
         </div>
 
         {/* Command Palette Footer */}
-        <div className="px-4 py-2.5 border-t border-[var(--glass-border)] bg-[rgba(0,0,0,0.3)] flex items-center justify-between text-[11px] text-[var(--text-tertiary)] font-mono">
+        <div className="px-4 py-2.5 border-t border-[var(--glass-border)] bg-[var(--input-bg-subtle)] flex items-center justify-between text-[11px] text-[var(--text-tertiary)] font-mono">
           <div className="flex items-center gap-3">
             <span><strong className="text-[var(--text-secondary)]">↑↓</strong> Navigate</span>
             <span><strong className="text-[var(--text-secondary)]">↵</strong> Select</span>

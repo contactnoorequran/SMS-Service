@@ -95,7 +95,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
             <div className="text-[11px] text-[var(--text-tertiary)] uppercase tracking-wider font-semibold">
               New Temporary Password
             </div>
-            <div className="flex items-center justify-between gap-2 p-2 bg-[rgba(0,0,0,0.4)] rounded-lg font-mono text-sm">
+            <div className="flex items-center justify-between gap-2 p-2 bg-[var(--input-bg-subtle)] border border-[var(--glass-border)] rounded-lg font-mono text-sm">
               <span className="text-[var(--accent-emerald)] font-bold select-all tracking-wider">
                 {temporaryPassword}
               </span>

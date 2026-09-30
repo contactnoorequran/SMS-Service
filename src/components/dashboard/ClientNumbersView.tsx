@@ -243,7 +243,7 @@ export const ClientNumbersView: React.FC = () => {
             placeholder="Search by number or country..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent-blue)]"
+            className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-[var(--input-bg)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent-blue)]"
           />
         </div>
 
@@ -256,7 +256,7 @@ export const ClientNumbersView: React.FC = () => {
       <div className="glass-card rounded-2xl border border-[var(--glass-border)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[rgba(0,0,0,0.2)] border-b border-[var(--glass-border)] text-[var(--text-tertiary)] font-semibold uppercase tracking-wider text-[10px]">
+            <thead className="bg-[var(--table-th-bg)] border-b border-[var(--glass-border)] text-[var(--text-tertiary)] font-semibold uppercase tracking-wider text-[10px]">
               <tr>
                 <th className="p-3.5 pl-5">Phone Number</th>
                 <th className="p-3.5">Country & Prefix</th>
@@ -327,7 +327,7 @@ export const ClientNumbersView: React.FC = () => {
                       className={`px-2 py-0.5 rounded text-[11px] font-semibold cursor-pointer border transition-colors ${
                         n.autoRenew
                           ? 'bg-[var(--accent-emerald-dim)] text-[var(--accent-emerald)] border-[rgba(16,185,129,0.3)]'
-                          : 'bg-[rgba(0,0,0,0.2)] text-[var(--text-tertiary)] border-[var(--glass-border)]'
+                          : 'bg-[var(--input-bg-subtle)] text-[var(--text-tertiary)] border-[var(--glass-border)]'
                       }`}
                     >
                       {n.autoRenew ? 'Enabled' : 'Disabled'}
@@ -364,7 +364,7 @@ export const ClientNumbersView: React.FC = () => {
               <select
                 value={selectedCountry}
                 onChange={(e) => setSelectedCountry(e.target.value)}
-                className="w-full p-2.5 rounded-lg bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] cursor-pointer"
+                className="w-full p-2.5 rounded-lg bg-[var(--input-bg)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] cursor-pointer"
               >
                 <option value="United Kingdom">United Kingdom (+44 7911) &mdash; $2.50 / mo</option>
                 <option value="United States">United States (+1 202) &mdash; $1.80 / mo</option>

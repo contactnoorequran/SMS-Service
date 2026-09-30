@@ -251,7 +251,7 @@ export const ManagerDashboardView: React.FC<ManagerDashboardViewProps> = ({ onNa
             No pending requests in your queue.
           </div>
         ) : (
-          <div className="divide-y divide-[var(--glass-border)] border border-[var(--glass-border)] rounded-xl overflow-hidden bg-[rgba(0,0,0,0.1)]">
+          <div className="divide-y divide-[var(--glass-border)] border border-[var(--glass-border)] rounded-xl overflow-hidden bg-[var(--input-bg-subtle)]">
             {approvals.map((req) => (
               <div
                 key={req.id}
@@ -361,7 +361,7 @@ export const ManagerDashboardView: React.FC<ManagerDashboardViewProps> = ({ onNa
               { name: 'Sarah Chen', email: 'sarah@smshub.local', clients: 4, quotaUsage: 91, status: 'Active' },
               { name: 'Marcus Vance', email: 'marcus@smshub.local', clients: 2, quotaUsage: 35, status: 'Idle' },
             ].map((agent, i) => (
-              <div key={i} className="p-3 bg-[rgba(0,0,0,0.12)] border border-[var(--glass-border)] rounded-xl flex items-center justify-between gap-3">
+              <div key={i} className="p-3 bg-[var(--input-bg-subtle)] border border-[var(--glass-border)] rounded-xl flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <div className="text-xs font-semibold text-[var(--text-primary)] truncate">{agent.name}</div>
                   <div className="text-[11px] text-[var(--text-tertiary)] font-mono truncate">{agent.email}</div>
@@ -402,7 +402,7 @@ export const ManagerDashboardView: React.FC<ManagerDashboardViewProps> = ({ onNa
                 { country: 'Germany', flag: '🇩🇪', prefix: '+49 151', allocated: 3000, active: 2490 },
                 { country: 'Sweden', flag: '🇸🇪', prefix: '+46 70', allocated: 2250, active: 1890 },
               ].map((pool, idx) => (
-                <div key={idx} className="p-3 bg-[rgba(0,0,0,0.12)] border border-[var(--glass-border)] rounded-xl flex items-center justify-between text-xs">
+                <div key={idx} className="p-3 bg-[var(--input-bg-subtle)] border border-[var(--glass-border)] rounded-xl flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2.5">
                     <span className="text-base">{pool.flag}</span>
                     <div>

@@ -86,21 +86,21 @@ export const BulkImportNumbersModal: React.FC<BulkImportNumbersModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-[var(--card-bg,#1e293b)] text-[var(--text-primary,#f8fafc)] border border-[var(--glass-border,#334155)] rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden animate-scale-in">
+      <div className="bg-[var(--card-bg)] text-[var(--text-primary)] border border-[var(--glass-border)] rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden animate-scale-in">
         {/* Modal Header matching Screenshot 2 */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border,#334155)]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/30 text-teal-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[var(--accent-emerald-dim)] border border-[rgba(16,185,129,0.3)] text-[var(--accent-emerald)] flex items-center justify-center">
               <Hash className="w-4 h-4" />
             </div>
-            <h2 className="text-base font-bold text-[var(--text-primary,#f8fafc)]">
+            <h2 className="text-base font-bold text-[var(--text-primary)]">
               Bulk Import / Generate Numbers
             </h2>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-[var(--text-tertiary,#94a3b8)] hover:text-[var(--text-primary,#f8fafc)] p-1 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors"
+            className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] p-1 rounded-lg hover:bg-[var(--glass-bg-hover)] transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -108,26 +108,26 @@ export const BulkImportNumbersModal: React.FC<BulkImportNumbersModalProps> = ({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5 text-xs">
-          <p className="text-xs text-[var(--text-tertiary,#94a3b8)]">
+          <p className="text-xs text-[var(--text-secondary)]">
             Add numbers using serial generation, a pasted list, or a file upload.
           </p>
 
           {error && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
+            <div className="p-3 rounded-xl bg-[var(--accent-rose-dim)] border border-[rgba(244,63,94,0.3)] text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-[var(--accent-rose)]" />
               <span>{error}</span>
             </div>
           )}
 
           {/* Target Range * */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-[var(--text-secondary,#94a3b8)]">
-              Target Range <span className="text-rose-400">*</span>
+            <label className="text-xs font-semibold text-[var(--text-secondary)]">
+              Target Range <span className="text-[var(--accent-rose)]">*</span>
             </label>
             <select
               value={targetRange}
               onChange={(e) => setTargetRange(e.target.value)}
-              className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer"
+              className="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] cursor-pointer"
             >
               <option value="">Type at least 1 character to search by range name...</option>
               {ranges.length > 0 ? (
@@ -146,14 +146,14 @@ export const BulkImportNumbersModal: React.FC<BulkImportNumbersModalProps> = ({
           </div>
 
           {/* 3 Mode Tabs matching Screenshot 2 */}
-          <div className="flex items-center gap-4 border-b border-[var(--glass-border,#334155)] pb-1">
+          <div className="flex items-center gap-4 border-b border-[var(--glass-border)] pb-1">
             <button
               type="button"
               onClick={() => setActiveTab('serial')}
               className={`flex items-center gap-2 pb-2 text-xs font-semibold cursor-pointer transition-all border-b-2 ${
                 activeTab === 'serial'
-                  ? 'border-teal-400 text-teal-400'
-                  : 'border-transparent text-[var(--text-tertiary,#94a3b8)] hover:text-[var(--text-primary,#f8fafc)]'
+                  ? 'border-[var(--accent-emerald)] text-emerald-700 dark:text-emerald-400'
+                  : 'border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'
               }`}
             >
               <span className="font-mono">123</span> Serial Generator
@@ -164,8 +164,8 @@ export const BulkImportNumbersModal: React.FC<BulkImportNumbersModalProps> = ({
               onClick={() => setActiveTab('paste')}
               className={`flex items-center gap-2 pb-2 text-xs font-semibold cursor-pointer transition-all border-b-2 ${
                 activeTab === 'paste'
-                  ? 'border-teal-400 text-teal-400'
-                  : 'border-transparent text-[var(--text-tertiary,#94a3b8)] hover:text-[var(--text-primary,#f8fafc)]'
+                  ? 'border-[var(--accent-emerald)] text-emerald-700 dark:text-emerald-400'
+                  : 'border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'
               }`}
             >
               <List className="w-3.5 h-3.5" /> Paste List
@@ -176,8 +176,8 @@ export const BulkImportNumbersModal: React.FC<BulkImportNumbersModalProps> = ({
               onClick={() => setActiveTab('file')}
               className={`flex items-center gap-2 pb-2 text-xs font-semibold cursor-pointer transition-all border-b-2 ${
                 activeTab === 'file'
-                  ? 'border-teal-400 text-teal-400'
-                  : 'border-transparent text-[var(--text-tertiary,#94a3b8)] hover:text-[var(--text-primary,#f8fafc)]'
+                  ? 'border-[var(--accent-emerald)] text-emerald-700 dark:text-emerald-400'
+                  : 'border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'
               }`}
             >
               <Upload className="w-3.5 h-3.5" /> Upload File
@@ -188,7 +188,7 @@ export const BulkImportNumbersModal: React.FC<BulkImportNumbersModalProps> = ({
           {activeTab === 'serial' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
               <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)]">
+                <label className="text-[11px] font-semibold text-[var(--text-secondary)]">
                   Start Number
                 </label>
                 <input
@@ -196,12 +196,12 @@ export const BulkImportNumbersModal: React.FC<BulkImportNumbersModalProps> = ({
                   placeholder="e.g. 445555590000"
                   value={startNumber}
                   onChange={(e) => setStartNumber(e.target.value)}
-                  className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs font-mono text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500"
+                  className="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-xs font-mono text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)]">
+                <label className="text-[11px] font-semibold text-[var(--text-secondary)]">
                   Quantity
                 </label>
                 <input
@@ -211,7 +211,7 @@ export const BulkImportNumbersModal: React.FC<BulkImportNumbersModalProps> = ({
                   placeholder="1000"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
-                  className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs font-mono text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500"
+                  className="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-xs font-mono text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)]"
                 />
               </div>
             </div>
@@ -220,7 +220,7 @@ export const BulkImportNumbersModal: React.FC<BulkImportNumbersModalProps> = ({
           {/* Tab 2: Paste List */}
           {activeTab === 'paste' && (
             <div className="space-y-2 pt-2">
-              <label className="text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)]">
+              <label className="text-[11px] font-semibold text-[var(--text-secondary)]">
                 Paste Phone Numbers (one per line)
               </label>
               <textarea
@@ -228,7 +228,7 @@ export const BulkImportNumbersModal: React.FC<BulkImportNumbersModalProps> = ({
                 placeholder="445555590001&#10;445555590002&#10;445555590003"
                 value={pastedList}
                 onChange={(e) => setPastedList(e.target.value)}
-                className="w-full p-3 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs font-mono text-[var(--text-primary,#f8fafc)] placeholder:text-[var(--text-tertiary,#64748b)] focus:outline-none focus:border-teal-500"
+                className="w-full p-3 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-xs font-mono text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--brand-primary)]"
               />
             </div>
           )}
@@ -236,12 +236,12 @@ export const BulkImportNumbersModal: React.FC<BulkImportNumbersModalProps> = ({
           {/* Tab 3: Upload File */}
           {activeTab === 'file' && (
             <div className="space-y-2 pt-2">
-              <label className="text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)]">
+              <label className="text-[11px] font-semibold text-[var(--text-secondary)]">
                 Choose CSV or TXT File
               </label>
-              <div className="border-2 border-dashed border-[var(--glass-border,#334155)] rounded-xl p-6 text-center hover:border-teal-500/50 transition-colors">
-                <Upload className="w-8 h-8 text-teal-400 mx-auto mb-2" />
-                <p className="text-xs text-[var(--text-secondary,#94a3b8)] mb-2">
+              <div className="border-2 border-dashed border-[var(--glass-border)] bg-[var(--input-bg-subtle)] rounded-xl p-6 text-center hover:border-[var(--brand-primary)] transition-colors">
+                <Upload className="w-8 h-8 text-[var(--accent-emerald)] mx-auto mb-2" />
+                <p className="text-xs text-[var(--text-secondary)] mb-2">
                   {selectedFile ? selectedFile.name : 'Select a .csv or .txt file containing numbers'}
                 </p>
                 <input
@@ -253,7 +253,7 @@ export const BulkImportNumbersModal: React.FC<BulkImportNumbersModalProps> = ({
                 />
                 <label
                   htmlFor="bulk-file-input"
-                  className="inline-block px-3 py-1.5 rounded-lg bg-teal-500/10 text-teal-400 hover:bg-teal-500/20 text-xs font-semibold cursor-pointer border border-teal-500/30"
+                  className="inline-block px-3 py-1.5 rounded-lg bg-[var(--accent-emerald-dim)] text-emerald-700 dark:text-teal-400 hover:bg-[var(--accent-emerald)] hover:text-white text-xs font-semibold cursor-pointer border border-[rgba(16,185,129,0.3)] transition-colors"
                 >
                   Browse Files
                 </label>
@@ -262,7 +262,7 @@ export const BulkImportNumbersModal: React.FC<BulkImportNumbersModalProps> = ({
           )}
 
           {/* Footer buttons matching Screenshot 2 */}
-          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-[var(--glass-border,#334155)]">
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-[var(--glass-border)]">
             <Button
               type="button"
               variant="secondary"

@@ -240,7 +240,7 @@ export const ManagerTeamView: React.FC = () => {
             placeholder={activeTab === 'AGENTS' ? 'Search agents...' : 'Search clients or companies...'}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent-blue)]"
+            className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-[var(--input-bg)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent-blue)]"
           />
         </div>
       </div>
@@ -274,7 +274,7 @@ export const ManagerTeamView: React.FC = () => {
                   </Badge>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 p-3 bg-[rgba(0,0,0,0.15)] rounded-xl border border-[var(--glass-border)] text-center text-xs">
+                <div className="grid grid-cols-3 gap-2 p-3 bg-[var(--input-bg-subtle)] rounded-xl border border-[var(--glass-border)] text-center text-xs">
                   <div>
                     <div className="text-[10px] text-[var(--text-tertiary)] uppercase">Clients</div>
                     <div className="font-mono font-bold text-sm text-[var(--text-primary)] mt-0.5">
@@ -322,7 +322,7 @@ export const ManagerTeamView: React.FC = () => {
         <div className="glass-card rounded-2xl border border-[var(--glass-border)] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[rgba(0,0,0,0.2)] border-b border-[var(--glass-border)] text-[var(--text-tertiary)] font-semibold uppercase tracking-wider text-[10px]">
+              <thead className="bg-[var(--table-th-bg)] border-b border-[var(--glass-border)] text-[var(--text-tertiary)] font-semibold uppercase tracking-wider text-[10px]">
                 <tr>
                   <th className="p-3.5 pl-5">Client Company</th>
                   <th className="p-3.5">Assigned Agent</th>
@@ -390,7 +390,7 @@ export const ManagerTeamView: React.FC = () => {
               <select
                 value={selectedAgentName}
                 onChange={(e) => setSelectedAgentName(e.target.value)}
-                className="w-full p-2.5 rounded-lg bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] cursor-pointer"
+                className="w-full p-2.5 rounded-lg bg-[var(--input-bg)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] cursor-pointer"
               >
                 {agents.map((a) => (
                   <option key={a.id} value={a.name}>

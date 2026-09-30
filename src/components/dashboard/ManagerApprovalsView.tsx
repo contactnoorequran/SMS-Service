@@ -244,7 +244,7 @@ export const ManagerApprovalsView: React.FC = () => {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-1.5 rounded-lg bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] cursor-pointer"
+            className="px-3 py-1.5 rounded-lg bg-[var(--input-bg)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-blue)] cursor-pointer"
           >
             <option value="ALL">All Statuses</option>
             <option value="PENDING">Pending Only</option>
@@ -259,7 +259,7 @@ export const ManagerApprovalsView: React.FC = () => {
               placeholder="Search request or ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent-blue)]"
+              className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-[var(--input-bg)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent-blue)]"
             />
           </div>
         </div>
@@ -269,7 +269,7 @@ export const ManagerApprovalsView: React.FC = () => {
       <div className="glass-card rounded-2xl border border-[var(--glass-border)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[rgba(0,0,0,0.2)] border-b border-[var(--glass-border)] text-[var(--text-tertiary)] font-semibold uppercase tracking-wider text-[10px]">
+            <thead className="bg-[var(--table-th-bg)] border-b border-[var(--glass-border)] text-[var(--text-tertiary)] font-semibold uppercase tracking-wider text-[10px]">
               <tr>
                 <th className="p-3.5 pl-5">Request ID</th>
                 <th className="p-3.5">Category</th>
@@ -449,13 +449,13 @@ export const ManagerApprovalsView: React.FC = () => {
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
                   placeholder="e.g. Unverified bank transfer reference, invalid wallet address..."
-                  className="w-full p-2.5 rounded-lg bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent-rose)]"
+                  className="w-full p-2.5 rounded-lg bg-[var(--input-bg)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent-rose)]"
                 />
               </div>
             )}
 
             {modalMode === 'DETAILS' && activeModalRequest.processedBy && (
-              <div className="p-3 bg-[rgba(0,0,0,0.15)] rounded-xl border border-[var(--glass-border)] space-y-1">
+              <div className="p-3 bg-[var(--input-bg-subtle)] rounded-xl border border-[var(--glass-border)] space-y-1">
                 <div className="font-semibold text-[var(--text-primary)]">Audit Telemetry:</div>
                 <div className="text-[var(--text-secondary)]">
                   Processed by <span className="font-semibold text-[var(--text-primary)]">{activeModalRequest.processedBy}</span> on {activeModalRequest.processedAt}

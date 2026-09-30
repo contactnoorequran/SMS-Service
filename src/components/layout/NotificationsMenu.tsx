@@ -144,7 +144,7 @@ export const NotificationsMenu: React.FC<NotificationsMenuProps> = ({ onNavigate
           </div>
 
           {/* Filter Tabs */}
-          <div className="px-4 py-2 bg-[rgba(0,0,0,0.15)] border-b border-[var(--glass-border)] flex items-center gap-2 text-xs">
+          <div className="px-4 py-2 bg-[var(--input-bg-subtle)] border-b border-[var(--glass-border)] flex items-center gap-2 text-xs">
             <button
               onClick={() => setActiveFilter('ALL')}
               className={`px-2.5 py-1 rounded-md font-medium transition-colors ${

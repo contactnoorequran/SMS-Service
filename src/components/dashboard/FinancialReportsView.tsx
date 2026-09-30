@@ -107,10 +107,10 @@ export const FinancialReportsView: React.FC = () => {
       {/* 1. Header matching Screenshot 4 */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-1">
         <div className="space-y-1">
-          <h1 className="text-xl font-bold text-[var(--text-primary,#f8fafc)] tracking-tight">
+          <h1 className="text-xl font-bold text-[var(--text-primary)] tracking-tight">
             Financial Reports
           </h1>
-          <p className="text-xs text-[var(--text-secondary,#94a3b8)]">
+          <p className="text-xs text-[var(--text-secondary)]">
             Track member balances, SMS earnings, and platform profit across your selected date range.
           </p>
           <div className="pt-0.5">
@@ -145,14 +145,14 @@ export const FinancialReportsView: React.FC = () => {
           </button>
           <button
             onClick={() => window.print()}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700/80 hover:bg-slate-600 text-[var(--text-secondary,#94a3b8)] hover:text-white flex items-center gap-1.5 transition-colors border border-[var(--glass-border,#334155)]"
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700/80 hover:bg-slate-600 text-[var(--text-secondary)] hover:text-white flex items-center gap-1.5 transition-colors border border-[var(--glass-border)]"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>Print</span>
           </button>
           <button
             onClick={handleRefresh}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.08)] text-[var(--text-secondary,#94a3b8)] border border-[var(--glass-border,#334155)] flex items-center gap-1.5 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.08)] text-[var(--text-secondary)] border border-[var(--glass-border)] flex items-center gap-1.5 transition-colors"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
@@ -161,13 +161,13 @@ export const FinancialReportsView: React.FC = () => {
       </div>
 
       {/* Tabs: Members, Wholesale */}
-      <div className="flex items-center gap-1 border-b border-[var(--glass-border,#334155)] pb-1">
+      <div className="flex items-center gap-1 border-b border-[var(--glass-border)] pb-1">
         <button
           onClick={() => setActiveTab('Members')}
           className={`px-4 py-2 text-xs font-semibold transition-all relative ${
             activeTab === 'Members'
               ? 'text-teal-400 border-b-2 border-teal-400'
-              : 'text-[var(--text-tertiary,#64748b)] hover:text-[var(--text-secondary,#94a3b8)]'
+              : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
           }`}
         >
           Members
@@ -177,7 +177,7 @@ export const FinancialReportsView: React.FC = () => {
           className={`px-4 py-2 text-xs font-semibold transition-all relative ${
             activeTab === 'Wholesale'
               ? 'text-teal-400 border-b-2 border-teal-400'
-              : 'text-[var(--text-tertiary,#64748b)] hover:text-[var(--text-secondary,#94a3b8)]'
+              : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
           }`}
         >
           Wholesale
@@ -187,15 +187,15 @@ export const FinancialReportsView: React.FC = () => {
       {/* 2. Top 5 KPI Cards matching Screenshot 4 */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
         {/* ADMIN NET PROFIT */}
-        <div className="glass-card p-3.5 rounded-xl border border-[var(--glass-border,#334155)] flex items-center justify-between">
+        <div className="glass-card p-3.5 rounded-xl border border-[var(--glass-border)] flex items-center justify-between">
           <div>
-            <div className="text-[9px] text-[var(--text-tertiary,#64748b)] uppercase font-semibold tracking-wider">
+            <div className="text-[9px] text-[var(--text-tertiary)] uppercase font-semibold tracking-wider">
               ADMIN NET PROFIT
             </div>
-            <div className="text-xl font-bold font-mono text-[var(--text-primary,#f8fafc)] mt-1">
+            <div className="text-xl font-bold font-mono text-[var(--text-primary)] mt-1">
               $0.00
             </div>
-            <div className="text-[10px] text-[var(--text-secondary,#94a3b8)] mt-0.5 truncate">
+            <div className="text-[10px] text-[var(--text-secondary)] mt-0.5 truncate">
               Platform profit for selected period
             </div>
           </div>
@@ -205,15 +205,15 @@ export const FinancialReportsView: React.FC = () => {
         </div>
 
         {/* PAID SMS */}
-        <div className="glass-card p-3.5 rounded-xl border border-[var(--glass-border,#334155)] flex items-center justify-between">
+        <div className="glass-card p-3.5 rounded-xl border border-[var(--glass-border)] flex items-center justify-between">
           <div>
-            <div className="text-[9px] text-[var(--text-tertiary,#64748b)] uppercase font-semibold tracking-wider">
+            <div className="text-[9px] text-[var(--text-tertiary)] uppercase font-semibold tracking-wider">
               PAID SMS
             </div>
-            <div className="text-xl font-bold font-mono text-[var(--text-primary,#f8fafc)] mt-1">
+            <div className="text-xl font-bold font-mono text-[var(--text-primary)] mt-1">
               0
             </div>
-            <div className="text-[10px] text-[var(--text-secondary,#94a3b8)] mt-0.5 truncate">
+            <div className="text-[10px] text-[var(--text-secondary)] mt-0.5 truncate">
               Counted messages in period
             </div>
           </div>
@@ -223,15 +223,15 @@ export const FinancialReportsView: React.FC = () => {
         </div>
 
         {/* UNPAID SMS */}
-        <div className="glass-card p-3.5 rounded-xl border border-[var(--glass-border,#334155)] flex items-center justify-between">
+        <div className="glass-card p-3.5 rounded-xl border border-[var(--glass-border)] flex items-center justify-between">
           <div>
-            <div className="text-[9px] text-[var(--text-tertiary,#64748b)] uppercase font-semibold tracking-wider">
+            <div className="text-[9px] text-[var(--text-tertiary)] uppercase font-semibold tracking-wider">
               UNPAID SMS
             </div>
-            <div className="text-xl font-bold font-mono text-[var(--text-primary,#f8fafc)] mt-1">
+            <div className="text-xl font-bold font-mono text-[var(--text-primary)] mt-1">
               0
             </div>
-            <div className="text-[10px] text-[var(--text-secondary,#94a3b8)] mt-0.5 truncate">
+            <div className="text-[10px] text-[var(--text-secondary)] mt-0.5 truncate">
               Over daily limit in period
             </div>
           </div>
@@ -241,15 +241,15 @@ export const FinancialReportsView: React.FC = () => {
         </div>
 
         {/* AVAILABLE BALANCE */}
-        <div className="glass-card p-3.5 rounded-xl border border-[var(--glass-border,#334155)] flex items-center justify-between">
+        <div className="glass-card p-3.5 rounded-xl border border-[var(--glass-border)] flex items-center justify-between">
           <div>
-            <div className="text-[9px] text-[var(--text-tertiary,#64748b)] uppercase font-semibold tracking-wider">
+            <div className="text-[9px] text-[var(--text-tertiary)] uppercase font-semibold tracking-wider">
               AVAILABLE BALANCE
             </div>
-            <div className="text-xl font-bold font-mono text-[var(--text-primary,#f8fafc)] mt-1">
+            <div className="text-xl font-bold font-mono text-[var(--text-primary)] mt-1">
               $0.00
             </div>
-            <div className="text-[10px] text-[var(--text-secondary,#94a3b8)] mt-0.5 truncate">
+            <div className="text-[10px] text-[var(--text-secondary)] mt-0.5 truncate">
               All members — withdrawable funds
             </div>
           </div>
@@ -259,15 +259,15 @@ export const FinancialReportsView: React.FC = () => {
         </div>
 
         {/* PENDING BALANCE */}
-        <div className="glass-card p-3.5 rounded-xl border border-[var(--glass-border,#334155)] flex items-center justify-between">
+        <div className="glass-card p-3.5 rounded-xl border border-[var(--glass-border)] flex items-center justify-between">
           <div>
-            <div className="text-[9px] text-[var(--text-tertiary,#64748b)] uppercase font-semibold tracking-wider">
+            <div className="text-[9px] text-[var(--text-tertiary)] uppercase font-semibold tracking-wider">
               PENDING BALANCE
             </div>
-            <div className="text-xl font-bold font-mono text-[var(--text-primary,#f8fafc)] mt-1">
+            <div className="text-xl font-bold font-mono text-[var(--text-primary)] mt-1">
               $0.00
             </div>
-            <div className="text-[10px] text-[var(--text-secondary,#94a3b8)] mt-0.5 truncate">
+            <div className="text-[10px] text-[var(--text-secondary)] mt-0.5 truncate">
               All members — awaiting clearance
             </div>
           </div>
@@ -278,13 +278,13 @@ export const FinancialReportsView: React.FC = () => {
       </div>
 
       {/* 3. Section: Report Period matching Screenshot 4 */}
-      <div className="glass-card p-5 rounded-2xl border border-[var(--glass-border,#334155)] space-y-4">
+      <div className="glass-card p-5 rounded-2xl border border-[var(--glass-border)] space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-sm font-bold text-[var(--text-primary,#f8fafc)]">
+            <h2 className="text-sm font-bold text-[var(--text-primary)]">
               Report Period
             </h2>
-            <p className="text-xs text-[var(--text-secondary,#94a3b8)] mt-0.5">
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
               Select a date range and optional Sender ID to refresh KPI cards and member summary
             </p>
           </div>
@@ -296,63 +296,63 @@ export const FinancialReportsView: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 text-xs items-end">
           {/* From Date */}
           <div className="sm:col-span-2">
-            <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+            <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
               From Date
             </label>
             <input
               type="date"
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
-              className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono cursor-pointer"
+              className="w-full px-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 font-mono cursor-pointer"
             />
           </div>
 
           {/* To Date */}
           <div className="sm:col-span-2">
-            <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+            <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
               To Date
             </label>
             <input
               type="date"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}
-              className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono cursor-pointer"
+              className="w-full px-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 font-mono cursor-pointer"
             />
           </div>
 
           {/* Search by Sender ID */}
           <div className="sm:col-span-4">
-            <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+            <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
               Search by Sender ID
             </label>
             <div className="relative">
-              <AtSign className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary,#64748b)]" />
+              <AtSign className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]" />
               <input
                 type="text"
                 placeholder="@ e.g. WhatsApp or Facebook"
                 value={senderIdSearch}
                 onChange={(e) => setSenderIdSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] placeholder:text-[var(--text-tertiary,#64748b)] focus:outline-none focus:border-teal-500"
+                className="w-full pl-9 pr-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-teal-500"
               />
             </div>
-            <p className="text-[10px] text-[var(--text-tertiary,#64748b)] mt-1">
+            <p className="text-[10px] text-[var(--text-tertiary)] mt-1">
               Leave empty to include all apps
             </p>
           </div>
 
           {/* Member Search */}
           <div className="sm:col-span-4">
-            <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+            <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
               Member search
             </label>
             <div className="relative">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary,#64748b)]" />
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]" />
               <input
                 type="text"
                 placeholder="Member search"
                 value={memberSearch}
                 onChange={(e) => setMemberSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] placeholder:text-[var(--text-tertiary,#64748b)] focus:outline-none focus:border-teal-500"
+                className="w-full pl-9 pr-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-teal-500"
               />
             </div>
           </div>
@@ -361,13 +361,13 @@ export const FinancialReportsView: React.FC = () => {
         {/* Bottom controls: Rows dropdown, Update Report button, This Month button */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-[var(--text-secondary,#94a3b8)] font-semibold">
+            <span className="text-[11px] text-[var(--text-secondary)] font-semibold">
               Rows
             </span>
             <select
               value={rowsPerPage}
               onChange={(e) => setRowsPerPage(e.target.value)}
-              className="px-2.5 py-1.5 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-lg text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono cursor-pointer"
+              className="px-2.5 py-1.5 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-lg text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 font-mono cursor-pointer"
             >
               <option value="10">10</option>
               <option value="25">25</option>
@@ -384,7 +384,7 @@ export const FinancialReportsView: React.FC = () => {
             </button>
             <button
               onClick={handleThisMonth}
-              className="px-3.5 py-2 bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.08)] text-[var(--text-secondary,#94a3b8)] border border-[var(--glass-border,#334155)] text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-2 bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.08)] text-[var(--text-secondary)] border border-[var(--glass-border)] text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors"
             >
               <Calendar className="w-3.5 h-3.5" />
               <span>This Month</span>
@@ -394,13 +394,13 @@ export const FinancialReportsView: React.FC = () => {
       </div>
 
       {/* 4. Section: Members Financial Summary Table matching Screenshot 4 */}
-      <div className="glass-card rounded-2xl border border-[var(--glass-border,#334155)] overflow-hidden">
-        <div className="p-5 border-b border-[var(--glass-border,#334155)] flex items-center justify-between">
+      <div className="glass-card rounded-2xl border border-[var(--glass-border)] overflow-hidden">
+        <div className="p-5 border-b border-[var(--glass-border)] flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-bold text-[var(--text-primary,#f8fafc)]">
+            <h2 className="text-sm font-bold text-[var(--text-primary)]">
               Members Financial Summary
             </h2>
-            <p className="text-xs text-[var(--text-secondary,#94a3b8)] mt-0.5">
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
               Per-member balances and period earnings breakdown
             </p>
           </div>
@@ -411,7 +411,7 @@ export const FinancialReportsView: React.FC = () => {
 
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
-            <thead className="bg-[rgba(0,0,0,0.2)] text-[var(--text-secondary,#94a3b8)] border-b border-[var(--glass-border,#334155)] uppercase text-[10px] font-semibold tracking-wider">
+            <thead className="bg-[var(--input-bg)] border-[var(--input-border)] text-[var(--text-secondary)] border-b border-[var(--glass-border)] uppercase text-[10px] font-semibold tracking-wider">
               <tr>
                 <th className="py-3 px-4">USER NAME</th>
                 <th className="py-3 px-4">EMAIL</th>
@@ -423,28 +423,28 @@ export const FinancialReportsView: React.FC = () => {
                 <th className="py-3 px-4">ADMIN PROFIT</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--glass-border,#334155)]">
+            <tbody className="divide-y divide-[var(--glass-border)]">
               {filteredMembers.map((m) => (
                 <tr key={m.id} className="hover:bg-[rgba(255,255,255,0.02)] transition-colors">
-                  <td className="py-3.5 px-4 font-semibold text-[var(--text-primary,#f8fafc)]">
+                  <td className="py-3.5 px-4 font-semibold text-[var(--text-primary)]">
                     {m.userName}
                   </td>
-                  <td className="py-3.5 px-4 font-mono text-[11px] text-[var(--text-secondary,#94a3b8)]">
+                  <td className="py-3.5 px-4 font-mono text-[11px] text-[var(--text-secondary)]">
                     {m.email}
                   </td>
-                  <td className="py-3.5 px-4 font-mono text-[var(--text-primary,#f8fafc)] font-semibold">
+                  <td className="py-3.5 px-4 font-mono text-[var(--text-primary)] font-semibold">
                     ${m.availableBalance.toFixed(4)}
                   </td>
-                  <td className="py-3.5 px-4 font-mono text-[var(--text-secondary,#94a3b8)]">
+                  <td className="py-3.5 px-4 font-mono text-[var(--text-secondary)]">
                     ${m.pendingBalance.toFixed(4)}
                   </td>
                   <td className="py-3.5 px-4 font-mono text-center font-semibold text-teal-400">
                     {m.paidSms}
                   </td>
-                  <td className="py-3.5 px-4 font-mono text-center text-[var(--text-tertiary,#64748b)]">
+                  <td className="py-3.5 px-4 font-mono text-center text-[var(--text-tertiary)]">
                     {m.unpaidSms}
                   </td>
-                  <td className="py-3.5 px-4 font-mono text-[var(--text-primary,#f8fafc)] font-semibold">
+                  <td className="py-3.5 px-4 font-mono text-[var(--text-primary)] font-semibold">
                     ${m.earnings.toFixed(4)}
                   </td>
                   <td className="py-3.5 px-4 font-mono text-emerald-400 font-semibold">

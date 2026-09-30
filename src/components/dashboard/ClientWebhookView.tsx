@@ -158,7 +158,7 @@ export const ClientWebhookView: React.FC = () => {
               value={webhookUrl}
               onChange={(e) => setWebhookUrl(e.target.value)}
               placeholder="https://your-domain.com/api/webhooks/sms"
-              className="w-full p-2.5 rounded-lg bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] font-mono focus:outline-none focus:border-[var(--accent-blue)]"
+              className="w-full p-2.5 rounded-lg bg-[var(--input-bg)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] font-mono focus:outline-none focus:border-[var(--accent-blue)]"
             />
             <p className="text-[11px] text-[var(--text-tertiary)]">
               We send an HTTP POST request with a JSON payload whenever an SMS is received on your leased numbers.
@@ -174,7 +174,7 @@ export const ClientWebhookView: React.FC = () => {
                 type="text"
                 readOnly
                 value={secretKey}
-                className="w-full p-2.5 rounded-lg bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] font-mono focus:outline-none select-all"
+                className="w-full p-2.5 rounded-lg bg-[var(--input-bg)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] font-mono focus:outline-none select-all"
               />
               <button
                 onClick={handleCopySecret}
@@ -219,7 +219,7 @@ export const ClientWebhookView: React.FC = () => {
               Simulate an inbound OTP payload to test connectivity with your backend server.
             </p>
 
-            <div className="p-3 bg-[rgba(0,0,0,0.25)] border border-[var(--glass-border)] rounded-xl font-mono text-[11px] text-[var(--text-secondary)] space-y-1">
+            <div className="p-3 bg-[var(--input-bg)] border border-[var(--glass-border)] rounded-xl font-mono text-[11px] text-[var(--text-secondary)] space-y-1">
               <div className="text-[var(--text-tertiary)]">// Outgoing Sample JSON Payload:</div>
               <div>{`{`}</div>
               <div className="pl-3">&quot;event&quot;: &quot;sms.received&quot;,</div>
@@ -263,7 +263,7 @@ export const ClientWebhookView: React.FC = () => {
 
       {/* Webhook Delivery Logs Table */}
       <div className="glass-card rounded-2xl border border-[var(--glass-border)] overflow-hidden">
-        <div className="p-4 border-b border-[var(--glass-border)] bg-[rgba(0,0,0,0.15)] flex items-center justify-between">
+        <div className="p-4 border-b border-[var(--glass-border)] bg-[var(--input-bg-subtle)] flex items-center justify-between">
           <h3 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
             <Clock className="w-3.5 h-3.5 text-[var(--accent-blue)]" />
             <span>Recent Webhook Delivery Logs</span>
@@ -273,7 +273,7 @@ export const ClientWebhookView: React.FC = () => {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[rgba(0,0,0,0.2)] border-b border-[var(--glass-border)] text-[var(--text-tertiary)] font-semibold uppercase tracking-wider text-[10px]">
+            <thead className="bg-[var(--table-th-bg)] border-b border-[var(--glass-border)] text-[var(--text-tertiary)] font-semibold uppercase tracking-wider text-[10px]">
               <tr>
                 <th className="p-3.5 pl-5">Delivery ID</th>
                 <th className="p-3.5">Event</th>

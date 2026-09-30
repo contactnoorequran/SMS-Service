@@ -46,10 +46,10 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
       {/* 1. Header matching Screenshot 1 */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
         <div className="space-y-1">
-          <h1 className="text-xl font-bold text-[var(--text-primary,#f8fafc)] tracking-tight">
+          <h1 className="text-xl font-bold text-[var(--text-primary)] tracking-tight">
             Operations Overview
           </h1>
-          <p className="text-xs text-[var(--text-secondary,#94a3b8)]">
+          <p className="text-xs text-[var(--text-secondary)]">
             Welcome back, admin. Live platform performance across SMS, numbers, and earnings
           </p>
           <div className="flex items-center gap-2 pt-0.5">
@@ -144,12 +144,12 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
       {/* 3. Middle Section: Traffic (7 days) Chart + September 2026 Metrics */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Traffic (7 days) */}
-        <div className="lg:col-span-8 glass-card p-5 rounded-2xl border border-[var(--glass-border,#334155)] flex flex-col justify-between">
+        <div className="lg:col-span-8 glass-card p-5 rounded-2xl border border-[var(--glass-border)] flex flex-col justify-between">
           <div>
-            <h2 className="text-sm font-bold text-[var(--text-primary,#f8fafc)]">
+            <h2 className="text-sm font-bold text-[var(--text-primary)]">
               Traffic (7 days)
             </h2>
-            <p className="text-xs text-[var(--text-secondary,#94a3b8)] mt-0.5">
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
               Inbound SMS volume by day
             </p>
 
@@ -171,7 +171,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
               </div>
 
               {/* Day Labels */}
-              <div className="flex justify-around text-[10px] font-mono text-[var(--text-tertiary,#64748b)] pt-2">
+              <div className="flex justify-around text-[10px] font-mono text-[var(--text-tertiary)] pt-2">
                 <span>Thu</span>
                 <span>Fri</span>
                 <span>Sat</span>
@@ -184,92 +184,92 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
           </div>
 
           {/* Bottom 4 Metrics */}
-          <div className="grid grid-cols-4 gap-2 pt-4 border-t border-[var(--glass-border,#334155)] text-center text-xs mt-3">
+          <div className="grid grid-cols-4 gap-2 pt-4 border-t border-[var(--glass-border)] text-center text-xs mt-3">
             <div>
-              <div className="text-base font-bold font-mono text-[var(--text-primary,#f8fafc)]">0</div>
-              <div className="text-[10px] text-[var(--text-tertiary,#64748b)]">Today's SMS</div>
+              <div className="text-base font-bold font-mono text-[var(--text-primary)]">0</div>
+              <div className="text-[10px] text-[var(--text-tertiary)]">Today's SMS</div>
             </div>
             <div>
-              <div className="text-base font-bold font-mono text-[var(--text-primary,#f8fafc)]">0</div>
-              <div className="text-[10px] text-[var(--text-tertiary,#64748b)]">This Week</div>
+              <div className="text-base font-bold font-mono text-[var(--text-primary)]">0</div>
+              <div className="text-[10px] text-[var(--text-tertiary)]">This Week</div>
             </div>
             <div>
-              <div className="text-base font-bold font-mono text-[var(--text-primary,#f8fafc)]">0</div>
-              <div className="text-[10px] text-[var(--text-tertiary,#64748b)]">Peak Day</div>
+              <div className="text-base font-bold font-mono text-[var(--text-primary)]">0</div>
+              <div className="text-[10px] text-[var(--text-tertiary)]">Peak Day</div>
             </div>
             <div>
-              <div className="text-base font-bold font-mono text-[var(--text-primary,#f8fafc)]">0</div>
-              <div className="text-[10px] text-[var(--text-tertiary,#64748b)]">Avg / Day</div>
+              <div className="text-base font-bold font-mono text-[var(--text-primary)]">0</div>
+              <div className="text-[10px] text-[var(--text-tertiary)]">Avg / Day</div>
             </div>
           </div>
         </div>
 
         {/* September 2026 Key Account Metrics */}
-        <div className="lg:col-span-4 glass-card p-5 rounded-2xl border border-[var(--glass-border,#334155)] space-y-4">
+        <div className="lg:col-span-4 glass-card p-5 rounded-2xl border border-[var(--glass-border)] space-y-4">
           <div>
-            <h2 className="text-sm font-bold text-[var(--text-primary,#f8fafc)]">
+            <h2 className="text-sm font-bold text-[var(--text-primary)]">
               September 2026
             </h2>
-            <p className="text-xs text-[var(--text-secondary,#94a3b8)] mt-0.5">
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
               Key account metrics
             </p>
           </div>
 
           <div className="space-y-3 text-xs">
             {/* New Members */}
-            <div className="p-3.5 rounded-xl bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] flex items-center justify-between">
+            <div className="p-3.5 rounded-xl bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-sky-500/15 text-sky-400 flex items-center justify-center">
                   <Users className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="font-semibold text-[var(--text-primary,#f8fafc)]">New Members</div>
-                  <div className="text-[10px] text-[var(--text-tertiary,#64748b)]">Registered this month</div>
+                  <div className="font-semibold text-[var(--text-primary)]">New Members</div>
+                  <div className="text-[10px] text-[var(--text-tertiary)]">Registered this month</div>
                 </div>
               </div>
-              <div className="text-base font-bold font-mono text-[var(--text-primary,#f8fafc)]">2</div>
+              <div className="text-base font-bold font-mono text-[var(--text-primary)]">2</div>
             </div>
 
             {/* New Clients */}
-            <div className="p-3.5 rounded-xl bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] flex items-center justify-between">
+            <div className="p-3.5 rounded-xl bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-blue-500/15 text-blue-400 flex items-center justify-center">
                   <Briefcase className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="font-semibold text-[var(--text-primary,#f8fafc)]">New Clients</div>
-                  <div className="text-[10px] text-[var(--text-tertiary,#64748b)]">Added this month</div>
+                  <div className="font-semibold text-[var(--text-primary)]">New Clients</div>
+                  <div className="text-[10px] text-[var(--text-tertiary)]">Added this month</div>
                 </div>
               </div>
-              <div className="text-base font-bold font-mono text-[var(--text-primary,#f8fafc)]">0</div>
+              <div className="text-base font-bold font-mono text-[var(--text-primary)]">0</div>
             </div>
 
             {/* Pending Balance */}
-            <div className="p-3.5 rounded-xl bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] flex items-center justify-between">
+            <div className="p-3.5 rounded-xl bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center">
                   <Clock className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="font-semibold text-[var(--text-primary,#f8fafc)]">Pending Balance</div>
-                  <div className="text-[10px] text-[var(--text-tertiary,#64748b)]">Total members pending</div>
+                  <div className="font-semibold text-[var(--text-primary)]">Pending Balance</div>
+                  <div className="text-[10px] text-[var(--text-tertiary)]">Total members pending</div>
                 </div>
               </div>
-              <div className="text-base font-bold font-mono text-[var(--text-primary,#f8fafc)]">$0.00</div>
+              <div className="text-base font-bold font-mono text-[var(--text-primary)]">$0.00</div>
             </div>
 
             {/* Numbers Pool */}
-            <div className="p-3.5 rounded-xl bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] flex items-center justify-between">
+            <div className="p-3.5 rounded-xl bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-teal-500/15 text-teal-400 flex items-center justify-center">
                   <Hash className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="font-semibold text-[var(--text-primary,#f8fafc)]">Numbers Pool</div>
-                  <div className="text-[10px] text-[var(--text-tertiary,#64748b)]">10,591 available</div>
+                  <div className="font-semibold text-[var(--text-primary)]">Numbers Pool</div>
+                  <div className="text-[10px] text-[var(--text-tertiary)]">10,591 available</div>
                 </div>
               </div>
-              <div className="text-base font-bold font-mono text-[var(--text-primary,#f8fafc)]">11,002</div>
+              <div className="text-base font-bold font-mono text-[var(--text-primary)]">11,002</div>
             </div>
           </div>
         </div>
@@ -278,19 +278,19 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
       {/* 4. Lower Section matching Screenshot 2: Number Inventory, Platform Pulse, Earnings (7 days) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Number Inventory */}
-        <div className="glass-card p-5 rounded-2xl border border-[var(--glass-border,#334155)] space-y-4">
+        <div className="glass-card p-5 rounded-2xl border border-[var(--glass-border)] space-y-4">
           <div>
-            <h2 className="text-sm font-bold text-[var(--text-primary,#f8fafc)]">
+            <h2 className="text-sm font-bold text-[var(--text-primary)]">
               Number Inventory
             </h2>
-            <p className="text-xs text-[var(--text-secondary,#94a3b8)] mt-0.5">
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
               Pool distribution by status
             </p>
           </div>
 
           <div className="space-y-3.5 text-xs">
             <div>
-              <div className="flex justify-between font-semibold mb-1 text-[var(--text-primary,#f8fafc)]">
+              <div className="flex justify-between font-semibold mb-1 text-[var(--text-primary)]">
                 <span>Available</span>
                 <span className="font-mono text-blue-400">10,591 • 96%</span>
               </div>
@@ -300,7 +300,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             </div>
 
             <div>
-              <div className="flex justify-between font-semibold mb-1 text-[var(--text-primary,#f8fafc)]">
+              <div className="flex justify-between font-semibold mb-1 text-[var(--text-primary)]">
                 <span>Allocated</span>
                 <span className="font-mono text-sky-400">409 • 4%</span>
               </div>
@@ -310,7 +310,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             </div>
 
             <div>
-              <div className="flex justify-between font-semibold mb-1 text-[var(--text-primary,#f8fafc)]">
+              <div className="flex justify-between font-semibold mb-1 text-[var(--text-primary)]">
                 <span>Test</span>
                 <span className="font-mono text-amber-400">2 • 0%</span>
               </div>
@@ -320,7 +320,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             </div>
 
             <div>
-              <div className="flex justify-between font-semibold mb-1 text-[var(--text-primary,#f8fafc)]">
+              <div className="flex justify-between font-semibold mb-1 text-[var(--text-primary)]">
                 <span>Expired</span>
                 <span className="font-mono text-rose-400">0 • 0%</span>
               </div>
@@ -332,50 +332,50 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         </div>
 
         {/* Platform Pulse */}
-        <div className="glass-card p-5 rounded-2xl border border-[var(--glass-border,#334155)] space-y-4">
+        <div className="glass-card p-5 rounded-2xl border border-[var(--glass-border)] space-y-4">
           <div>
-            <h2 className="text-sm font-bold text-[var(--text-primary,#f8fafc)]">
+            <h2 className="text-sm font-bold text-[var(--text-primary)]">
               Platform Pulse
             </h2>
-            <p className="text-xs text-[var(--text-secondary,#94a3b8)] mt-0.5">
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
               Core entities at a glance
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="p-4 rounded-xl bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] text-center space-y-1">
+            <div className="p-4 rounded-xl bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] text-center space-y-1">
               <Server className="w-5 h-5 mx-auto text-teal-400 mb-1" />
-              <div className="text-xl font-bold font-mono text-[var(--text-primary,#f8fafc)]">1</div>
-              <div className="text-[11px] text-[var(--text-secondary,#94a3b8)]">Providers</div>
+              <div className="text-xl font-bold font-mono text-[var(--text-primary)]">1</div>
+              <div className="text-[11px] text-[var(--text-secondary)]">Providers</div>
             </div>
 
-            <div className="p-4 rounded-xl bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] text-center space-y-1">
+            <div className="p-4 rounded-xl bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] text-center space-y-1">
               <Layers className="w-5 h-5 mx-auto text-emerald-400 mb-1" />
-              <div className="text-xl font-bold font-mono text-[var(--text-primary,#f8fafc)]">2</div>
-              <div className="text-[11px] text-[var(--text-secondary,#94a3b8)]">Ranges</div>
+              <div className="text-xl font-bold font-mono text-[var(--text-primary)]">2</div>
+              <div className="text-[11px] text-[var(--text-secondary)]">Ranges</div>
             </div>
 
-            <div className="p-4 rounded-xl bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] text-center space-y-1">
+            <div className="p-4 rounded-xl bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] text-center space-y-1">
               <Users className="w-5 h-5 mx-auto text-sky-400 mb-1" />
-              <div className="text-xl font-bold font-mono text-[var(--text-primary,#f8fafc)]">2</div>
-              <div className="text-[11px] text-[var(--text-secondary,#94a3b8)]">Members</div>
+              <div className="text-xl font-bold font-mono text-[var(--text-primary)]">2</div>
+              <div className="text-[11px] text-[var(--text-secondary)]">Members</div>
             </div>
 
-            <div className="p-4 rounded-xl bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] text-center space-y-1">
+            <div className="p-4 rounded-xl bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] text-center space-y-1">
               <Building2 className="w-5 h-5 mx-auto text-indigo-400 mb-1" />
-              <div className="text-xl font-bold font-mono text-[var(--text-primary,#f8fafc)]">0</div>
-              <div className="text-[11px] text-[var(--text-secondary,#94a3b8)]">Clients</div>
+              <div className="text-xl font-bold font-mono text-[var(--text-primary)]">0</div>
+              <div className="text-[11px] text-[var(--text-secondary)]">Clients</div>
             </div>
           </div>
         </div>
 
         {/* Earnings (7 days) */}
-        <div className="glass-card p-5 rounded-2xl border border-[var(--glass-border,#334155)] flex flex-col justify-between">
+        <div className="glass-card p-5 rounded-2xl border border-[var(--glass-border)] flex flex-col justify-between">
           <div>
-            <h2 className="text-sm font-bold text-[var(--text-primary,#f8fafc)]">
+            <h2 className="text-sm font-bold text-[var(--text-primary)]">
               Earnings (7 days)
             </h2>
-            <p className="text-xs text-[var(--text-secondary,#94a3b8)] mt-0.5">
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
               Member earnings trend
             </p>
 
@@ -394,14 +394,14 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 pt-4 border-t border-[var(--glass-border,#334155)] text-center text-xs">
+          <div className="grid grid-cols-2 gap-2 pt-4 border-t border-[var(--glass-border)] text-center text-xs">
             <div>
-              <div className="text-base font-bold font-mono text-[var(--text-primary,#f8fafc)]">$0.00</div>
-              <div className="text-[10px] text-[var(--text-tertiary,#64748b)]">Period Total</div>
+              <div className="text-base font-bold font-mono text-[var(--text-primary)]">$0.00</div>
+              <div className="text-[10px] text-[var(--text-tertiary)]">Period Total</div>
             </div>
             <div>
-              <div className="text-base font-bold font-mono text-[var(--text-primary,#f8fafc)]">$0.00</div>
-              <div className="text-[10px] text-[var(--text-tertiary,#64748b)]">Best Day</div>
+              <div className="text-base font-bold font-mono text-[var(--text-primary)]">$0.00</div>
+              <div className="text-[10px] text-[var(--text-tertiary)]">Best Day</div>
             </div>
           </div>
         </div>
@@ -410,13 +410,13 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
       {/* 5. Bottom Section: Recent SMS and Top Members Today */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Recent SMS */}
-        <div className="glass-card rounded-2xl border border-[var(--glass-border,#334155)] overflow-hidden">
-          <div className="p-4 border-b border-[var(--glass-border,#334155)] flex items-center justify-between">
+        <div className="glass-card rounded-2xl border border-[var(--glass-border)] overflow-hidden">
+          <div className="p-4 border-b border-[var(--glass-border)] flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-bold text-[var(--text-primary,#f8fafc)]">
+              <h2 className="text-sm font-bold text-[var(--text-primary)]">
                 Recent SMS
               </h2>
-              <p className="text-xs text-[var(--text-secondary,#94a3b8)] mt-0.5">
+              <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                 Latest inbound messages
               </p>
             </div>
@@ -424,23 +424,23 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
               0 latest
             </span>
           </div>
-          <div className="py-12 text-center text-xs text-[var(--text-tertiary,#64748b)] space-y-2">
+          <div className="py-12 text-center text-xs text-[var(--text-tertiary)] space-y-2">
             <Inbox className="w-8 h-8 mx-auto text-slate-600" />
             <p>No recent messages yet.</p>
           </div>
         </div>
 
         {/* Top Members Today */}
-        <div className="glass-card rounded-2xl border border-[var(--glass-border,#334155)] overflow-hidden">
-          <div className="p-4 border-b border-[var(--glass-border,#334155)]">
-            <h2 className="text-sm font-bold text-[var(--text-primary,#f8fafc)]">
+        <div className="glass-card rounded-2xl border border-[var(--glass-border)] overflow-hidden">
+          <div className="p-4 border-b border-[var(--glass-border)]">
+            <h2 className="text-sm font-bold text-[var(--text-primary)]">
               Top Members Today
             </h2>
-            <p className="text-xs text-[var(--text-secondary,#94a3b8)] mt-0.5">
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
               Highest SMS volume
             </p>
           </div>
-          <div className="py-12 text-center text-xs text-[var(--text-tertiary,#64748b)] space-y-2">
+          <div className="py-12 text-center text-xs text-[var(--text-tertiary)] space-y-2">
             <Users className="w-8 h-8 mx-auto text-slate-600" />
             <p>No member traffic today yet.</p>
           </div>

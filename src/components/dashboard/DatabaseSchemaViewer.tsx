@@ -727,7 +727,7 @@ export const DatabaseSchemaViewer: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header Banner */}
-      <div className="p-6 bg-[var(--bg-surface)] rounded-xl text-white border border-[var(--glass-border)] shadow-sm">
+      <div className="p-6 bg-[var(--bg-surface)] rounded-xl text-[var(--text-primary)] border border-[var(--glass-border)] shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -736,8 +736,8 @@ export const DatabaseSchemaViewer: React.FC = () => {
               </Badge>
               <span className="text-xs text-[var(--text-tertiary)] font-mono">Prisma ORM 6.x • PostgreSQL Normalized DDL</span>
             </div>
-            <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-              <Database className="w-5 h-5 text-indigo-400" />
+            <h1 className="text-xl font-bold tracking-tight text-[var(--text-primary)] flex items-center gap-2">
+              <Database className="w-5 h-5 text-[var(--brand-primary)]" />
               Database Architecture & Entity Relationship Directory
             </h1>
             <p className="text-xs text-[var(--text-secondary)] max-w-3xl leading-relaxed">
@@ -770,11 +770,11 @@ export const DatabaseSchemaViewer: React.FC = () => {
           </div>
           <div className="bg-[var(--glass-bg)]/60 p-2.5 rounded-lg border border-[var(--glass-border)]">
             <div className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider font-semibold">Financial Precision</div>
-            <div className="text-lg font-bold text-amber-300 mt-0.5">Decimal(18, 6)</div>
+            <div className="text-lg font-bold text-[var(--accent-amber)] mt-0.5">Decimal(18, 6)</div>
           </div>
           <div className="bg-[var(--glass-bg)]/60 p-2.5 rounded-lg border border-[var(--glass-border)]">
             <div className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider font-semibold">Migration DDL</div>
-            <div className="text-lg font-bold text-blue-400 mt-0.5">833 Lines SQL</div>
+            <div className="text-lg font-bold text-[var(--accent-blue)] mt-0.5">833 Lines SQL</div>
           </div>
         </div>
       </div>
@@ -939,11 +939,11 @@ export const DatabaseSchemaViewer: React.FC = () => {
                   </thead>
                   <tbody className="divide-y divide-[var(--glass-border)] font-mono text-[11px]">
                     {currentModel.fields.map((field) => (
-                      <tr key={field.name} className="hover:bg-[var(--glass-bg)]/50 /30">
+                      <tr key={field.name} className="hover:bg-[var(--glass-bg-hover)]">
                         <td className="px-3 py-2 font-semibold text-[var(--text-primary)]">
                           {field.name}
                         </td>
-                        <td className="px-3 py-2 text-indigo-600 text-[var(--accent-violet)]">
+                        <td className="px-3 py-2 font-semibold text-[var(--accent-violet)]">
                           {field.type}
                         </td>
                         <td className="px-3 py-2 text-[var(--text-secondary)]">

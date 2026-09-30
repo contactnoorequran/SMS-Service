@@ -66,10 +66,10 @@ export const FieldSmsView: React.FC = () => {
       {/* 1. Header matching Screenshot 2 */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
         <div className="space-y-1">
-          <h1 className="text-xl font-bold text-[var(--text-primary,#f8fafc)] tracking-tight">
+          <h1 className="text-xl font-bold text-[var(--text-primary)] tracking-tight">
             Field SMS
           </h1>
-          <p className="text-xs text-[var(--text-secondary,#94a3b8)]">
+          <p className="text-xs text-[var(--text-secondary)]">
             Inbound messages for destination numbers not registered in the system — discover new field numbers from providers.
           </p>
           <div className="pt-0.5">
@@ -105,15 +105,15 @@ export const FieldSmsView: React.FC = () => {
       {/* 2. Three KPI Cards matching Screenshot 2 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* TODAY */}
-        <div className="glass-card p-4 rounded-xl border border-[var(--glass-border,#334155)] flex items-center justify-between">
+        <div className="glass-card p-4 rounded-xl border border-[var(--glass-border)] flex items-center justify-between">
           <div>
-            <div className="text-[10px] text-[var(--text-tertiary,#64748b)] uppercase font-semibold tracking-wider">
+            <div className="text-[10px] text-[var(--text-tertiary)] uppercase font-semibold tracking-wider">
               TODAY
             </div>
-            <div className="text-2xl font-bold font-mono text-[var(--text-primary,#f8fafc)] mt-1">
+            <div className="text-2xl font-bold font-mono text-[var(--text-primary)] mt-1">
               0
             </div>
-            <div className="text-[11px] text-[var(--text-secondary,#94a3b8)] mt-0.5">
+            <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">
               Unregistered field messages
             </div>
           </div>
@@ -123,15 +123,15 @@ export const FieldSmsView: React.FC = () => {
         </div>
 
         {/* FIELD NUMBERS */}
-        <div className="glass-card p-4 rounded-xl border border-[var(--glass-border,#334155)] flex items-center justify-between">
+        <div className="glass-card p-4 rounded-xl border border-[var(--glass-border)] flex items-center justify-between">
           <div>
-            <div className="text-[10px] text-[var(--text-tertiary,#64748b)] uppercase font-semibold tracking-wider">
+            <div className="text-[10px] text-[var(--text-tertiary)] uppercase font-semibold tracking-wider">
               FIELD NUMBERS
             </div>
-            <div className="text-2xl font-bold font-mono text-[var(--text-primary,#f8fafc)] mt-1">
+            <div className="text-2xl font-bold font-mono text-[var(--text-primary)] mt-1">
               0
             </div>
-            <div className="text-[11px] text-[var(--text-secondary,#94a3b8)] mt-0.5">
+            <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">
               Unique numbers today
             </div>
           </div>
@@ -141,15 +141,15 @@ export const FieldSmsView: React.FC = () => {
         </div>
 
         {/* ALL TIME */}
-        <div className="glass-card p-4 rounded-xl border border-[var(--glass-border,#334155)] flex items-center justify-between">
+        <div className="glass-card p-4 rounded-xl border border-[var(--glass-border)] flex items-center justify-between">
           <div>
-            <div className="text-[10px] text-[var(--text-tertiary,#64748b)] uppercase font-semibold tracking-wider">
+            <div className="text-[10px] text-[var(--text-tertiary)] uppercase font-semibold tracking-wider">
               ALL TIME
             </div>
-            <div className="text-2xl font-bold font-mono text-[var(--text-primary,#f8fafc)] mt-1">
+            <div className="text-2xl font-bold font-mono text-[var(--text-primary)] mt-1">
               0
             </div>
-            <div className="text-[11px] text-[var(--text-secondary,#94a3b8)] mt-0.5">
+            <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">
               Total field SMS stored
             </div>
           </div>
@@ -160,12 +160,12 @@ export const FieldSmsView: React.FC = () => {
       </div>
 
       {/* 3. Filter Box matching Screenshot 2 */}
-      <div className="glass-card p-5 rounded-2xl border border-[var(--glass-border,#334155)] space-y-4">
+      <div className="glass-card p-5 rounded-2xl border border-[var(--glass-border)] space-y-4">
         <div>
-          <h2 className="text-xs font-bold text-[var(--text-primary,#f8fafc)] uppercase tracking-wider">
+          <h2 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
             Filters
           </h2>
-          <p className="text-[11px] font-mono text-[var(--text-tertiary,#64748b)] mt-0.5">
+          <p className="text-[11px] font-mono text-[var(--text-tertiary)] mt-0.5">
             {todayDateStr}
           </p>
         </div>
@@ -173,50 +173,50 @@ export const FieldSmsView: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 text-xs">
           {/* Search Field Number */}
           <div className="md:col-span-3">
-            <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+            <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
               Search Field Number
             </label>
             <div className="relative">
-              <Hash className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary,#64748b)]" />
+              <Hash className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]" />
               <input
                 type="text"
                 placeholder="e.g. 447700900123"
                 value={fieldNumber}
                 onChange={(e) => setFieldNumber(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] placeholder:text-[var(--text-tertiary,#64748b)] focus:outline-none focus:border-teal-500 font-mono"
+                className="w-full pl-9 pr-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-teal-500 font-mono"
               />
             </div>
-            <p className="text-[10px] text-[var(--text-tertiary,#64748b)] mt-1">
+            <p className="text-[10px] text-[var(--text-tertiary)] mt-1">
               Matches the destination [TO] number
             </p>
           </div>
 
           {/* Search Sender */}
           <div className="md:col-span-3">
-            <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+            <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
               Search Sender
             </label>
             <div className="relative">
-              <AtSign className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary,#64748b)]" />
+              <AtSign className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]" />
               <input
                 type="text"
                 placeholder="@ e.g. WhatsApp"
                 value={senderSearch}
                 onChange={(e) => setSenderSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] placeholder:text-[var(--text-tertiary,#64748b)] focus:outline-none focus:border-teal-500"
+                className="w-full pl-9 pr-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-teal-500"
               />
             </div>
           </div>
 
           {/* Provider */}
           <div className="md:col-span-2">
-            <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+            <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
               Provider
             </label>
             <select
               value={selectedProvider}
               onChange={(e) => setSelectedProvider(e.target.value)}
-              className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer"
+              className="w-full px-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 cursor-pointer"
             >
               <option value="ALL">Provider: All</option>
               <option value="Alaa0">Alaa0</option>
@@ -226,27 +226,27 @@ export const FieldSmsView: React.FC = () => {
 
           {/* From Date */}
           <div className="md:col-span-2">
-            <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+            <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
               From
             </label>
             <input
               type="date"
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
-              className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono cursor-pointer"
+              className="w-full px-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 font-mono cursor-pointer"
             />
           </div>
 
           {/* To Date */}
           <div className="md:col-span-2">
-            <label className="block text-[11px] font-semibold text-[var(--text-secondary,#94a3b8)] mb-1">
+            <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
               To
             </label>
             <input
               type="date"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}
-              className="w-full px-3 py-2 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-xl text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 font-mono cursor-pointer"
+              className="w-full px-3 py-2 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-xl text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 font-mono cursor-pointer"
             />
           </div>
         </div>
@@ -254,13 +254,13 @@ export const FieldSmsView: React.FC = () => {
         {/* Per page row */}
         <div className="flex items-center justify-between pt-1">
           <div className="w-32">
-            <label className="block text-[10px] font-semibold text-[var(--text-tertiary,#64748b)] mb-0.5">
+            <label className="block text-[10px] font-semibold text-[var(--text-tertiary)] mb-0.5">
               Per page
             </label>
             <select
               value={perPage}
               onChange={(e) => setPerPage(e.target.value)}
-              className="w-full px-2.5 py-1.5 bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border,#334155)] rounded-lg text-xs text-[var(--text-primary,#f8fafc)] focus:outline-none focus:border-teal-500 cursor-pointer font-mono"
+              className="w-full px-2.5 py-1.5 bg-[var(--input-bg)] border-[var(--input-border)] border border-[var(--glass-border)] rounded-lg text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 cursor-pointer font-mono"
             >
               <option value="10">10</option>
               <option value="25">25</option>
@@ -272,12 +272,12 @@ export const FieldSmsView: React.FC = () => {
       </div>
 
       {/* 4. Unregistered Field Traffic Section matching Screenshot 2 */}
-      <div className="glass-card rounded-2xl border border-[var(--glass-border,#334155)] overflow-hidden">
-        <div className="p-5 border-b border-[var(--glass-border,#334155)]">
-          <h2 className="text-sm font-bold text-[var(--text-primary,#f8fafc)]">
+      <div className="glass-card rounded-2xl border border-[var(--glass-border)] overflow-hidden">
+        <div className="p-5 border-b border-[var(--glass-border)]">
+          <h2 className="text-sm font-bold text-[var(--text-primary)]">
             Unregistered Field Traffic
           </h2>
-          <p className="text-xs text-[var(--text-secondary,#94a3b8)] mt-0.5">
+          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
             These destination numbers are not in Numbers / Ranges. Add them to the system when you want normal billing and member reports.
           </p>
         </div>
@@ -285,14 +285,14 @@ export const FieldSmsView: React.FC = () => {
         {/* Empty State */}
         {messages.length === 0 ? (
           <div className="py-16 px-4 text-center">
-            <p className="text-xs text-[var(--text-tertiary,#64748b)] font-medium">
+            <p className="text-xs text-[var(--text-tertiary)] font-medium">
               No field SMS found for the selected filters.
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
-              <thead className="bg-[rgba(0,0,0,0.2)] text-[var(--text-secondary,#94a3b8)] border-b border-[var(--glass-border,#334155)] uppercase text-[10px] font-semibold tracking-wider">
+              <thead className="bg-[var(--input-bg)] border-[var(--input-border)] text-[var(--text-secondary)] border-b border-[var(--glass-border)] uppercase text-[10px] font-semibold tracking-wider">
                 <tr>
                   <th className="py-3 px-4">DATE / TIME</th>
                   <th className="py-3 px-4">PROVIDER</th>
@@ -302,22 +302,22 @@ export const FieldSmsView: React.FC = () => {
                   <th className="py-3 px-4 text-right">ACTION</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--glass-border,#334155)]">
+              <tbody className="divide-y divide-[var(--glass-border)]">
                 {messages.map((m) => (
                   <tr key={m.id} className="hover:bg-[rgba(255,255,255,0.02)] transition-colors">
-                    <td className="py-3 px-4 font-mono text-[11px] text-[var(--text-secondary,#94a3b8)]">
+                    <td className="py-3 px-4 font-mono text-[11px] text-[var(--text-secondary)]">
                       {m.receivedAt}
                     </td>
-                    <td className="py-3 px-4 font-semibold text-[var(--text-primary,#f8fafc)]">
+                    <td className="py-3 px-4 font-semibold text-[var(--text-primary)]">
                       {m.provider}
                     </td>
                     <td className="py-3 px-4 font-mono text-teal-400 font-semibold">
                       {m.toNumber}
                     </td>
-                    <td className="py-3 px-4 font-mono text-[var(--text-secondary,#94a3b8)]">
+                    <td className="py-3 px-4 font-mono text-[var(--text-secondary)]">
                       {m.fromSender}
                     </td>
-                    <td className="py-3 px-4 text-[var(--text-primary,#f8fafc)] max-w-xs truncate">
+                    <td className="py-3 px-4 text-[var(--text-primary)] max-w-xs truncate">
                       {m.messageText}
                     </td>
                     <td className="py-3 px-4 text-right">

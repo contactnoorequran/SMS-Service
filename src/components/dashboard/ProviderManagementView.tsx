@@ -583,7 +583,7 @@ export const ProviderManagementView: React.FC = () => {
               placeholder="Search: Name, host, system ID..."
               value={filterState.search}
               onChange={(e) => updateFilter('search', e.target.value)}
-              className="w-full pl-9 pr-3 py-2 rounded-xl bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-teal-500"
+              className="w-full pl-9 pr-3 py-2 rounded-xl bg-[var(--input-bg)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-teal-500"
             />
           </div>
 
@@ -591,7 +591,7 @@ export const ProviderManagementView: React.FC = () => {
             <select
               value={filterState.type}
               onChange={(e) => updateFilter('type', e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 cursor-pointer"
+              className="w-full px-3 py-2 rounded-xl bg-[var(--input-bg)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 cursor-pointer"
             >
               <option value="ALL">Connection: All connections</option>
               <option value="DIRECT_SMPP">SMPP</option>
@@ -603,7 +603,7 @@ export const ProviderManagementView: React.FC = () => {
             <select
               value={filterState.limit}
               onChange={(e) => updateFilter('limit', Number(e.target.value))}
-              className="w-full px-3 py-2 rounded-xl bg-[rgba(0,0,0,0.2)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 cursor-pointer"
+              className="w-full px-3 py-2 rounded-xl bg-[var(--input-bg)] border border-[var(--glass-border)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-teal-500 cursor-pointer"
             >
               <option value="10">Rows: 10</option>
               <option value="25">Rows: 25</option>
@@ -650,7 +650,7 @@ export const ProviderManagementView: React.FC = () => {
           />
 
           {totalCount > filterState.limit && (
-            <div className="p-3 border-t border-[var(--glass-border)] bg-[rgba(0,0,0,0.1)]">
+            <div className="p-3 border-t border-[var(--glass-border)] bg-[var(--input-bg-subtle)]">
               <Pagination
                 currentPage={filterState.page}
                 totalPages={totalPages}

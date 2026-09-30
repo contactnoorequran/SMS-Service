@@ -463,7 +463,7 @@ export const MessagingManagementView: React.FC = () => {
             isLoading={isLoading}
             keyExtractor={(item) => item.id}
           />
-          <div className="p-4 border-t border-[var(--glass-border)] bg-[rgba(0,0,0,0.1)]">
+          <div className="p-4 border-t border-[var(--glass-border)] bg-[var(--input-bg-subtle)]">
             <Pagination
               currentPage={page}
               totalPages={totalPages}

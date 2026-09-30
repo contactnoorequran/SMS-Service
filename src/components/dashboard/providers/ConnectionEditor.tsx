@@ -5,8 +5,8 @@ import { apiClient } from '../../../services/api';
 import { ProviderDetail, ProviderConnectionSummary, CreateConnectionPayload, UpdateConnectionPayload } from '../../../types/providers';
 
 interface Props {isOpen: boolean; onClose: () => void; provider: ProviderDetail | null; connectionToEdit?: ProviderConnectionSummary | null; onSubmit: (id: string, payload: CreateConnectionPayload | UpdateConnectionPayload, connectionId?: string) => Promise<void>}
-const defaults = {name: 'Demo HTTP', mode: 'DEMO', connectionType: 'HTTP_REST', environment: 'SANDBOX', host: 'demo.invalid', port: 443, priority: 1, tlsEnabled: true, enabled: false,
-  smppDirection: 'CLIENT', listenAddress: '127.0.0.1', allowedProviderIps: '95.154.228.78', publicHost: '',
+const defaults = {name: 'Demo HTTP', mode: 'DEMO', connectionType: 'HTTP_REST', environment: 'SANDBOX', host: 'demo.invalid', port: 443, priority: 1, tlsEnabled: false, enabled: false,
+  smppDirection: 'CLIENT', listenAddress: '0.0.0.0', allowedProviderIps: '95.154.228.78', publicHost: '76.13.217.198',
   systemId: '', systemType: '', throughputTps: 10, windowSize: 10, enquireLinkIntervalSec: 30, reconnectIntervalSec: 10,
   sourceTon: 5, sourceNpi: 0, destTon: 1, destNpi: 1, adapter: 'generic', healthUrl: '', sendUrl: '', authType: 'bearer', authHeader: 'X-API-Key',
   webhookAuth: 'hmac', webhookPublicKey: '', fromField: 'from', toField: 'to', bodyField: 'body', messageIdPath: 'id', credentialRefLabel: 'Carrier credentials'};

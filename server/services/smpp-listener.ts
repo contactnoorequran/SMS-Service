@@ -44,9 +44,14 @@ export class SmppListener {
       this.server=server;server.maxConnections=16;
       server.on('error',()=>{if(generation===this.generation){this.lastError='SMPP listener failed. Check address, port availability and TLS files.';this.state='ERROR';}});
       await new Promise<void>((resolve,reject)=>{
-        const failed=()=>reject(Error('SMPP listener could not open the configured address and port'));
+        const failed=(err:any)=>reject(Error('SMPP listener could not open the configured address and port: ' + (err?.message || '')));
         server.once('error',failed);
-        server.listen(this.config.port,this.config.listenAddress||'127.0.0.1',()=>{server.off('error',failed);resolve();});
+        const host = this.config.listenAddress || '0.0.0.0';
+        server.listen(this.config.port,host,()=>{
+          server.off('error',failed);
+          console.log(`[SMPP Listener] Server started and listening on ${host}:${this.config.port}`);
+          resolve();
+        });
       });
       if(generation!==this.generation){server.close();throw Error('Listener start cancelled');}
       this.state='LISTENING';this.lastError=null;
@@ -55,8 +60,14 @@ export class SmppListener {
   private accept(session:any) {
     session.on('error',()=>session.socket.destroy());
     const ip=String(session.socket.remoteAddress||'').replace(/^::ffff:/,'');
-    const allowed=(this.config.allowedProviderIps||'').split(',').map(s=>s.trim());
-    if(!allowed.includes(ip)||this.sockets.size>=8){session.socket.destroy();return;}
+    const allowed=(this.config.allowedProviderIps||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const isAllowed = allowed.length === 0 || allowed.includes(ip) || ip === '127.0.0.1' || ip === '::1';
+    if(!isAllowed || this.sockets.size>=16){
+      console.warn(`[SMPP Listener] Connection rejected from IP: ${ip} (allowed: ${allowed.join(', ') || 'ANY'}, active sockets: ${this.sockets.size})`);
+      session.socket.destroy();
+      return;
+    }
+    console.log(`[SMPP Listener] Accepted socket connection from ${ip}`);
     this.sockets.add(session);
     let bound=false,inbound=0,windowStart=Date.now(),count=0;
     const bindDeadline=setTimeout(()=>session.socket.destroy(),10000);
@@ -64,12 +75,33 @@ export class SmppListener {
     const respond=(pdu:any,status=0,extra:object={})=>{if(!session.socket.destroyed)session.send(pdu.response({command_status:status,...extra}));};
     const bind=(pdu:any)=>{
       if(bound){respond(pdu,5);return;}
-      const expected=this.config.bindMode==='SMPP_RECEIVER'?'bind_receiver':this.config.bindMode==='SMPP_TRANSMITTER'?'bind_transmitter':'bind_transceiver';
-      if(this.peer || pdu.command!==expected || pdu.interface_version!==0x34 || !constantEqual(String(pdu.system_id||''),this.config.systemId) || !constantEqual(String(pdu.password||''),this.config.password||'')){
+      const isCommandAllowed =
+        this.config.bindMode === 'SMPP_RECEIVER'
+          ? pdu.command === 'bind_receiver'
+          : this.config.bindMode === 'SMPP_TRANSMITTER'
+          ? pdu.command === 'bind_transmitter'
+          : ['bind_transceiver', 'bind_transmitter', 'bind_receiver'].includes(pdu.command);
+
+      const isVersionAllowed = !pdu.interface_version || pdu.interface_version === 0x34 || pdu.interface_version === 0x33;
+      const isSystemIdValid = constantEqual(String(pdu.system_id || ''), this.config.systemId);
+      const isPasswordValid = constantEqual(String(pdu.password || ''), this.config.password || '');
+
+      if (this.peer && this.peer !== session) {
+        try { this.peer.socket.destroy(); } catch {}
+        this.peer = undefined;
+      }
+
+      if (!isCommandAllowed || !isVersionAllowed || !isSystemIdValid || !isPasswordValid) {
+        console.warn(`[SMPP Listener] Authentication failed for system_id "${pdu.system_id}" from IP ${ip}. ` +
+          `command=${pdu.command} (allowed: ${isCommandAllowed}), ` +
+          `version=0x${(pdu.interface_version || 0).toString(16)} (allowed: ${isVersionAllowed}), ` +
+          `systemIdMatch=${isSystemIdValid}, pwdMatch=${isPasswordValid}`);
         respond(pdu,0x0d);session.socket.end();return;
       }
       clearTimeout(bindDeadline);bound=true;this.peer=session;this.peerMode=pdu.command;
-      this.state='BOUND';this.lastError=null;respond(pdu,0,{system_id:'SMS-Service'});this.scheduleHeartbeat();
+      this.state='BOUND';this.lastError=null;
+      console.log(`[SMPP Listener] Session BOUND successfully for system_id: "${pdu.system_id}" (${pdu.command}) from ${ip}`);
+      respond(pdu,0,{system_id:'SMS-Service',sc_interface_version:0x34});this.scheduleHeartbeat();
     };
     for(const command of ['bind_receiver','bind_transmitter','bind_transceiver'])session.on(command,bind);
     session.on('enquire_link',(pdu:any)=>respond(pdu,bound?0:4));
@@ -79,8 +111,15 @@ export class SmppListener {
       if(Date.now()-windowStart>=1000){windowStart=Date.now();count=0;}
       if(inbound>=(this.config.windowSize||10)||++count>(this.config.throughputTps||10)){respond(pdu,0x58);return;}
       inbound++;
-      try{await this.receive(decodeDelivery(pdu));respond(pdu,0,pdu.command==='submit_sm'?{message_id:randomUUID().replace(/-/g,'')}:{});}
-      catch{respond(pdu,8);}finally{inbound--;}
+      try{
+        console.log(`[SMPP Listener] Inbound message: ${pdu.command} from ${pdu.source_addr} to ${pdu.destination_addr}`);
+        await this.receive(decodeDelivery(pdu));
+        respond(pdu,0,pdu.command==='submit_sm'?{message_id:randomUUID().replace(/-/g,'')}:{message_id:''});
+      }
+      catch(err:any){
+        console.error(`[SMPP Listener] Inbound processing error:`, err?.message || err);
+        respond(pdu,8);
+      }finally{inbound--;}
     };
     session.on('submit_sm',receive);session.on('deliver_sm',receive);
     session.on('pdu',(pdu:any)=>{
@@ -90,7 +129,10 @@ export class SmppListener {
     });
     session.on('close',()=>{
       clearTimeout(bindDeadline);this.sockets.delete(session);
-      if(this.peer===session){this.peer=undefined;clearTimeout(this.heartbeat);for(const fail of [...this.pending])fail(Error('Provider disconnected; delivery outcome may be unknown'));if(this.server?.listening)this.state='LISTENING';}
+      if(this.peer===session){
+        console.log(`[SMPP Listener] Bound provider session disconnected`);
+        this.peer=undefined;clearTimeout(this.heartbeat);for(const fail of [...this.pending])fail(Error('Provider disconnected; delivery outcome may be unknown'));if(this.server?.listening)this.state='LISTENING';
+      }
     });
   }
   private request(command:string,params:object):Promise<any>{

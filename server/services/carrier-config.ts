@@ -12,7 +12,7 @@ export const connectionSchema = z.object({
   tlsEnabled: z.boolean().default(true),
   enabled: z.boolean().default(false),
   smppDirection: z.enum(['CLIENT','SERVER']).default('CLIENT'),
-  listenAddress: z.string().refine(value => Boolean(isIP(value)), 'Use a local IPv4 or IPv6 address').default('127.0.0.1'),
+  listenAddress: z.string().refine(value => Boolean(isIP(value)), 'Use a local IPv4 or IPv6 address').default('0.0.0.0'),
   allowedProviderIps: z.string().max(512).default(''),
   publicHost: z.string().trim().max(253).default(''),
   systemId: z.string().max(15).default(''),
@@ -52,7 +52,7 @@ export function validateLiveConfig(c: ConnectionConfig) {
   } else {
     if (!c.systemId || !/^[\x21-\x7e]{1,15}$/.test(c.systemId)) throw new Error('SMPP System ID must be 1–15 printable ASCII characters');
     if(c.smppDirection === 'SERVER'){
-      const ips=c.allowedProviderIps.split(',').map(ip=>ip.trim());
+      const ips=c.allowedProviderIps.split(',').map(ip=>ip.trim()).filter(Boolean);
       if(!ips.length || ips.length>16 || ips.some(ip=>!isIP(ip)))throw new Error('List the exact allowed provider IP addresses, separated by commas');
     }else if (!c.host || /[\s/]/.test(c.host)) throw new Error('SMPP requires a provider host');
   }

@@ -582,7 +582,7 @@ export const NumberManagementView: React.FC<NumberManagementViewProps> = ({ onNa
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">INVENTORY</p>
               <h3 className="text-2xl font-extrabold text-[var(--text-primary)] mt-1 font-mono">
-                {formatNumber(kpis.totalNumbers || 11002)}
+                {formatNumber(kpis.totalNumbers ?? 0)}
               </h3>
               <p className="text-[11px] text-[var(--text-muted)] mt-1">All numbers · click to clear status</p>
             </div>
@@ -601,7 +601,7 @@ export const NumberManagementView: React.FC<NumberManagementViewProps> = ({ onNa
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">AVAILABLE</p>
               <h3 className="text-2xl font-extrabold text-[var(--text-primary)] mt-1 font-mono">
-                {formatNumber(kpis.availableNumbers || 10591)}
+                {formatNumber(kpis.availableNumbers ?? 0)}
               </h3>
               <p className="text-[11px] text-[var(--text-muted)] mt-1">From database · click to filter</p>
             </div>
@@ -620,7 +620,7 @@ export const NumberManagementView: React.FC<NumberManagementViewProps> = ({ onNa
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">ALLOCATED</p>
               <h3 className="text-2xl font-extrabold text-[var(--text-primary)] mt-1 font-mono">
-                {formatNumber(kpis.assignedNumbers || 409)}
+                {formatNumber(kpis.assignedNumbers ?? 0)}
               </h3>
               <p className="text-[11px] text-[var(--text-muted)] mt-1">From database · click to filter</p>
             </div>
@@ -639,7 +639,7 @@ export const NumberManagementView: React.FC<NumberManagementViewProps> = ({ onNa
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">TEST</p>
               <h3 className="text-2xl font-extrabold text-[var(--text-primary)] mt-1 font-mono">
-                {formatNumber(2)}
+                {formatNumber(kpis.suspendedNumbers ?? 0)}
               </h3>
               <p className="text-[11px] text-[var(--text-muted)] mt-1">From database · click to filter</p>
             </div>
